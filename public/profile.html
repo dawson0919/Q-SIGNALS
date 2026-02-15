@@ -109,8 +109,9 @@
             <section id="applySection" class="hidden p-4">
                 <div class="bg-primary/5 border border-primary/20 rounded-2xl p-6 text-center">
                     <span class="material-symbols-outlined text-primary text-4xl mb-2">workspace_premium</span>
-                    <h3 class="text-lg font-bold text-white mb-2">Upgrade to Advanced</h3>
-                    <p class="text-sm text-slate-400 mb-4">Unlock live strategy signals and automated alerts.</p>
+                    <h3 class="text-lg font-bold text-white mb-2">🚀 Upgrade to Advanced</h3>
+                    <p class="text-sm text-slate-400 mb-1">Unlock live strategy signals and automated alerts.</p>
+                    <p class="text-xs text-slate-500 mb-4">註冊以下交易平台以解鎖進階會員</p>
 
                     <!-- Sponsor / Registration Steps -->
                     <div class="mb-6">
@@ -369,13 +370,18 @@
                     body: JSON.stringify({ account })
                 });
                 if (res.ok) {
-                    alert('Application submitted successfully!');
-                    window.location.reload();
+                    alert('Application submitted successfully! 申請已成功提交！');
+                    // Update UI without reloading to avoid infinite recursion
+                    document.getElementById('applyForm').classList.add('hidden');
+                    document.getElementById('applyPending').classList.remove('hidden');
                 } else {
                     const err = await res.json();
                     alert('Error: ' + err.error);
                 }
-            } catch (e) { alert('Request failed'); }
+            } catch (e) {
+                console.error('Application error:', e);
+                alert('Request failed: ' + e.message);
+            }
         }
 
         async function loadSubscriptions(token) {
