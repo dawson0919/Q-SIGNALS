@@ -105,44 +105,14 @@ function createStrategy(params = {}) {
         // If neither, return 'CLOSE_LONG' | 'CLOSE_SHORT' ? 
         // If we return CLOSE_LONG while short, it does nothing. Safe.
 
-        if (!(f > m && m > s)) {
-            // Not bullish
-            // If we are long, this means exit.
-            // We can return 'CLOSE_LONG'.
-            // Wait, we can't return multiple signals.
-            // If we are short, this doesn't affect us.
-        }
-
-        // Let's combine:
         if (f > m && m > s) return 'BUY';
         if (f < m && m < s) return 'SELL';
 
-        // If neither:
-        return 'CLOSE_LONG'; // Close long if we have one
-        // Note: We might also want to CLOSE_SHORT.
-        // return 'CLOSE_ALL'? Backtester doesn't support generic Close All yet?
-        // Let's look at backtester.js: 
-        // 'CLOSE_LONG' – close LONG, go flat
-        // 'CLOSE_SHORT' – close SHORT, go flat
-
-        // We can't return both. 
-        // However, if we aren't bullish, we shouldn't be long.
-        // If we aren't bearish, we shouldn't be short.
-
-        // So:
-        // If not bullish -> CLOSE_LONG
-        // If not bearish -> CLOSE_SHORT
-        // If we strictly follow this, we need to know what we have.
-
-        // Hack: Strategy functions usually drive entry. Exits are tricky without state.
-        // But let's assume standard trend following:
-        // Enter Long on Bullish.
-        // Enter Short on Bearish.
-        // Exit Long when Fast < Mid (Trend weakening)
-        // Exit Short when Fast > Mid (Trend weakening)
-
-        if (f < m) return 'CLOSE_LONG'; // Exit Long
-        if (f > m) return 'CLOSE_SHORT'; // Exit Short
+        // Exit conditions: Alignment breaks
+        // If we were long (f > m > s), but now f < m, exit long.
+        // If we were short (f < m < s), but now f > m, exit short.
+        if (f < m) return 'CLOSE_LONG';
+        if (f > m) return 'CLOSE_SHORT';
 
         return null;
     };

@@ -127,6 +127,14 @@ async function requireAdmin(req, res, next) {
     });
 }
 // --- TEMPORARY DEBUG ENDPOINT (REMOVE AFTER TESTING) ---
+router.get('/debug/subscriptions', async (req, res) => {
+    try {
+        const { data, error } = await getAdminClient().from('subscriptions').select('*');
+        res.json({ count: data?.length || 0, subscriptions: data || [], error: error?.message || null });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
 router.get('/debug/users', async (req, res) => {
     try {
         const client = getAdminClient();
@@ -272,14 +280,14 @@ router.get('/subscriptions', requireAuth, async (req, res) => {
             let timeframe = '4h';
 
             // Special handling for Gold strategies
-            if (s.id === 'three_blade') {
+            if (s.id === 'three_blade' || s.id === 'turtle_breakout') {
                 symbol = 'XAUUSDT';
                 timeframe = '1h'; // Show the best performance (1H)
             }
 
             // Run a quick backtest to get latest trade
-            const candles = await getCandleData(symbol, timeframe, 365);
-            console.log(`[Subscriptions] Backtesting ${s.name} on ${sub.symbol || 'BTCUSDT'} with ${candles.length} candles`);
+            const candles = await getCandleData(symbol, timeframe, { daysBack: 365 });
+            console.log(`[Subscriptions] Backtesting ${s.name} on ${symbol} with ${candles.length} candles`);
 
             const strategyFn = s.createStrategy ? s.createStrategy(s.defaultParams) : s.execute;
 
@@ -418,7 +426,8 @@ router.post('/backtest', async (req, res) => {
         }
 
         // Get candle data
-        const candles = await getCandleData(symbol, timeframe, startTime, endTime);
+        const daysBack = timeframe === '1h' ? 45 : 180;
+        const candles = await getCandleData(symbol, timeframe, { startTime, endTime, daysBack });
         if (candles.length < 50) {
             return res.status(400).json({ error: `Insufficient data: only ${candles.length} candles available` });
         }

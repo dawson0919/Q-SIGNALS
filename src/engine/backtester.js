@@ -208,9 +208,13 @@ class Backtester {
             pnlPercent: parseFloat(t.pnlPercent.toFixed(2))
         }));
 
-        // Equity curve (sampled for chart - max 200 points)
-        const step = Math.max(1, Math.floor(equityCurve.length / 200));
-        const sampledEquity = equityCurve.filter((_, i) => i % step === 0 || i === equityCurve.length - 1);
+        // 5. Equity curve (sampled for chart - max 200 points)
+        // Ensure starting point is the startTime calculated in dataFetcher/routes
+        const equityCurveStartTime = candles[0]?.open_time || candles[0]?.openTime;
+        const filteredEquity = equityCurve.filter(p => p.time >= equityCurveStartTime);
+
+        const step = Math.max(1, Math.floor(filteredEquity.length / 200));
+        const sampledEquity = filteredEquity.filter((_, i) => i % step === 0 || i === filteredEquity.length - 1);
 
         return {
             summary: {
@@ -233,9 +237,9 @@ class Backtester {
                 avgLoss: parseFloat(avgLoss.toFixed(2)),
                 plRatio: parseFloat((avgLoss !== 0 ? Math.abs(avgWin / avgLoss) : avgWin > 0 ? Infinity : 0).toFixed(2)),
                 period: {
-                    start: candles[0]?.open_time || candles[0]?.openTime,
+                    start: equityCurveStartTime,
                     end: candles[candles.length - 1]?.open_time || candles[candles.length - 1]?.openTime,
-                    startDate: new Date(candles[0]?.open_time || candles[0]?.openTime).toISOString().split('T')[0],
+                    startDate: new Date(equityCurveStartTime).toISOString().split('T')[0],
                     endDate: new Date(candles[candles.length - 1]?.open_time || candles[candles.length - 1]?.openTime).toISOString().split('T')[0]
                 }
             },

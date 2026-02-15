@@ -107,10 +107,12 @@
             <!-- Performance Grid -->
             <div class="grid grid-cols-2 gap-3" id="perfGrid">
                 <div class="bg-surface-dark border border-border-dark p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1">Total Return</p>
+                    <p class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1">Total Return (<span
+                            id="roiTitlePeriod">--</span>)</p>
                     <p class="text-2xl font-bold text-primary" id="metricReturn">--</p>
                     <p class="text-[10px] text-primary/60 mt-1 flex items-center gap-1"><span
-                            class="material-symbols-outlined text-xs">trending_up</span> All Time</p>
+                            class="material-symbols-outlined text-xs">trending_up</span> <span
+                            id="returnPeriodLabel">Performance</span></p>
                 </div>
                 <div class="bg-surface-dark border border-border-dark p-4 rounded-xl">
                     <p class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1">Max Drawdown</p>
@@ -346,6 +348,14 @@
             document.getElementById('metricTotalTrades').textContent = s.totalTrades;
             document.getElementById('metricWL').textContent = `${s.winningTrades} / ${s.losingTrades}`;
             document.getElementById('periodLabel').textContent = `${s.period.startDate} → ${s.period.endDate}`;
+
+            // Set ROI Period Label based on timeframe
+            const roiDays = timeframe === '1h' ? 45 : 180;
+            const returnPeriodLabel = document.getElementById('returnPeriodLabel');
+            if (returnPeriodLabel) returnPeriodLabel.textContent = `最近 ${roiDays} 天績效`;
+
+            const roiTitlePeriod = document.getElementById('roiTitlePeriod');
+            if (roiTitlePeriod) roiTitlePeriod.textContent = `${roiDays}d`;
 
             // Show latest signal from recent trades
             if (data.recentTrades && data.recentTrades.length > 0) {

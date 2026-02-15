@@ -331,8 +331,12 @@
             </div>
 
             <!-- Custom Descriptions for Gold -->
-            ${symbol === 'XAUUSDT' && timeframe === '1h' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：短線爆發型。使用優化版三刀流 (8/15/30 EMA)，專為捕捉黃金日內劇烈波動而設計，反應極快。</p>` : ''}
-            ${symbol === 'XAUUSDT' && timeframe === '4h' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：穩健型。這組參數專注於過濾雜訊，捕捉黃金的長期均線趨勢，適合長線波段佈局。</p>` : ''}
+            <!-- Custom Descriptions for Gold -->
+            ${symbol === 'XAUUSDT' && timeframe === '1h' && strat.id === 'three_blade' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：短線爆發型。使用優化版三刀流 (8/15/30 EMA)，專為捕捉黃金日內劇烈波動而設計，反應極快。</p>` : ''}
+            ${symbol === 'XAUUSDT' && timeframe === '4h' && strat.id === 'three_blade' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：穩健型。這組參數專注於過濾雜訊，捕捉黃金的長期均線趨勢，適合長線波段佈局。</p>` : ''}
+            
+            ${symbol === 'XAUUSDT' && timeframe === '1h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：短線突破型。使用優化版海龜參數 (8K/2K)，專為捕捉黃金短線突破行情設計。</p>` : ''}
+            ${symbol === 'XAUUSDT' && timeframe === '4h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：波段趨勢型。使用寬鬆參數 (15K/2K)，捕捉黃金較大級別的趨勢突破，避免過度頻繁交易。</p>` : ''}
             
             <div class="grid grid-cols-2 gap-2 mb-4">
               <div class="bg-background-dark/50 p-2 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
