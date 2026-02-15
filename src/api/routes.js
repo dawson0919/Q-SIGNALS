@@ -149,7 +149,7 @@ router.get('/profile', requireAuth, async (req, res) => {
         }
 
         // Check for own pending application
-        const { data: apps, error: appError } = await getSupabase()
+        const { data: apps, error: appError } = await getAuthenticatedClient(req.token)
             .from('premium_applications')
             .select('status')
             .eq('user_id', req.user.id)
@@ -170,7 +170,7 @@ router.post('/apply-premium', requireAuth, async (req, res) => {
     if (!account) return res.status(400).json({ error: 'Account required' });
     try {
         // Check if already has a pending application
-        const { data: existing } = await getSupabase()
+        const { data: existing } = await getAuthenticatedClient(req.token)
             .from('premium_applications')
             .select('id')
             .eq('user_id', req.user.id)
