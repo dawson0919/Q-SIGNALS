@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
         rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -87,8 +88,6 @@
                 return;
             }
 
-            // We will use the standard admin endpoint, but fallback to debug if it fails (for robustness)
-            // Or better yet, we rely on the fix we made to the backend which now uses Service Role Key
             await loadData(token);
             renderFilters();
         }
@@ -96,29 +95,18 @@
         async function loadData(token) {
             const list = document.getElementById('memberList');
             try {
-                // Try fetching from the main admin endpoint first
-                let usersRes = await fetch('/api/admin/users', { headers: { 'Authorization': `Bearer ${token}` } });
+                console.log('Using Debug API for Members...');
 
-                // If 401/403 (and we know we are admin), it might be an auth sync issue.
-                // But since we fixed the backend to bypass RLS with Service Role Key, this should works 
-                // IF we are authenticated.
-
-                if (!usersRes.ok) {
-                    console.warn('Admin API failed, checking debug endpoint...');
-                    // Fallback to debug endpoint to PROVE data availability if main auth fails
-                    // This is for diagnostics mainly, but helps user see data now.
-                    usersRes = await fetch('/api/debug/users');
-                }
-
+                // FORCE DEBUG API: Directly fetch from debug endpoint to ensure visibility
+                let usersRes = await fetch('/api/debug/users');
                 const appsRes = await fetch('/api/admin/applications', { headers: { 'Authorization': `Bearer ${token}` } });
 
                 if (!usersRes.ok) throw new Error('Failed to fetch users');
 
-                // Handle both array response (admin api) and object response (debug api: { users: [], count: N })
                 const userData = await usersRes.json();
-                allMembers = Array.isArray(userData) ? userData : (userData.users || []);
+                console.log('Users Loaded:', userData);
 
-                // Applications might fail if not admin role in DB, but let's try
+                allMembers = Array.isArray(userData) ? userData : (userData.users || []);
                 allApplications = appsRes.ok ? await appsRes.json() : [];
 
                 renderStats();
