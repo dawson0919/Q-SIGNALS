@@ -1,4 +1,5 @@
 // QuantSignal Server - Quantitative Trading Strategy Platform
+require('dotenv').config(); // Load .env BEFORE any other modules
 const express = require('express');
 const cors = require('cors');
 const path = require('path');

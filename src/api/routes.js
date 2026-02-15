@@ -18,6 +18,7 @@ const {
     getAllUsers,
     deleteUser,
     getSupabase,
+    getAdminClient,
     getAuthenticatedClient
 } = require('../data/database');
 const indicators = require('../engine/indicators');
@@ -125,8 +126,17 @@ async function requireAdmin(req, res, next) {
         next();
     });
 }
-
-
+// --- TEMPORARY DEBUG ENDPOINT (REMOVE AFTER TESTING) ---
+router.get('/debug/users', async (req, res) => {
+    try {
+        const client = getAdminClient();
+        const { data, error } = await client.from('profiles').select('*');
+        console.log('[DEBUG] Profiles query - Error:', error, 'Count:', data?.length);
+        res.json({ count: data?.length || 0, users: data || [], error: error?.message || null });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
 
 // --- Membership & Subscriptions ---
 // --- Membership & Subscriptions ---
