@@ -145,8 +145,20 @@ router.get('/profile', requireAuth, async (req, res) => {
         const isAdminEmail = adminEmails.some(e => e.toLowerCase().trim() === userEmail);
 
         if (isAdminEmail || req.user.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd') {
-            if (!profile) {
-                profile = { id: req.user.id, email: req.user.email, created_at: new Date().toISOString() };
+            if (!profile || profile.role !== 'admin') {
+                // AGGRESSIVE SYNC: Update database to make sure RLS works
+                await getSupabase()
+                    .from('profiles')
+                    .upsert({
+                        id: req.user.id,
+                        email: req.user.email,
+                        role: 'admin',
+                        updated_at: new Date().toISOString()
+                    });
+
+                if (!profile) {
+                    profile = { id: req.user.id, email: req.user.email, created_at: new Date().toISOString() };
+                }
             }
             profile.role = 'admin';
         }
