@@ -170,7 +170,11 @@ async function getApplications(token) {
         .from('premium_applications')
         .select('*')
         .order('created_at', { ascending: false });
-    if (error) return [];
+
+    if (error) {
+        console.error('[DB] getApplications Error:', error.message, error.details);
+        return [];
+    }
     return data;
 }
 
@@ -197,7 +201,11 @@ async function getAllUsers(token) {
     const { data, error } = await getAuthenticatedClient(token)
         .from('profiles')
         .select('*');
-    if (error) return [];
+
+    if (error) {
+        console.error('[DB] getAllUsers Error:', error.message, error.details);
+        return [];
+    }
 
     // Apply Admin Override to listing
     return data.map(u => {
