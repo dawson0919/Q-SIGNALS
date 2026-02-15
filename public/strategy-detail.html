@@ -265,12 +265,38 @@
             }
 
             const isAdmin = userRole === 'admin';
-            if (isAdmin) {
-                document.getElementById('signalSection').style.display = 'block';
+            const isPlatinum = userRole === 'platinum';
+            const isAdvanced = userRole === 'advanced';
+            const isSPX = symbol === 'SPXUSDT';
+
+            // Base Visibility Logic
+            if (isSPX) {
+                // SPX is restricted to Admin or Platinum
+                if (isAdmin || isPlatinum) {
+                    document.getElementById('signalSection').style.display = 'block';
+                    document.getElementById('signalPremiumOverlay').style.display = 'none';
+                } else {
+                    // Show chart but hide/blur signal for SPX
+                    document.getElementById('signalSection').style.display = 'block';
+                    document.getElementById('signalPremiumOverlay').style.display = 'flex';
+                    const link = document.querySelector('#signalPremiumOverlay a');
+                    if (link) link.textContent = 'UPGRADE TO PLATINUM';
+                }
             } else {
-                // If not admin, hide signal section. Option to show "Upgrade" for others?
-                // The user said "others only see charts", so we keep it hidden.
-                document.getElementById('signalSection').style.display = 'none';
+                // Original logic for other assets (GOLD, BTC, etc.)
+                if (strategyCategory === 'Premium') {
+                    if (isAdmin || isAdvanced || isPlatinum) {
+                        document.getElementById('signalSection').style.display = 'block';
+                        document.getElementById('signalPremiumOverlay').style.display = 'none';
+                    } else {
+                        document.getElementById('signalSection').style.display = 'block';
+                        document.getElementById('signalPremiumOverlay').style.display = 'flex';
+                    }
+                } else {
+                    // Basic strategy
+                    document.getElementById('signalSection').style.display = 'block';
+                    document.getElementById('signalPremiumOverlay').style.display = 'none';
+                }
             }
 
             // Load strategy info

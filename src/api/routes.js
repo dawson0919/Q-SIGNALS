@@ -253,9 +253,15 @@ router.post('/subscribe', requireAuth, async (req, res) => {
 
         const role = profile?.role || 'standard';
 
-        console.log(`[Subscribe] User: ${req.user.email} (${req.user.id}), Role: ${role}, Strategy: ${s.name} (${s.category})`);
+        console.log(`[Subscribe] User: ${req.user.email} (${req.user.id}), Role: ${role}, Strategy: ${s.name} (${s.category}), Symbol: ${symbol}`);
 
-        if (s.category === 'Premium' && !['admin', 'advanced'].includes(role)) {
+        // SPX Restriction
+        if (symbol === 'SPXUSDT' && !['admin', 'platinum'].includes(role)) {
+            console.log(`[Subscribe] DENIED: SPX requiring Platinum.`);
+            return res.status(403).json({ error: 'Platinum Membership required for S&P 500 signals.' });
+        }
+
+        if (s.category === 'Premium' && !['admin', 'advanced', 'platinum'].includes(role)) {
             console.log(`[Subscribe] DENIED: Role '${role}' insufficient for Premium strategy.`);
             return res.status(403).json({ error: 'Premium Membership required for this strategy.' });
         }
