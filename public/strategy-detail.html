@@ -133,7 +133,7 @@
         <!-- Backtest Chart -->
         <section class="p-4">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="font-bold text-base">Equity Curve（回測）4H K線 • 最近 180 天</h3>
+                <h3 class="font-bold text-base" id="equityTitle">Equity Curve（回測）4H K線 • 最近 180 天</h3>
                 <div id="periodLabel" class="px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold">--
                 </div>
             </div>
@@ -224,11 +224,19 @@
         const params = new URLSearchParams(window.location.search);
         const strategyId = params.get('strategy') || 'ma60';
         const symbol = params.get('symbol') || 'BTCUSDT';
+        const timeframe = params.get('timeframe') || '4h';
+
+        // Update Title dynamically
+        const days = timeframe === '1h' ? 45 : 180;
+        const tfLabel = timeframe.toUpperCase();
+        const titleEl = document.getElementById('equityTitle');
+        if (titleEl) titleEl.textContent = `Equity Curve（回測）${tfLabel} K線 • 最近 ${days} 天`;
 
         let userRole = 'standard'; // Track user role
         let strategyCategory = 'Basic'; // Track strategy category
 
         async function loadData() {
+            // ... (Auth Logic) ... 
             const { user, token } = await getUser();
 
             // Get user role
@@ -250,7 +258,7 @@
                 const strat = await sRes.json();
                 strategyCategory = strat.category || 'Basic'; // Store category
                 document.getElementById('strategyName').textContent = strat.name || strategyId;
-                document.getElementById('strategySymbol').textContent = `${symbol.replace('USDT', '/USDT')} • QuantSignal`;
+                document.getElementById('strategySymbol').textContent = `${symbol.replace('USDT', '/USDT')} • ${tfLabel} • QuantSignal`;
             } catch (e) { }
 
             // Check subscription status
@@ -263,7 +271,7 @@
                 const res = await fetch('/api/backtest', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ strategyId, symbol })
+                    body: JSON.stringify({ strategyId, symbol, timeframe })
                 });
                 const data = await res.json();
                 if (data.summary) renderReport(data);
