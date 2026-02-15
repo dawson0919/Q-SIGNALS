@@ -44,8 +44,10 @@ function createStrategy(params = {}) {
     if (params.symbol === 'XAUUSDT') {
         if (params.timeframe === '1h') {
             fast = 8; mid = 15; slow = 30;
+            console.log(`[ThreeBlade] Init XAUUSDT 1H Optimized: ${fast}/${mid}/${slow}`);
         } else if (params.timeframe === '4h') {
             fast = 20; mid = 60; slow = 120;
+            console.log(`[ThreeBlade] Init XAUUSDT 4H Optimized: ${fast}/${mid}/${slow}`);
         }
     }
 
@@ -149,7 +151,7 @@ function createStrategy(params = {}) {
 module.exports = {
     id: 'three_blade',
     name: '均線三刀流 (Triple MA)',
-    description: '使用 20/50/200 三條 EMA 進行趨勢判斷。當快中慢線多頭排列時做多，空頭排列時做空。',
+    description: '使用 20/50/200 EMA 趨勢。黃金1H優化版為 8/15/30，專攻短線波動。',
     category: 'Premium',
     author: 'QuantSignal',
     pineScript,
