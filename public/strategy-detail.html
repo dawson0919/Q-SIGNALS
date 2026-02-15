@@ -132,6 +132,16 @@
             </div>
         </section>
 
+        <!-- Admin Only Section -->
+        <section class="px-4 py-2 hidden" id="adminNotesSection">
+            <div class="bg-primary/5 border border-primary/20 p-4 rounded-xl">
+                <div class="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest mb-2">
+                    <span class="material-symbols-outlined text-sm">security</span> Admin Insights (Optimization)
+                </div>
+                <p id="adminNotesContent" class="text-sm text-slate-300 whitespace-pre-line leading-relaxed"></p>
+            </div>
+        </section>
+
         <!-- Backtest Chart -->
         <section class="p-4">
             <div class="flex items-center justify-between mb-4">
@@ -256,11 +266,18 @@
 
             // Load strategy info
             try {
-                const sRes = await fetch(`/api/strategies/${strategyId}`);
+                const sHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
+                const sRes = await fetch(`/api/strategies/${strategyId}`, { headers: sHeaders });
                 const strat = await sRes.json();
                 strategyCategory = strat.category || 'Basic'; // Store category
                 document.getElementById('strategyName').textContent = strat.name || strategyId;
                 document.getElementById('strategySymbol').textContent = `${symbol.replace('USDT', '/USDT')} • ${tfLabel} • QuantSignal`;
+
+                // Show admin notes if available
+                if (strat.adminNotes) {
+                    document.getElementById('adminNotesSection').classList.remove('hidden');
+                    document.getElementById('adminNotesContent').innerText = strat.adminNotes;
+                }
             } catch (e) { }
 
             // Check subscription status

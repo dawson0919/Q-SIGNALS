@@ -85,14 +85,26 @@ router.post('/admin/strategies/toggle-visibility', requireAdmin, (req, res) => {
 });
 
 // Get strategy by ID
-router.get('/strategies/:id', (req, res) => {
+router.get('/strategies/:id', async (req, res) => {
     const s = strategies[req.params.id];
     if (!s) return res.status(404).json({ error: 'Strategy not found' });
 
-    // Validate visibility if not checking details (frontend usually checks list first)
-    // But for direct link access, we might want to restrict if hidden?
-    // For now, let's allow direct access if they have the ID, or duplicate the admin check.
-    // Simpler: Just return the data, maybe add isVisible flag.
+    // Check if admin to show sensitive info
+    let isAdmin = false;
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+        try {
+            const token = authHeader.split(' ')[1];
+            const { data } = await getSupabase().auth.getUser(token);
+            if (data.user) {
+                const profile = await getProfile(data.user.id, token);
+                const adminEmails = (process.env.ADMIN_EMAILS || '').split(',');
+                if (profile?.role === 'admin' || adminEmails.includes(data.user.email)) {
+                    isAdmin = true;
+                }
+            }
+        } catch (e) { }
+    }
 
     res.json({
         id: s.id,
@@ -100,7 +112,8 @@ router.get('/strategies/:id', (req, res) => {
         description: s.description,
         category: s.category || 'Basic',
         author: s.author || 'Unknown',
-        isVisible: s.isVisible !== false
+        isVisible: s.isVisible !== false,
+        adminNotes: isAdmin ? s.adminNotes : null
     });
 });
 

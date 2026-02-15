@@ -124,6 +124,7 @@ module.exports = {
     description: '海龜突破策略：利用 Pivot High/Low 判斷市場結構。經優化後（BTC 參數：2/5/2；SPX 參數：20/5/10），具有極佳的趨勢捕捉能力與更準確的進場機制。',
     category: 'Premium',
     author: 'QuantSignal',
+    adminNotes: 'SPX 最佳化結果：\n4H (180d): L:20, R:5, H:10 -> 收益 +68.9%, 勝率 46%\n1H (45d): L:6, R:2, H:2 -> 捕捉敏感波動',
     pineScript,
     createStrategy,
     execute: createStrategy({ leftBars: LEFT, rightBars: RIGHT, minHoldBars: MIN_HOLD_BARS }), // Optimized default
