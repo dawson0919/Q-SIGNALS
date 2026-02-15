@@ -3,7 +3,7 @@ const WebSocket = require('ws');
 const { insertCandles } = require('./database');
 
 const SPOT_SYMBOLS = ['btcusdt', 'ethusdt', 'solusdt'];
-const FUTURES_SYMBOLS = ['xauusdt'];
+const FUTURES_SYMBOLS = ['xauusdt', 'spxusdt'];
 const ALL_SYMBOLS = [...SPOT_SYMBOLS, ...FUTURES_SYMBOLS];
 const TIMEFRAMES = ['1h', '4h'];
 const currentPrices = {};

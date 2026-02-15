@@ -483,21 +483,27 @@
         BTCUSDT: 'BTC',
         ETHUSDT: 'ETH',
         SOLUSDT: 'SOL',
-        XAUUSDT: 'GOLD'
+        XAUUSDT: 'GOLD',
+        SPXUSDT: 'SPX'
       };
-      let html = '';
+
+      let itemHtml = '';
       for (const [sym, name] of Object.entries(symbols)) {
         const p = prices[sym];
         if (p) {
           const color = p.change24h >= 0 ? 'text-primary' : 'text-red-500';
-          html += `<div class="flex items-center gap-2 shrink-0">
-            <span class="font-bold text-white">${name}</span>
-            <span class="font-mono">$${p.price?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '--'}</span>
-            <span class="${color} text-xs font-bold">${p.change24h >= 0 ? '+' : ''}${p.change24h?.toFixed(2) || '0.00'}%</span>
+          itemHtml += `<div class="flex items-center gap-2 shrink-0 px-4">
+            <span class="font-bold text-white text-xs">${name}</span>
+            <span class="font-mono text-xs">$${p.price?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '--'}</span>
+            <span class="${color} text-[10px] font-bold">${p.change24h >= 0 ? '+' : ''}${p.change24h?.toFixed(2) || '0.00'}%</span>
           </div>`;
         }
       }
-      if (html) container.innerHTML = html;
+
+      if (itemHtml) {
+        // Double it for seamless scrolling
+        container.innerHTML = `<div class="flex price-ticker">${itemHtml}${itemHtml}${itemHtml}</div>`;
+      }
     }
 
     // Also poll prices via REST

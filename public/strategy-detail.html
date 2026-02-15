@@ -264,6 +264,15 @@
                 }
             }
 
+            const isAdmin = userRole === 'admin';
+            if (isAdmin) {
+                document.getElementById('signalSection').style.display = 'block';
+            } else {
+                // If not admin, hide signal section. Option to show "Upgrade" for others?
+                // The user said "others only see charts", so we keep it hidden.
+                document.getElementById('signalSection').style.display = 'none';
+            }
+
             // Load strategy info
             try {
                 const sHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
