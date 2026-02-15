@@ -200,10 +200,8 @@
     <nav
         class="fixed bottom-0 left-0 right-0 bg-background-dark border-t border-border-dark px-6 py-3 flex justify-between items-center z-50">
         <a href="index.html" class="flex flex-col items-center gap-1 text-slate-500"><span
-                class="material-symbols-outlined">explore</span><span class="text-[10px]">Explore</span></a>
-        <a href="#" class="flex flex-col items-center gap-1 text-primary"><span class="material-symbols-outlined"
-                style="font-variation-settings: 'FILL' 1">insights</span><span class="text-[10px]">Strategies</span></a>
-        <a href="admin.html" class="flex flex-col items-center gap-1 text-slate-500"><span
+                class="material-symbols-outlined">home</span><span class="text-[10px]">Home</span></a>
+        <a id="adminNavLink" href="admin.html" class="hidden flex-col items-center gap-1 text-slate-500"><span
                 class="material-symbols-outlined">terminal</span><span class="text-[10px]">Admin</span></a>
         <a href="profile.html" class="flex flex-col items-center gap-1 text-slate-500"><span
                 class="material-symbols-outlined">person</span><span class="text-[10px]">Profile</span></a>
@@ -451,6 +449,16 @@
         async function init() {
             if (typeof updateHeaderAuth === 'function') updateHeaderAuth();
             await loadData();
+
+            // Show admin nav link for admins only
+            const { user, token } = await getUser();
+            if (user && token && (userRole === 'admin' || isAdmin(user))) {
+                const adminLink = document.getElementById('adminNavLink');
+                if (adminLink) {
+                    adminLink.classList.remove('hidden');
+                    adminLink.classList.add('flex');
+                }
+            }
         }
 
         init();
