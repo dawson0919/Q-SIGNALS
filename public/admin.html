@@ -224,6 +224,28 @@ if shortCondition
 
             <div id="resultTrades" class="space-y-2"></div>
         </section>
+        </section>
+
+        <!-- Strategy Management Section -->
+        <section class="p-4 space-y-4">
+            <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-widest">Strategy Management</h2>
+            <div class="bg-surface-dark border border-border-dark rounded-xl overflow-hidden">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-black/20 border-b border-border-dark text-slate-500 uppercase font-medium">
+                        <tr>
+                            <th class="px-4 py-3">Strategy Name</th>
+                            <th class="px-4 py-3">Category</th>
+                            <th class="px-4 py-3 text-right">Visible</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stratMgmtList" class="divide-y divide-border-dark text-slate-300">
+                        <tr>
+                            <td colspan="3" class="px-4 py-3 text-center text-slate-500">Loading strategies...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </main>
 
     <!-- Footer Action -->
@@ -406,6 +428,81 @@ if shortCondition
             const counts = d.candleCounts;
             document.getElementById('dbStats').textContent = `DB: ${Object.values(counts).reduce((a, b) => a + b, 0)} candles`;
         }).catch(() => { });
+
+        // Load Strategies for Management
+        async function loadAdminStrategies() {
+            try {
+                // We need to fetch strategies. Assuming we are logged in as admin (requireAuth checked on page load ideally)
+                // We use the same /api/strategies endpoint. It now returns isVisible flag if admin.
+                // We need to pass the auth token.
+                const { data: { session } } = await supabase.auth.getSession();
+                const token = session?.access_token;
+                if (!token) return;
+
+                const res = await fetch('/api/strategies', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                const list = document.getElementById('stratMgmtList');
+                list.innerHTML = '';
+
+                if (!data.strategies || data.strategies.length === 0) {
+                    list.innerHTML = '<tr><td colspan="3" class="px-4 py-3 text-center text-slate-500">No strategies found.</td></tr>';
+                    return;
+                }
+
+                data.strategies.forEach(s => {
+                    const isVisible = s.isVisible !== false; // Default true
+                    list.innerHTML += `
+                        <tr class="hover:bg-white/5 transition-colors">
+                            <td class="px-4 py-3 font-medium text-white">${s.name}</td>
+                            <td class="px-4 py-3 text-slate-400">${s.category || 'Basic'}</td>
+                            <td class="px-4 py-3 text-right">
+                                <button onclick="toggleStratVisibility('${s.id}', ${!isVisible})" 
+                                    class="px-2 py-1 rounded text-[10px] font-bold uppercase transition-colors ${isVisible ? 'bg-primary/20 text-primary hover:bg-red-500/20 hover:text-red-500' : 'bg-slate-700 text-slate-400 hover:bg-primary/20 hover:text-primary'}">
+                                    ${isVisible ? 'Hide' : 'Show'}
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (e) {
+                console.error('Error loading strategies for admin:', e);
+            }
+        }
+
+        async function toggleStratVisibility(id, newState) {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) return;
+
+                const res = await fetch('/api/admin/strategies/toggle-visibility', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify({ id, isVisible: newState })
+                });
+
+                if (res.ok) {
+                    loadAdminStrategies(); // Reload list
+                } else {
+                    alert('Failed to update visibility');
+                }
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+
+        // Initialize Supabase client for admin page usage
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Wait for auth then load
+        setTimeout(() => {
+            loadAdminStrategies();
+        }, 1000);
     </script>
 </body>
 

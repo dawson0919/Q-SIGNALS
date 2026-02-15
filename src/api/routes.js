@@ -42,27 +42,63 @@ const macdMa = require('../engine/strategies/macdMa');
 strategies[macdMa.id] = macdMa;
 
 // List all strategies
-router.get('/strategies', (req, res) => {
-    const list = Object.values(strategies).map(s => ({
-        id: s.id,
-        name: s.name,
-        description: s.description,
-        category: s.category || 'Basic',
-        author: s.author || 'Unknown'
-    }));
+router.get('/strategies', async (req, res) => {
+    // Check if admin to show hidden
+    let isAdmin = false;
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+        const token = authHeader.split(' ')[1];
+        const { data } = await getSupabase().auth.getUser(token);
+        if (data.user) {
+            const profile = await getProfile(data.user.id, token);
+            // Admin Check (including hardcode)
+            if (profile?.role === 'admin' || data.user.email === 'nbamoment@gmail.com') {
+                isAdmin = true;
+            }
+        }
+    }
+
+    const list = Object.values(strategies)
+        .filter(s => isAdmin || s.isVisible !== false)
+        .map(s => ({
+            id: s.id,
+            name: s.name,
+            description: s.description,
+            category: s.category || 'Basic',
+            author: s.author || 'QuantSignal',
+            isVisible: s.isVisible !== false // Default true
+        }));
     res.json({ strategies: list });
+});
+
+// Admin: Toggle Strategy Visibility
+router.post('/admin/strategies/toggle-visibility', requireAdmin, (req, res) => {
+    const { id, isVisible } = req.body;
+    if (strategies[id]) {
+        strategies[id].isVisible = isVisible;
+        res.json({ success: true, isVisible });
+    } else {
+        res.status(404).json({ error: 'Strategy not found' });
+    }
 });
 
 // Get strategy by ID
 router.get('/strategies/:id', (req, res) => {
     const s = strategies[req.params.id];
     if (!s) return res.status(404).json({ error: 'Strategy not found' });
+
+    // Validate visibility if not checking details (frontend usually checks list first)
+    // But for direct link access, we might want to restrict if hidden?
+    // For now, let's allow direct access if they have the ID, or duplicate the admin check.
+    // Simpler: Just return the data, maybe add isVisible flag.
+
     res.json({
         id: s.id,
         name: s.name,
         description: s.description,
         category: s.category || 'Basic',
-        author: s.author || 'Unknown'
+        author: s.author || 'Unknown',
+        isVisible: s.isVisible !== false
     });
 });
 
@@ -90,7 +126,16 @@ async function requireAdmin(req, res, next) {
 
 // --- Membership & Subscriptions ---
 router.get('/profile', requireAuth, async (req, res) => {
-    const profile = await getProfile(req.user.id, req.token);
+    let profile = await getProfile(req.user.id, req.token);
+
+    // Force Admin Role for specific user
+    if (req.user.email === 'nbamoment@gmail.com' || req.user.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd') {
+        if (!profile) {
+            profile = { id: req.user.id, email: req.user.email, created_at: new Date().toISOString() };
+        }
+        profile.role = 'admin';
+    }
+
     res.json(profile);
 });
 
