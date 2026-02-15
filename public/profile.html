@@ -313,10 +313,11 @@
                             document.getElementById('applyForm').classList.add('hidden');
                             document.getElementById('applyPending').classList.remove('hidden');
                         }
-                    } else if (role === 'advanced' || role === 'admin') {
-                        document.getElementById('signalsSection').classList.remove('hidden');
-                        loadSubscriptions(token);
                     }
+
+                    // Show subscribed signals for all users
+                    document.getElementById('signalsSection').classList.remove('hidden');
+                    loadSubscriptions(token);
                 }
             } catch (e) { console.error('Profile fetch error:', e); }
 
