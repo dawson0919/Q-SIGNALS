@@ -331,7 +331,7 @@
             </div>
 
             <!-- Custom Descriptions for Gold -->
-            ${symbol === 'XAUUSDT' && timeframe === '1h' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：敏捷型。這組參數能非常快速地捕捉到金價的小型突破與均線交叉，適合日內交易，在極端行情中反應迅速。</p>` : ''}
+            ${symbol === 'XAUUSDT' && timeframe === '1h' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：短線爆發型。使用優化版三刀流 (8/15/30 EMA)，專為捕捉黃金日內劇烈波動而設計，反應極快。</p>` : ''}
             ${symbol === 'XAUUSDT' && timeframe === '4h' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：穩健型。這組參數專注於過濾雜訊，捕捉黃金的長期均線趨勢，適合長線波段佈局。</p>` : ''}
             
             <div class="grid grid-cols-2 gap-2 mb-4">
@@ -421,7 +421,10 @@
           if (wrEl) wrEl.textContent = `${data.summary.winRate}%`;
 
           const pfEl = document.getElementById(`pf-${strategyId}-${symbol}-${timeframe}`);
-          if (pfEl) pfEl.textContent = `${data.summary.profitFactor}`;
+          if (pfEl) {
+            const pf = data.summary.profitFactor;
+            pfEl.textContent = (pf === null || pf === 'null') ? '∞' : Number(pf).toFixed(2);
+          }
 
           const trEl = document.getElementById(`trades-${strategyId}-${symbol}-${timeframe}`);
           if (trEl) trEl.textContent = `${data.summary.totalTrades}`;
