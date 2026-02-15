@@ -17,7 +17,8 @@ const {
     updateApplicationStatus,
     getAllUsers,
     deleteUser,
-    getSupabase
+    getSupabase,
+    getAuthenticatedClient
 } = require('../data/database');
 const indicators = require('../engine/indicators');
 
