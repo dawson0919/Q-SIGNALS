@@ -276,7 +276,10 @@
                 if (res.ok) {
                     const profile = await res.json();
                     if (profile && profile.role) {
-                        role = profile.role;
+                        // Keep admin role if already identified locally
+                        if (role !== 'admin' || profile.role === 'admin') {
+                            role = profile.role;
+                        }
                     }
 
                     const tierEl = document.getElementById('userTier');
