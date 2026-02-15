@@ -217,6 +217,11 @@ async function getAllUsers(token) {
         return [];
     }
 
+    console.log(`[DB] getAllUsers result count: ${data ? data.length : 0}`);
+    if (data && data.length === 0) {
+        console.log('[DB] WARNING: Profiles table returned 0 rows. Check RLS policies or if table is empty.');
+    }
+
     // Apply Admin Override to listing (Removed - now handled by DB update in requireAdmin)
     /*
     return data.map(u => {
