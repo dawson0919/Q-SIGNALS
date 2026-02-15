@@ -45,7 +45,22 @@ class Backtester {
             indicatorData.ema[p] = indicators.ema(closes, p);
         });
         indicatorData.rsi[14] = indicators.rsi(closes, 14);
-        indicatorData.macd_8_50_7 = indicators.macd(closes, 8, 50, 7);
+
+        // ── Helper for dynamic MACD ──────
+        const getDynamicMacd = (f, s, sig) => {
+            const key = `macd_${f}_${s}_${sig}`;
+            if (!indicatorData[key]) {
+                indicatorData[key] = indicators.macd(closes, f, s, sig);
+            }
+            return indicatorData[key];
+        };
+        indicatorData.getMacd = getDynamicMacd;
+
+        // Pre-calculate common ones
+        getDynamicMacd(8, 50, 7);
+        getDynamicMacd(12, 26, 9);
+        getDynamicMacd(5, 26, 7); // Gold Optimized 4h
+
 
         // ── Helper: close current position ──────────────────
         const closePosition = (exitPrice, exitTime) => {

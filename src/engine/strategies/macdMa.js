@@ -49,10 +49,10 @@ function execute(candles, indicatorData, i, indicators) {
 
 // Rewriting execute to be standalone if data is missing, but efficient if present
 function createStrategy(params = {}) {
-    let fast = params.fast || FAST;
-    let slow = params.slow || SLOW;
-    let signal = params.signal || SIGNAL;
-    let ma = params.ma || SMA_FILTER;
+    let fast = params.fast !== undefined ? params.fast : FAST;
+    let slow = params.slow !== undefined ? params.slow : SLOW;
+    let signal = params.signal !== undefined ? params.signal : SIGNAL;
+    let ma = params.ma !== undefined ? params.ma : SMA_FILTER;
 
     // Apply Optimized Parameters for Gold 4h
     if (params.symbol === 'XAUUSDT' && params.timeframe === '4h') {
@@ -60,20 +60,31 @@ function createStrategy(params = {}) {
     }
 
     return function execute(candles, indicatorData, i, indicators) {
-        const macdResult = indicatorData[`macd_${fast}_${slow}_${signal}`];
-        const smaVal = indicatorData.sma[ma];
+        let macdResult = indicatorData[`macd_${fast}_${slow}_${signal}`];
 
-        if (!macdResult || !smaVal || macdResult.macd[i] === null || macdResult.signal[i] === null || smaVal[i] === null) {
-            return null;
+        // Fallback for dynamic calculation if missing
+        if (!macdResult && indicatorData.getMacd) {
+            macdResult = indicatorData.getMacd(fast, slow, signal);
         }
 
-        const price = indicatorData.close[i];
+        if (!macdResult || macdResult.macd[i] === null || macdResult.signal[i] === null) return null;
 
-        if (indicators.crossover(macdResult.macd, macdResult.signal, i) && price > smaVal[i]) {
+        const price = indicatorData.close[i];
+        let filterPassBuy = true;
+        let filterPassSell = true;
+
+        if (ma > 0) {
+            const smaVal = indicatorData.sma[ma];
+            if (!smaVal || smaVal[i] === null) return null;
+            filterPassBuy = price > smaVal[i];
+            filterPassSell = price < smaVal[i];
+        }
+
+        if (indicators.crossover(macdResult.macd, macdResult.signal, i) && filterPassBuy) {
             return 'BUY';
         }
 
-        if (indicators.crossunder(macdResult.macd, macdResult.signal, i) && price < smaVal[i]) {
+        if (indicators.crossunder(macdResult.macd, macdResult.signal, i) && filterPassSell) {
             return 'SELL';
         }
 
