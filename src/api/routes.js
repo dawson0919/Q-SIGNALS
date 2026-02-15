@@ -138,39 +138,37 @@ async function requireAdmin(req, res, next) {
 router.get('/profile', requireAuth, async (req, res) => {
     try {
         let profile = await getProfile(req.user.id, req.token);
-        const adminEmails = (process.env.ADMIN_EMAILS || '').split(',');
-
-        // Force Admin Role for specific user
+        // Proactive Profile Sync: Ensure user exists in database
         const userEmail = (req.user.email || '').toLowerCase().trim();
+        const adminEmails = (process.env.ADMIN_EMAILS || '').split(',');
         const isAdminEmail = adminEmails.some(e => e.toLowerCase().trim() === userEmail);
+        const isSuperAdmin = req.user.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd';
 
-        if (isAdminEmail || req.user.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd') {
-            if (!profile || profile.role !== 'admin') {
-                // AGGRESSIVE SYNC: Update database to make sure RLS works
-                await getSupabase()
-                    .from('profiles')
-                    .upsert({
-                        id: req.user.id,
-                        email: req.user.email,
-                        role: 'admin',
-                        updated_at: new Date().toISOString()
-                    });
+        const targetRole = (isAdminEmail || isSuperAdmin) ? 'admin' : (profile?.role || 'standard');
 
-                if (!profile) {
-                    profile = { id: req.user.id, email: req.user.email, created_at: new Date().toISOString() };
-                }
-            }
-            profile.role = 'admin';
-        }
-
-        if (!profile) {
-            profile = {
+        // Always upsert to ensure the profile exists in the DB for Admin Audit
+        // We use req.token to ensure we have the right permissions to update our own profile
+        const { data: syncedProfile, error: upsertError } = await getAuthenticatedClient(req.token)
+            .from('profiles')
+            .upsert({
                 id: req.user.id,
                 email: req.user.email,
-                role: 'standard',
-                created_at: new Date().toISOString()
-            };
+                role: targetRole,
+                updated_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+        if (upsertError) {
+            console.error('[Profile Sync] Error:', upsertError.message);
         }
+
+        profile = syncedProfile || profile || {
+            id: req.user.id,
+            email: req.user.email,
+            role: targetRole,
+            created_at: new Date().toISOString()
+        };
 
         // Check for own pending application
         const { data: apps, error: appError } = await getAuthenticatedClient(req.token)
