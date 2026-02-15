@@ -58,8 +58,9 @@ async function getSession() {
 }
 
 function isAdmin(user) {
-    // Check for hardcoded super admin or role if available in metadata (though role usually comes from profile table)
-    return user && (user.email === 'nbamoment@gmail.com' || user.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd');
+    if (!user || !user.email) return false;
+    const email = user.email.toLowerCase().trim();
+    return email === 'nbamoment@gmail.com' || user.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd';
 }
 
 function getUserDisplayName(user) {

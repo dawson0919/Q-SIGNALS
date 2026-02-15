@@ -120,7 +120,15 @@ async function requireAuth(req, res, next) {
 async function requireAdmin(req, res, next) {
     await requireAuth(req, res, async () => {
         const profile = await getProfile(req.user.id, req.token);
-        if (profile?.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+        const adminEmails = (process.env.ADMIN_EMAILS || '').split(',');
+        const userEmail = (req.user.email || '').toLowerCase().trim();
+        const isAdminEmail = adminEmails.some(e => e.toLowerCase().trim() === userEmail);
+
+        const isUserAdmin = profile?.role === 'admin' ||
+            isAdminEmail ||
+            req.user.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd';
+
+        if (!isUserAdmin) return res.status(403).json({ error: 'Forbidden' });
         next();
     });
 }
@@ -133,7 +141,10 @@ router.get('/profile', requireAuth, async (req, res) => {
         const adminEmails = (process.env.ADMIN_EMAILS || '').split(',');
 
         // Force Admin Role for specific user
-        if (adminEmails.includes(req.user.email) || req.user.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd') {
+        const userEmail = (req.user.email || '').toLowerCase().trim();
+        const isAdminEmail = adminEmails.some(e => e.toLowerCase().trim() === userEmail);
+
+        if (isAdminEmail || req.user.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd') {
             if (!profile) {
                 profile = { id: req.user.id, email: req.user.email, created_at: new Date().toISOString() };
             }
