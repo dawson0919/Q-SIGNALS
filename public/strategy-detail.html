@@ -320,7 +320,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ strategyId })
+                    body: JSON.stringify({ strategyId, symbol, timeframe })
                 });
 
                 if (res.ok) {
