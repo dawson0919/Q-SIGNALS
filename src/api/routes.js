@@ -128,16 +128,8 @@ async function requireAdmin(req, res, next) {
             req.user.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd';
 
         if (isSuperAdmin) {
-            // Auto-promote to admin in DB to ensure RLS policies work
-            // This fixes the issue where RLS blocks 'getAllUsers' even if the code allows access
-            try {
-                // We use a fire-and-forget update here to not slow down the request too much, 
-                // but for critical RLS (like list users), we might need to wait.
-                // Given the user report of "0 users", we MUST wait to ensure RLS sees the new role.
-                await updateProfile(req.user.id, { role: 'admin' }, req.token);
-            } catch (e) {
-                console.error('[Admin] Failed to auto-promote super admin:', e.message);
-            }
+            // Strictly allow access based on email config. 
+            // Data access is now handled by RLS policies in the DB.
             return next();
         }
 
