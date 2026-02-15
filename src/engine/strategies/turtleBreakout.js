@@ -37,6 +37,15 @@ function createStrategy(params = {}) {
         }
     }
 
+    // Apply Optimized Parameters for SPX (S&P 500)
+    if (params.symbol === 'SPXUSDT') {
+        if (params.timeframe === '1h') {
+            LEFT = 6; RIGHT = 2; MIN_HOLD_BARS = 2;
+        } else if (params.timeframe === '4h') {
+            LEFT = 20; RIGHT = 5; MIN_HOLD_BARS = 10;
+        }
+    }
+
     // Persistent state inside closure
     let hprice = 0;
     let lprice = 0;
@@ -112,7 +121,7 @@ const MIN_HOLD_BARS = 2;
 module.exports = {
     id: 'turtle_breakout',
     name: '海龜交易策略',
-    description: '海龜突破策略：利用 Pivot High/Low 判斷市場結構。經優化後（BTC 參數：2/5/2），具有更高的盈虧比例與更靈活的進場機制。',
+    description: '海龜突破策略：利用 Pivot High/Low 判斷市場結構。經優化後（BTC 參數：2/5/2；SPX 參數：20/5/10），具有極佳的趨勢捕捉能力與更準確的進場機制。',
     category: 'Premium',
     author: 'QuantSignal',
     pineScript,
