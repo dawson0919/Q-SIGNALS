@@ -43,7 +43,7 @@ function createStrategy(params = {}) {
     // Apply Optimized Parameters for Gold
     if (params.symbol === 'XAUUSDT') {
         if (params.timeframe === '1h') {
-            fast = 5; mid = 100; slow = 120;
+            fast = 8; mid = 15; slow = 30;
         } else if (params.timeframe === '4h') {
             fast = 20; mid = 60; slow = 120;
         }
