@@ -304,6 +304,7 @@ router.get('/subscriptions', requireAuth, async (req, res) => {
 router.get('/admin/users', requireAdmin, async (req, res) => {
     try {
         const users = await getAllUsers(req.token);
+        console.log(`[Admin] Fetched ${users.length} users for admin ${req.user.email}`);
         res.json(users);
     } catch (e) {
         console.error('Admin users fetch error:', e);
