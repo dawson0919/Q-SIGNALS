@@ -214,6 +214,7 @@
         const symbol = params.get('symbol') || 'BTCUSDT';
 
         let userRole = 'standard'; // Track user role
+        let strategyCategory = 'Basic'; // Track strategy category
 
         async function loadData() {
             const { user, token } = await getUser();
@@ -235,6 +236,7 @@
             try {
                 const sRes = await fetch(`/api/strategies/${strategyId}`);
                 const strat = await sRes.json();
+                strategyCategory = strat.category || 'Basic'; // Store category
                 document.getElementById('strategyName').textContent = strat.name || strategyId;
                 document.getElementById('strategySymbol').textContent = `${symbol.replace('USDT', '/USDT')} • QuantSignal`;
             } catch (e) { }
@@ -341,8 +343,11 @@
                 const timeStr = entryDate.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
                 document.getElementById('signalTime').querySelector('span:last-child').textContent = `Signal Time: ${timeStr}`;
 
-                // Apply blur for non-premium users
-                if (userRole !== 'advanced' && userRole !== 'admin') {
+                // Apply blur for non-premium users ONLY on Premium strategies
+                const isPremiumStrategy = strategyCategory === 'Premium';
+                const isPremiumUser = userRole === 'advanced' || userRole === 'admin';
+
+                if (isPremiumStrategy && !isPremiumUser) {
                     document.getElementById('signalContent').classList.add('premium-blur');
                     document.getElementById('signalPremiumOverlay').style.display = 'flex';
                 }
@@ -404,12 +409,14 @@
             container.innerHTML = '';
             if (!trades) return;
 
-            // For non-premium users, skip the first 2 trades
-            const isPremium = userRole === 'advanced' || userRole === 'admin';
-            const tradesToShow = isPremium ? trades.slice(0, 8) : trades.slice(2, 8);
+            // For non-premium users on Premium strategies, skip the first 2 trades
+            const isPremiumUser = userRole === 'advanced' || userRole === 'admin';
+            const isPremiumStrategy = strategyCategory === 'Premium';
+            const shouldHideTrades = isPremiumStrategy && !isPremiumUser;
+            const tradesToShow = shouldHideTrades ? trades.slice(2, 8) : trades.slice(0, 8);
 
             // Show premium notice for hidden trades
-            if (!isPremium && trades.length > 0) {
+            if (shouldHideTrades && trades.length > 0) {
                 const notice = document.createElement('div');
                 notice.className = 'bg-primary/5 border border-primary/30 rounded-xl p-4 mb-3 text-center';
                 notice.innerHTML = `
