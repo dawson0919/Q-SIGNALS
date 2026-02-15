@@ -54,8 +54,17 @@
       box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
     }
 
+    .price-ticker-container {
+      width: 100%;
+      overflow: hidden;
+      white-space: nowrap;
+      position: relative;
+    }
+
     .price-ticker {
-      animation: ticker 30s linear infinite;
+      display: inline-flex;
+      white-space: nowrap;
+      animation: ticker 60s linear infinite;
     }
 
     @keyframes ticker {
@@ -64,7 +73,7 @@
       }
 
       100% {
-        transform: translateX(-50%);
+        transform: translateX(-33.33%);
       }
     }
 
@@ -102,14 +111,14 @@
   </header>
 
   <!-- Live Price Ticker Bar -->
-  <div class="border-b border-border-dark bg-card-dark/50 overflow-hidden">
-    <div class="flex items-center py-2 px-4 gap-6" id="priceTicker">
-      <div class="flex items-center gap-2 shrink-0">
+  <div class="border-b border-border-dark bg-card-dark/50 price-ticker-container">
+    <div id="priceTicker" class="flex items-center py-2 px-4">
+      <div class="flex items-center gap-2 shrink-0 bg-card-dark z-10 pr-4">
         <span class="w-2 h-2 rounded-full bg-primary pulse-green"></span>
         <span class="text-[10px] uppercase tracking-widest text-primary font-bold">LIVE</span>
       </div>
-      <div class="flex gap-8 items-center text-sm" id="priceItems">
-        <span class="text-slate-500">Loading prices...</span>
+      <div id="priceItems" class="price-ticker">
+        <span class="text-slate-500 px-4">Loading prices...</span>
       </div>
     </div>
   </div>
@@ -265,15 +274,15 @@
         strategyList.innerHTML = '';
 
         // Add built-in strategies
-        const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT'];
-        const symbolNames = { BTCUSDT: 'BTC', ETHUSDT: 'ETH', SOLUSDT: 'SOL', XAUUSDT: 'GOLD' };
+        const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'SPXUSDT'];
+        const symbolNames = { BTCUSDT: 'BTC', ETHUSDT: 'ETH', SOLUSDT: 'SOL', XAUUSDT: 'GOLD', SPXUSDT: 'SPX' };
 
         for (const strat of data.strategies) {
           for (const symbol of symbols) {
             // For Gold, we show both 1h and 4h versions for Turtle and Three-Blade MA
             const isMultiTf = symbol === 'XAUUSDT' && (strat.id === 'turtle_breakout' || strat.id === 'three_blade');
 
-            if (isMultiTf) {
+            if (isMultiTf || (symbol === 'SPXUSDT' && (strat.id === 'turtle_breakout' || strat.id === 'three_blade'))) {
               const card1h = createStrategyCard(strat, symbol, symbolNames[symbol], '1h');
               strategyList.appendChild(card1h);
               runBacktestForCard(strat.id, symbol, card1h, '1h');
@@ -315,7 +324,9 @@
         ? `<div class="absolute -right-12 top-6 bg-red-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">workspace_premium</span> MOST PROFITABLE</div>`
         : isTurtle && symbol === 'BTCUSDT'
           ? `<div class="absolute -right-12 top-6 bg-orange-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">local_fire_department</span> HOT BTCTRADE</div>`
-          : '';
+          : isTurtle && symbol === 'SPXUSDT' && timeframe === '4h'
+            ? `<div class="absolute -right-12 top-6 bg-blue-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">show_chart</span> BEST FOR SPX</div>`
+            : '';
 
       div.innerHTML = `
         ${featuredBadge}
@@ -334,9 +345,11 @@
             <!-- Custom Descriptions for Gold -->
             ${symbol === 'XAUUSDT' && timeframe === '1h' && strat.id === 'three_blade' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：短線爆發型。使用優化版三刀流 (8/15/30 EMA)，專為捕捉黃金日內劇烈波動而設計，反應極快。</p>` : ''}
             ${symbol === 'XAUUSDT' && timeframe === '4h' && strat.id === 'three_blade' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：穩健型。這組參數專注於過濾雜訊，捕捉黃金的長期均線趨勢，適合長線波段佈局。</p>` : ''}
-            
             ${symbol === 'XAUUSDT' && timeframe === '1h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：短線突破型。使用優化版海龜參數 (8K/2K)，專為捕捉黃金短線突破行情設計。</p>` : ''}
             ${symbol === 'XAUUSDT' && timeframe === '4h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：波段趨勢型。使用寬鬆參數 (15K/2K)，捕捉黃金較大級別的趨勢突破，避免過度頻繁交易。</p>` : ''}
+            
+            ${symbol === 'SPXUSDT' && timeframe === '1h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-blue-400/80 leading-tight mb-4 font-medium italic">特性：極低延遲捕捉。參數 (6/2/2) 專為捕捉標普 500 短線劇烈波動設計，靈敏度極高。</p>` : ''}
+            ${symbol === 'SPXUSDT' && timeframe === '4h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-blue-400/80 leading-tight mb-4 font-medium italic">特性：最佳化收益。參數 (20/5/10) 捕捉標普 500 長線波段趨勢，回測總收益高達 +68.9%。</p>` : ''}
             
             <div class="grid grid-cols-2 gap-2 mb-4">
               <div class="bg-background-dark/50 p-2 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
