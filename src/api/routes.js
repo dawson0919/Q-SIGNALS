@@ -234,6 +234,30 @@ router.get('/subscriptions', requireAuth, async (req, res) => {
     }
 });
 
+// Get user profile (role, etc.)
+router.get('/profile', requireAuth, async (req, res) => {
+    try {
+        const profile = await getProfile(req.user.id, req.token);
+        if (!profile) {
+            // Return default profile for new users
+            return res.json({
+                user_id: req.user.id,
+                role: 'standard',
+                created_at: new Date().toISOString()
+            });
+        }
+        res.json(profile);
+    } catch (e) {
+        console.error('Profile fetch error:', e);
+        // Return default on error
+        res.json({
+            user_id: req.user.id,
+            role: 'standard',
+            created_at: new Date().toISOString()
+        });
+    }
+});
+
 // --- Admin Panel Routes ---
 router.get('/admin/users', requireAdmin, async (req, res) => {
     const users = await getAllUsers(req.token);
