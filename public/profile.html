@@ -345,7 +345,9 @@
 
             // Stats (Strategies)
             try {
-                const res = await fetch('/api/strategies');
+                const res = await fetch('/api/strategies', {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
                 const data = await res.json();
                 document.getElementById('statStrategies').textContent = data.strategies?.length || 0;
             } catch (e) { }
