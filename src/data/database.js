@@ -112,10 +112,12 @@ async function getProfile(userId, token) {
         .single();
     if (error) return null;
 
-    // Hardcode Super Admin Override
+    // Hardcode Super Admin Override (Removed - now handled by DB update in requireAdmin)
+    /*
     if (data && (data.email === 'nbamoment@gmail.com' || data.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd')) {
         data.role = 'admin';
     }
+    */
 
     return data;
 }
@@ -215,13 +217,16 @@ async function getAllUsers(token) {
         return [];
     }
 
-    // Apply Admin Override to listing
+    // Apply Admin Override to listing (Removed - now handled by DB update in requireAdmin)
+    /*
     return data.map(u => {
         if (u.email === 'nbamoment@gmail.com' || u.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd') {
             return { ...u, role: 'admin' };
         }
         return u;
     });
+    */
+    return data;
 }
 
 async function deleteUser(userId, token) {

@@ -119,17 +119,35 @@ async function requireAuth(req, res, next) {
 
 async function requireAdmin(req, res, next) {
     await requireAuth(req, res, async () => {
-        const profile = await getProfile(req.user.id, req.token);
-        const adminEmails = (process.env.ADMIN_EMAILS || '').split(',');
         const userEmail = (req.user.email || '').toLowerCase().trim();
-        const isAdminEmail = adminEmails.some(e => e.toLowerCase().trim() === userEmail);
+        const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
 
-        const isUserAdmin = profile?.role === 'admin' ||
-            isAdminEmail ||
+        // Hardcoded Super Admin / Config Admin
+        const isSuperAdmin = userEmail === 'nbamoment@gmail.com' ||
+            adminEmails.includes(userEmail) ||
             req.user.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd';
 
-        if (!isUserAdmin) return res.status(403).json({ error: 'Forbidden' });
-        next();
+        if (isSuperAdmin) {
+            // Auto-promote to admin in DB to ensure RLS policies work
+            // This fixes the issue where RLS blocks 'getAllUsers' even if the code allows access
+            try {
+                // We use a fire-and-forget update here to not slow down the request too much, 
+                // but for critical RLS (like list users), we might need to wait.
+                // Given the user report of "0 users", we MUST wait to ensure RLS sees the new role.
+                await updateProfile(req.user.id, { role: 'admin' }, req.token);
+            } catch (e) {
+                console.error('[Admin] Failed to auto-promote super admin:', e.message);
+            }
+            return next();
+        }
+
+        // For other users, check DB role
+        const profile = await getProfile(req.user.id, req.token);
+        if (profile?.role === 'admin') {
+            return next();
+        }
+
+        res.status(403).json({ error: 'Forbidden' });
     });
 }
 
