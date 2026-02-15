@@ -267,56 +267,68 @@
             document.getElementById('infoId').textContent = user.id;
 
             // Fetch extended profile data from backend
-            let role = 'standard'; // Default to standard
+            let role = isAdmin(user) ? 'admin' : 'standard';
             try {
                 const res = await fetch('/api/profile', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                const profile = await res.json();
 
-                if (profile && profile.role) {
-                    role = profile.role;
-                }
-
-                const tierEl = document.getElementById('userTier');
-                tierEl.textContent = role === 'admin' ? 'Admin (Premium)' : role === 'advanced' ? 'Advanced' : 'Standard';
-                tierEl.className = `text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase ${role === 'admin' ? 'bg-primary text-black' :
-                    role === 'advanced' ? 'bg-primary/20 text-primary' : 'bg-slate-800 text-slate-400'
-                    }`;
-
-                if (role === 'admin') {
-                    document.getElementById('adminBadge').classList.remove('hidden');
-                    document.getElementById('adminLink').classList.remove('hidden');
-                    document.getElementById('adminLink').classList.add('flex');
-                    // Show admin nav link in bottom navigation
-                    const adminNavLink = document.getElementById('adminNavLink');
-                    if (adminNavLink) {
-                        adminNavLink.classList.remove('hidden');
-                        adminNavLink.classList.add('flex');
+                if (res.ok) {
+                    const profile = await res.json();
+                    if (profile && profile.role) {
+                        role = profile.role;
                     }
-                }
 
-                // Show application section if not yet advanced
-                if (role === 'standard') {
-                    document.getElementById('applySection').classList.remove('hidden');
-                    // Check for pending application from profile property
-                    if (profile.hasPendingApplication) {
-                        document.getElementById('applyForm').classList.add('hidden');
-                        document.getElementById('applyPending').classList.remove('hidden');
+                    const tierEl = document.getElementById('userTier');
+                    tierEl.textContent = role === 'admin' ? 'Admin (Premium)' : role === 'advanced' ? 'Advanced' : 'Standard';
+                    tierEl.className = `text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase ${role === 'admin' ? 'bg-primary text-black' :
+                        role === 'advanced' ? 'bg-primary/20 text-primary' : 'bg-slate-800 text-slate-400'
+                        }`;
+
+                    if (role === 'admin') {
+                        document.getElementById('adminBadge').classList.remove('hidden');
+                        document.getElementById('adminLink').classList.remove('hidden');
+                        document.getElementById('adminLink').classList.add('flex');
+                        // Show admin nav link in bottom navigation
+                        const adminNavLink = document.getElementById('adminNavLink');
+                        if (adminNavLink) {
+                            adminNavLink.classList.remove('hidden');
+                            adminNavLink.classList.add('flex');
+                        }
+                        // Explicitly hide apply section for admins
+                        document.getElementById('applySection').classList.add('hidden');
                     }
-                }
 
-                // Show subscribed signals for all users
-                document.getElementById('signalsSection').classList.remove('hidden');
-                loadSubscriptions(token);
+                    // Show application section if not yet advanced/admin
+                    if (role === 'standard') {
+                        document.getElementById('applySection').classList.remove('hidden');
+                        // Check for pending application from profile property
+                        if (profile.hasPendingApplication) {
+                            document.getElementById('applyForm').classList.add('hidden');
+                            document.getElementById('applyPending').classList.remove('hidden');
+                        }
+                    } else {
+                        document.getElementById('applySection').classList.add('hidden');
+                    }
+
+                    // Show subscribed signals for all users
+                    document.getElementById('signalsSection').classList.remove('hidden');
+                    loadSubscriptions(token);
+                } else {
+                    throw new Error('Profile fetch failed');
+                }
             } catch (e) {
                 console.error('Profile fetch error:', e);
                 // Hide loading spinner even on error
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('profileContent').classList.remove('hidden');
 
-                // Show application section for safety
-                document.getElementById('applySection').classList.remove('hidden');
+                // If we already know they are admin, keep it hidden
+                if (role !== 'admin') {
+                    document.getElementById('applySection').classList.remove('hidden');
+                } else {
+                    document.getElementById('applySection').classList.add('hidden');
+                }
                 document.getElementById('signalsSection').classList.remove('hidden');
                 loadSubscriptions(token);
             }
