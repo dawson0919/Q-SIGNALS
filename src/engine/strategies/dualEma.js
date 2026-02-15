@@ -42,11 +42,16 @@ const SL_PCT = 0.05; // 5%
 const COOLDOWN_BARS = 3;
 
 function createStrategy(params = {}) {
-    const fast_len = params.fastLen || FAST_LEN;
-    const slow_len = params.slowLen || SLOW_LEN;
-    const rsi_len = params.rsiLen || RSI_LEN;
-    const sl_pct = params.slPct || SL_PCT;
-    const cooldown = params.cooldown || COOLDOWN_BARS;
+    let fast_len = params.fastLen || FAST_LEN;
+    let slow_len = params.slowLen || SLOW_LEN;
+    let rsi_len = params.rsiLen || RSI_LEN;
+    let sl_pct = params.slPct || SL_PCT;
+    let cooldown = params.cooldown || COOLDOWN_BARS;
+
+    // Apply Optimized Parameters for Gold 4h
+    if (params.symbol === 'XAUUSDT' && params.timeframe === '4h') {
+        fast_len = 30; slow_len = 100; sl_pct = 0.03;
+    }
 
     // Persistent state inside closure
     let position = null; // null | 'LONG' | 'SHORT'

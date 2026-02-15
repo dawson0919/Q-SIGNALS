@@ -49,10 +49,15 @@ function execute(candles, indicatorData, i, indicators) {
 
 // Rewriting execute to be standalone if data is missing, but efficient if present
 function createStrategy(params = {}) {
-    const fast = params.fast || FAST;
-    const slow = params.slow || SLOW;
-    const signal = params.signal || SIGNAL;
-    const ma = params.ma || SMA_FILTER;
+    let fast = params.fast || FAST;
+    let slow = params.slow || SLOW;
+    let signal = params.signal || SIGNAL;
+    let ma = params.ma || SMA_FILTER;
+
+    // Apply Optimized Parameters for Gold 4h
+    if (params.symbol === 'XAUUSDT' && params.timeframe === '4h') {
+        fast = 5; slow = 26; signal = 7; ma = 200;
+    }
 
     return function execute(candles, indicatorData, i, indicators) {
         const macdResult = indicatorData[`macd_${fast}_${slow}_${signal}`];

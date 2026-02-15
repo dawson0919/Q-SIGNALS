@@ -23,8 +23,13 @@ if (shortCondition)
 `.trim();
 
 function createStrategy(params = {}) {
-    const period = params.period || 60;
-    const filterPeriod = params.filterPeriod || 0; // 0 = disabled
+    let period = params.period || 60;
+    let filterPeriod = params.filterPeriod || 250;
+
+    // Apply Optimized Parameters for Gold 4h
+    if (params.symbol === 'XAUUSDT' && params.timeframe === '4h') {
+        period = 20; filterPeriod = 100;
+    }
 
     return function execute(candles, indicatorData, i, indicators) {
         const sma = indicatorData.sma[period];
