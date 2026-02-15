@@ -3,8 +3,10 @@ const { createClient } = require('@supabase/supabase-js');
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://zrhussirvsgsoffmrkxb.supabase.co';
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || 'sb_publishable_MERSBCkwCzs880gVcz_J7Q_urxy9azM';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 let supabase = null;
+let supabaseAdmin = null;
 
 function initSupabase() {
     if (!supabase) {
@@ -16,6 +18,21 @@ function initSupabase() {
 function getSupabase() {
     if (!supabase) return initSupabase();
     return supabase;
+}
+
+// Service Role Client - Bypasses ALL RLS policies. Use ONLY for admin operations.
+function getAdminClient() {
+    if (!supabaseAdmin) {
+        if (!SUPABASE_SERVICE_ROLE_KEY) {
+            console.error('[DB] WARNING: SUPABASE_SERVICE_ROLE_KEY not set! Admin queries will fail.');
+            return getSupabase(); // Fallback (will still be blocked by RLS)
+        }
+        supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+            auth: { autoRefreshToken: false, persistSession: false }
+        });
+        console.log('[DB] Admin client initialized (Service Role - bypasses RLS)');
+    }
+    return supabaseAdmin;
 }
 
 function getAuthenticatedClient(token) {
@@ -176,7 +193,8 @@ async function applyPremium(userId, email, account, token) {
 }
 
 async function getApplications(token) {
-    const { data, error } = await getAuthenticatedClient(token)
+    // Use admin client to bypass RLS for admin operations
+    const { data, error } = await getAdminClient()
         .from('premium_applications')
         .select('*')
         .order('created_at', { ascending: false });
@@ -189,8 +207,8 @@ async function getApplications(token) {
 }
 
 async function updateApplicationStatus(id, userId, status, token) {
-    // 1. Update application status
-    const { error: appError } = await getAuthenticatedClient(token)
+    // Use admin client to bypass RLS for admin operations
+    const { error: appError } = await getAdminClient()
         .from('premium_applications')
         .update({ status })
         .eq('id', id);
@@ -198,7 +216,7 @@ async function updateApplicationStatus(id, userId, status, token) {
 
     // 2. If approved, upgrade profile role
     if (status === 'approved') {
-        const { error: profileError } = await getAuthenticatedClient(token)
+        const { error: profileError } = await getAdminClient()
             .from('profiles')
             .update({ role: 'advanced' })
             .eq('id', userId);
@@ -208,7 +226,8 @@ async function updateApplicationStatus(id, userId, status, token) {
 
 // --- Admin: User Management ---
 async function getAllUsers(token) {
-    const { data, error } = await getAuthenticatedClient(token)
+    // Use admin client (Service Role) to bypass RLS entirely
+    const { data, error } = await getAdminClient()
         .from('profiles')
         .select('*');
 
@@ -218,26 +237,36 @@ async function getAllUsers(token) {
     }
 
     console.log(`[DB] getAllUsers result count: ${data ? data.length : 0}`);
-    if (data && data.length === 0) {
-        console.log('[DB] WARNING: Profiles table returned 0 rows. Check RLS policies or if table is empty.');
+
+    // If profiles is empty, try to sync from auth.users
+    if (!data || data.length === 0) {
+        console.log('[DB] Profiles table is empty. Attempting to sync from auth.users...');
+        const adminClient = getAdminClient();
+        const { data: authUsers, error: authErr } = await adminClient.auth.admin.listUsers();
+        if (authErr) {
+            console.error('[DB] Failed to list auth users:', authErr.message);
+            return [];
+        }
+        // Insert all auth users into profiles
+        for (const u of (authUsers?.users || [])) {
+            await adminClient.from('profiles').upsert({
+                id: u.id,
+                email: u.email,
+                role: u.email === 'nbamoment@gmail.com' ? 'admin' : 'standard'
+            }, { onConflict: 'id' });
+        }
+        console.log(`[DB] Synced ${authUsers?.users?.length || 0} users from auth.users`);
+        // Re-query
+        const { data: refreshed } = await adminClient.from('profiles').select('*');
+        return refreshed || [];
     }
 
-    // Apply Admin Override to listing (Removed - now handled by DB update in requireAdmin)
-    /*
-    return data.map(u => {
-        if (u.email === 'nbamoment@gmail.com' || u.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd') {
-            return { ...u, role: 'admin' };
-        }
-        return u;
-    });
-    */
     return data;
 }
 
 async function deleteUser(userId, token) {
-    // Note: Deleting from auth.users requires service_role key.
-    // Here we at least delete the profile and related data if RLS allows.
-    const { error } = await getAuthenticatedClient(token)
+    // Use admin client to delete profile (bypasses RLS)
+    const { error } = await getAdminClient()
         .from('profiles')
         .delete()
         .eq('id', userId);
@@ -247,6 +276,7 @@ async function deleteUser(userId, token) {
 module.exports = {
     initSupabase,
     getSupabase,
+    getAdminClient,
     getAuthenticatedClient,
     insertCandles,
     getCandles,
