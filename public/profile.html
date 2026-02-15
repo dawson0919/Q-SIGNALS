@@ -299,19 +299,10 @@
                 // Show application section if not yet advanced
                 if (role === 'standard') {
                     document.getElementById('applySection').classList.remove('hidden');
-                    // Check for pending application
-                    try {
-                        const appRes = await fetch('/api/admin/applications', {
-                            headers: { 'Authorization': `Bearer ${token}` }
-                        });
-                        const apps = await appRes.json();
-                        const myApp = apps.find(a => a.user_id === user.id && a.status === 'pending');
-                        if (myApp) {
-                            document.getElementById('applyForm').classList.add('hidden');
-                            document.getElementById('applyPending').classList.remove('hidden');
-                        }
-                    } catch (appError) {
-                        console.error('Application fetch error:', appError);
+                    // Check for pending application from profile property
+                    if (profile.hasPendingApplication) {
+                        document.getElementById('applyForm').classList.add('hidden');
+                        document.getElementById('applyPending').classList.remove('hidden');
                     }
                 }
 
@@ -320,7 +311,11 @@
                 loadSubscriptions(token);
             } catch (e) {
                 console.error('Profile fetch error:', e);
-                // Even if profile fetch fails, show application section for safety
+                // Hide loading spinner even on error
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('profileContent').classList.remove('hidden');
+
+                // Show application section for safety
                 document.getElementById('applySection').classList.remove('hidden');
                 document.getElementById('signalsSection').classList.remove('hidden');
                 loadSubscriptions(token);

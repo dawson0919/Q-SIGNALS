@@ -111,18 +111,35 @@
         }
 
         async function loadData(token) {
+            const list = document.getElementById('memberList');
             try {
                 const [usersRes, appsRes] = await Promise.all([
                     fetch('/api/admin/users', { headers: { 'Authorization': `Bearer ${token}` } }),
                     fetch('/api/admin/applications', { headers: { 'Authorization': `Bearer ${token}` } })
                 ]);
 
+                if (!usersRes.ok || !appsRes.ok) {
+                    const uErr = await usersRes.json();
+                    const aErr = await appsRes.json();
+                    throw new Error(uErr.error || aErr.error || 'Server error fetching data');
+                }
+
                 allMembers = await usersRes.json();
                 allApplications = await appsRes.json();
 
                 renderMembers('all');
                 updateStats();
-            } catch (e) { console.error('Admin load error:', e); }
+            } catch (e) {
+                console.error('Admin load error:', e);
+                list.innerHTML = `
+                    <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-6 text-center">
+                        <span class="material-symbols-outlined text-red-500 text-3xl mb-2">error</span>
+                        <p class="text-white font-bold mb-1">Failed to load data</p>
+                        <p class="text-slate-400 text-xs">${e.message}</p>
+                        <p class="text-xs text-red-400 mt-4">請確保已在 Supabase 執行 RLS 修復 SQL 指令</p>
+                    </div>
+                `;
+            }
         }
 
         function updateStats() {
@@ -144,9 +161,18 @@
             if (filter === 'premium') filtered = allMembers.filter(m => m.role === 'advanced' || m.role === 'admin');
             if (filter === 'basic') filtered = allMembers.filter(m => !m.role || m.role === 'standard');
             if (filter === 'pending') {
-                // Filter users who have a pending application
                 const pendingUserIds = allApplications.filter(a => a.status === 'pending').map(a => a.user_id);
                 filtered = allMembers.filter(m => pendingUserIds.includes(m.id));
+            }
+
+            if (filtered.length === 0) {
+                list.innerHTML = `
+                    <div class="py-12 text-center">
+                        <span class="material-symbols-outlined text-slate-600 text-4xl mb-2">group_off</span>
+                        <p class="text-slate-500 text-sm">No members found in this category.</p>
+                    </div>
+                `;
+                return;
             }
 
             filtered.forEach(m => {
@@ -161,10 +187,10 @@
                                     <span class="material-symbols-outlined ${isPremium ? 'text-primary' : 'text-slate-400'} text-lg">person</span>
                                 </div>
                                 <div>
-                                    <p class="font-semibold text-sm flex items-center gap-1.5">${m.email.split('@')[0]}
+                                    <p class="font-semibold text-sm flex items-center gap-1.5">${m.email ? m.email.split('@')[0] : 'Unknown'}
                                         ${isPremium ? '<span class="material-symbols-outlined text-primary text-xs" style="font-variation-settings:\'FILL\' 1">verified</span>' : ''}
                                     </p>
-                                    <p class="text-[11px] text-slate-500">${m.email}</p>
+                                    <p class="text-[11px] text-slate-500">${m.email || 'No email'}</p>
                                 </div>
                             </div>
                             <div class="flex gap-2">

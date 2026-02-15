@@ -51,8 +51,8 @@ router.get('/strategies', async (req, res) => {
         const { data } = await getSupabase().auth.getUser(token);
         if (data.user) {
             const profile = await getProfile(data.user.id, token);
-            // Admin Check (including hardcode)
-            if (profile?.role === 'admin' || data.user.email === 'nbamoment@gmail.com') {
+            const adminEmails = (process.env.ADMIN_EMAILS || '').split(',');
+            if (profile?.role === 'admin' || adminEmails.includes(data.user.email)) {
                 isAdmin = true;
             }
         }
@@ -125,24 +125,62 @@ async function requireAdmin(req, res, next) {
 }
 
 // --- Membership & Subscriptions ---
+// --- Membership & Subscriptions ---
 router.get('/profile', requireAuth, async (req, res) => {
-    let profile = await getProfile(req.user.id, req.token);
+    try {
+        let profile = await getProfile(req.user.id, req.token);
+        const adminEmails = (process.env.ADMIN_EMAILS || '').split(',');
 
-    // Force Admin Role for specific user
-    if (req.user.email === 'nbamoment@gmail.com' || req.user.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd') {
-        if (!profile) {
-            profile = { id: req.user.id, email: req.user.email, created_at: new Date().toISOString() };
+        // Force Admin Role for specific user
+        if (adminEmails.includes(req.user.email) || req.user.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd') {
+            if (!profile) {
+                profile = { id: req.user.id, email: req.user.email, created_at: new Date().toISOString() };
+            }
+            profile.role = 'admin';
         }
-        profile.role = 'admin';
-    }
 
-    res.json(profile);
+        if (!profile) {
+            profile = {
+                id: req.user.id,
+                email: req.user.email,
+                role: 'standard',
+                created_at: new Date().toISOString()
+            };
+        }
+
+        // Check for own pending application
+        const { data: apps, error: appError } = await getSupabase()
+            .from('premium_applications')
+            .select('status')
+            .eq('user_id', req.user.id)
+            .eq('status', 'pending')
+            .limit(1);
+
+        profile.hasPendingApplication = apps && apps.length > 0;
+
+        res.json(profile);
+    } catch (e) {
+        console.error('Profile fetch error:', e);
+        res.status(500).json({ error: 'Failed to fetch profile' });
+    }
 });
 
 router.post('/apply-premium', requireAuth, async (req, res) => {
     const { account } = req.body;
     if (!account) return res.status(400).json({ error: 'Account required' });
     try {
+        // Check if already has a pending application
+        const { data: existing } = await getSupabase()
+            .from('premium_applications')
+            .select('id')
+            .eq('user_id', req.user.id)
+            .eq('status', 'pending')
+            .limit(1);
+
+        if (existing && existing.length > 0) {
+            return res.status(400).json({ error: 'You already have a pending application.' });
+        }
+
         await applyPremium(req.user.id, req.user.email, account, req.token);
         res.json({ success: true });
     } catch (e) {
@@ -158,9 +196,10 @@ router.post('/subscribe', requireAuth, async (req, res) => {
     try {
         // Enforce RBAC
         let profile = await getProfile(req.user.id, req.token);
+        const adminEmails = (process.env.ADMIN_EMAILS || '').split(',');
 
         // Fallback or Override for Admin
-        if (req.user.email === 'nbamoment@gmail.com' || req.user.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd') {
+        if (adminEmails.includes(req.user.email) || req.user.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd') {
             profile = { ...profile, role: 'admin' };
         }
 
@@ -234,55 +273,28 @@ router.get('/subscriptions', requireAuth, async (req, res) => {
     }
 });
 
-// Get user profile (role, etc.)
-router.get('/profile', requireAuth, async (req, res) => {
-    try {
-        const profile = await getProfile(req.user.id, req.token);
-        if (!profile) {
-            // Return default profile for new users
-            return res.json({
-                user_id: req.user.id,
-                role: 'standard',
-                created_at: new Date().toISOString()
-            });
-        }
-        res.json(profile);
-    } catch (e) {
-        console.error('Profile fetch error:', e);
-        // Return default on error
-        res.json({
-            user_id: req.user.id,
-            role: 'standard',
-            created_at: new Date().toISOString()
-        });
-    }
-});
+// (Duplicate route removed)
+
 
 // --- Admin Panel Routes ---
 router.get('/admin/users', requireAdmin, async (req, res) => {
-    const users = await getAllUsers(req.token);
-
-    // Mock Users for Testing Admin Panel
-    const mockUsers = [
-        { id: 'mock_1', email: 'trader.alex@test.com', role: 'standard', created_at: new Date().toISOString() },
-        { id: 'mock_2', email: 'crypto.sarah@test.com', role: 'standard', created_at: new Date().toISOString() },
-        { id: 'mock_3', email: 'investor.mike@test.com', role: 'standard', created_at: new Date().toISOString() }
-    ];
-
-    res.json([...users, ...mockUsers]);
+    try {
+        const users = await getAllUsers(req.token);
+        res.json(users);
+    } catch (e) {
+        console.error('Admin users fetch error:', e);
+        res.status(500).json({ error: e.message });
+    }
 });
 
 router.get('/admin/applications', requireAdmin, async (req, res) => {
-    const apps = await getApplications(req.token);
-
-    // Mock Applications
-    const mockApps = [
-        { id: 'app_1', user_id: 'mock_1', email: 'trader.alex@test.com', trading_account: 'MT-882145', status: 'pending', created_at: new Date().toISOString() },
-        { id: 'app_2', user_id: 'mock_2', email: 'crypto.sarah@test.com', trading_account: 'MT-993214', status: 'pending', created_at: new Date().toISOString() },
-        { id: 'app_3', user_id: 'mock_3', email: 'investor.mike@test.com', trading_account: 'PX-774412', status: 'pending', created_at: new Date().toISOString() }
-    ];
-
-    res.json([...apps, ...mockApps]);
+    try {
+        const apps = await getApplications(req.token);
+        res.json(apps);
+    } catch (e) {
+        console.error('Admin apps fetch error:', e);
+        res.status(500).json({ error: e.message });
+    }
 });
 
 router.post('/admin/approve-application', requireAdmin, async (req, res) => {

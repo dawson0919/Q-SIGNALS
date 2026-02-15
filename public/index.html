@@ -83,10 +83,6 @@
       <h1 class="text-xl font-bold tracking-tight text-white">QuantSignal</h1>
     </div>
     <div class="flex items-center gap-3">
-      <button class="relative p-2 text-slate-400 hover:bg-card-dark rounded-full transition-colors">
-        <span class="material-symbols-outlined">notifications</span>
-        <span class="absolute top-2 right-2.5 w-2 h-2 bg-primary rounded-full border-2 border-background-dark"></span>
-      </button>
       <a href="login.html" id="authLink" class="text-sm text-primary font-bold hover:underline">Login</a>
     </div>
   </header>
@@ -416,7 +412,7 @@
   <script>
     updateHeaderAuth();
 
-    // Show admin nav link for admins only
+    // Auth & UI Updates
     (async () => {
       const { user, token } = await getUser();
       if (user && token) {
@@ -425,14 +421,29 @@
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const profile = await res.json();
-          if (profile.role === 'admin' || isAdmin(user)) {
+          const isAdminUser = profile.role === 'admin' || isAdmin(user);
+
+          // Show admin nav link
+          if (isAdminUser) {
             const adminLink = document.getElementById('adminNavLink');
             if (adminLink) {
               adminLink.classList.remove('hidden');
               adminLink.classList.add('flex');
             }
           }
+
+          // Hide promo banner if already advanced or applied
+          const promoBanner = document.getElementById('promoBanner');
+          if (profile.role !== 'standard' || profile.hasPendingApplication) {
+            if (promoBanner) promoBanner.classList.add('hidden');
+          } else {
+            if (promoBanner) promoBanner.classList.remove('hidden');
+          }
         } catch (e) { }
+      } else {
+        // Guest mode
+        const promoBanner = document.getElementById('promoBanner');
+        if (promoBanner) promoBanner.classList.remove('hidden');
       }
     })();
   </script>
