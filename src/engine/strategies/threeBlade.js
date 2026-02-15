@@ -36,9 +36,18 @@ if (strategy.position_size < 0 and not bearish)
 `.trim();
 
 function createStrategy(params = {}) {
-    const fast = params.fast || 20;
-    const mid = params.mid || 50;
-    const slow = params.slow || 200;
+    let fast = params.fast || 20;
+    let mid = params.mid || 50;
+    let slow = params.slow || 200;
+
+    // Apply Optimized Parameters for Gold
+    if (params.symbol === 'XAUUSDT') {
+        if (params.timeframe === '1h') {
+            fast = 5; mid = 100; slow = 120;
+        } else if (params.timeframe === '4h') {
+            fast = 20; mid = 60; slow = 120;
+        }
+    }
 
     return function execute(candles, indicatorData, i, indicators) {
         const emaFast = indicatorData.ema[fast];

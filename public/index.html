@@ -132,10 +132,45 @@
       </div>
     </div>
 
+    <!-- Gold Market Highlight -->
+    <div class="px-4 pt-4">
+      <div
+        class="bg-gradient-to-br from-yellow-600/30 via-card-dark to-card-dark border border-yellow-500/40 rounded-2xl p-5 relative overflow-hidden group shadow-[0_0_20px_rgba(234,179,8,0.1)]">
+        <div class="absolute -right-6 -top-6 opacity-20 group-hover:scale-110 transition-transform duration-1000">
+          <span class="material-symbols-outlined text-yellow-500 text-[120px]">savings</span>
+        </div>
+        <div class="relative z-10">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="flex h-2 w-2 rounded-full bg-yellow-500 animate-pulse"></span>
+            <span
+              class="text-[10px] font-black bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded uppercase tracking-widest">Market
+              Top Asset</span>
+          </div>
+          <div class="flex justify-between items-end">
+            <div>
+              <h3 class="text-sm font-bold text-slate-400 uppercase tracking-tighter mb-1">Tether Gold (XAU/USDT)</h3>
+              <div class="flex items-baseline gap-3">
+                <span id="goldPriceMain"
+                  class="text-4xl font-black text-white italic tracking-tighter tabular-nums">$----.--</span>
+                <span id="goldChangeMain" class="text-sm font-bold text-slate-500">--%</span>
+              </div>
+            </div>
+            <div class="text-right pb-1">
+              <p class="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1 opacity-60">Status</p>
+              <div class="flex items-center gap-2 justify-end">
+                <span class="text-[11px] font-black text-yellow-500 tracking-tight">VIP SIGNAL READY</span>
+                <span class="material-symbols-outlined text-yellow-500 text-sm">verified</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Strategy List -->
     <div class="p-4 space-y-4">
       <div class="flex items-center justify-between mb-2">
-        <h2 class="text-xs font-bold uppercase tracking-widest text-slate-500">Live Strategies</h2>
+        <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400">Trading Signals</h2>
         <span class="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">LIVE FEED</span>
       </div>
       <div id="strategyList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -201,16 +236,28 @@
         strategyList.innerHTML = '';
 
         // Add built-in strategies
-        const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'];
-        const symbolNames = { BTCUSDT: 'BTC', ETHUSDT: 'ETH', SOLUSDT: 'SOL' };
+        const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT'];
+        const symbolNames = { BTCUSDT: 'BTC', ETHUSDT: 'ETH', SOLUSDT: 'SOL', XAUUSDT: 'GOLD' };
 
         for (const strat of data.strategies) {
-          // Special handling to put MACD and Turtle at the top if desired, 
-          // but for now just the logic to add badges.
           for (const symbol of symbols) {
-            const card = createStrategyCard(strat, symbol, symbolNames[symbol]);
-            strategyList.appendChild(card);
-            runBacktestForCard(strat.id, symbol, card);
+            // For Gold, we show both 1h and 4h versions for Turtle and Three-Blade MA
+            const isMultiTf = symbol === 'XAUUSDT' && (strat.id === 'turtle_breakout' || strat.id === 'three_blade');
+
+            if (isMultiTf) {
+              const card1h = createStrategyCard(strat, symbol, symbolNames[symbol], '1h');
+              strategyList.appendChild(card1h);
+              runBacktestForCard(strat.id, symbol, card1h, '1h');
+
+              const card4h = createStrategyCard(strat, symbol, symbolNames[symbol], '4h');
+              strategyList.appendChild(card4h);
+              runBacktestForCard(strat.id, symbol, card4h, '4h');
+            } else {
+              // Default 4h version for others
+              const card = createStrategyCard(strat, symbol, symbolNames[symbol], '4h');
+              strategyList.appendChild(card);
+              runBacktestForCard(strat.id, symbol, card, '4h');
+            }
           }
         }
       } catch (err) {
@@ -218,7 +265,7 @@
       }
     }
 
-    function createStrategyCard(strat, symbol, symbolShort) {
+    function createStrategyCard(strat, symbol, symbolShort, timeframe = '4h') {
       const div = document.createElement('div');
       const isPremium = strat.category === 'Premium';
       const isOptimized = strat.id === 'macd_ma_optimized';
@@ -248,36 +295,41 @@
             <div class="flex justify-between items-start mb-3">
               <div>
                 <span class="${badgeClass}">${strat.category || 'Basic'}</span>
+                <span class="text-[10px] font-bold text-slate-500 bg-slate-800 rounded px-1.5 py-0.5 uppercase mb-1 inline-block ml-1">${timeframe}</span>
                 <h3 class="text-xl font-bold text-white leading-tight mt-0.5 line-clamp-1" title="${strat.name} (${symbolShort})">${strat.name} <span class="text-slate-500 text-base">(${symbolShort})</span>${authorBadge}</h3>
                 ${isPremium ? `<p class="text-[10px] text-primary/60 mt-0.5">by ${strat.author || 'QuantSignal'}</p>` : ''}
               </div>
             </div>
+
+            <!-- Custom Descriptions for Gold -->
+            ${symbol === 'XAUUSDT' && timeframe === '1h' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：敏捷型。這組參數能非常快速地捕捉到金價的小型突破與均線交叉，適合日內交易，在極端行情中反應迅速。</p>` : ''}
+            ${symbol === 'XAUUSDT' && timeframe === '4h' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：穩健型。這組參數專注於過濾雜訊，捕捉黃金的長期均線趨勢，適合長線波段佈局。</p>` : ''}
             
             <div class="grid grid-cols-2 gap-2 mb-4">
               <div class="bg-background-dark/50 p-2 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
                 <p class="text-[10px] text-slate-500 uppercase font-bold mb-0.5">Total ROI</p>
-                <p class="text-xl font-black text-primary truncate" id="roi-${strat.id}-${symbol}">--</p>
+                <p class="text-xl font-black text-primary truncate" id="roi-${strat.id}-${symbol}-${timeframe}">--</p>
               </div>
               <div class="bg-background-dark/50 p-2 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
                 <p class="text-[10px] text-slate-500 uppercase font-bold mb-0.5">Win Rate</p>
-                <p class="text-xl font-bold text-white truncate" id="winrate-${strat.id}-${symbol}">--</p>
+                <p class="text-xl font-bold text-white truncate" id="winrate-${strat.id}-${symbol}-${timeframe}">--</p>
               </div>
               <div class="bg-background-dark/50 p-2 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
                 <p class="text-[10px] text-slate-500 uppercase font-bold mb-0.5">PF</p>
-                <p class="text-xl font-bold text-white truncate" id="pf-${strat.id}-${symbol}">--</p>
+                <p class="text-xl font-bold text-white truncate" id="pf-${strat.id}-${symbol}-${timeframe}">--</p>
               </div>
               <div class="bg-background-dark/50 p-2 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
                 <p class="text-[10px] text-slate-500 uppercase font-bold mb-0.5">Trades</p>
-                <p class="text-xl font-bold text-white truncate" id="trades-${strat.id}-${symbol}">--</p>
+                <p class="text-xl font-bold text-white truncate" id="trades-${strat.id}-${symbol}-${timeframe}">--</p>
               </div>
             </div>
           </div>
           
-          <a href="strategy-detail.html?strategy=${strat.id}&symbol=${symbol}" class="w-full py-3 rounded-xl ${isPremium ? 'bg-primary text-background-dark glow-button' : 'border border-primary text-primary'} font-bold text-sm hover:opacity-90 transition-colors flex items-center justify-center gap-2 cursor-pointer mt-auto">
+          <a href="strategy-detail.html?strategy=${strat.id}&symbol=${symbol}&timeframe=${timeframe}" class="w-full py-3 rounded-xl ${isPremium ? 'bg-primary text-background-dark glow-button' : 'border border-primary text-primary'} font-bold text-sm hover:opacity-90 transition-colors flex items-center justify-center gap-2 cursor-pointer mt-auto">
             ${isPremium ? '🔥 View Premium' : 'View Details'} <span class="material-symbols-outlined text-sm">arrow_forward</span>
           </a>
         </div>
-        <div class="h-1.5 w-full ${isPremium ? 'bg-primary/30' : 'bg-primary/20'} absolute bottom-0 left-0"><div class="absolute inset-0 bg-primary h-full opacity-50" style="width: 0%" id="bar-${strat.id}-${symbol}"></div></div>
+        <div class="h-1.5 w-full ${isPremium ? 'bg-primary/30' : 'bg-primary/20'} absolute bottom-0 left-0"><div class="absolute inset-0 bg-primary h-full opacity-50" style="width: 0%" id="bar-${strat.id}-${symbol}-${timeframe}"></div></div>
       `;
       return div;
     }
@@ -323,29 +375,29 @@
       return div;
     }
 
-    async function runBacktestForCard(strategyId, symbol, card) {
+    async function runBacktestForCard(strategyId, symbol, card, timeframe = '4h') {
       try {
         const res = await fetch('/api/backtest', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ strategyId, symbol })
+          body: JSON.stringify({ strategyId, symbol, timeframe })
         });
         const data = await res.json();
         if (data.summary) {
           const roi = data.summary.totalReturn;
-          const roiEl = document.getElementById(`roi-${strategyId}-${symbol}`);
+          const roiEl = document.getElementById(`roi-${strategyId}-${symbol}-${timeframe}`);
           if (roiEl) roiEl.innerHTML = `${roi > 0 ? '+' : ''}${roi.toFixed(1)}%`;
 
-          const wrEl = document.getElementById(`winrate-${strategyId}-${symbol}`);
+          const wrEl = document.getElementById(`winrate-${strategyId}-${symbol}-${timeframe}`);
           if (wrEl) wrEl.textContent = `${data.summary.winRate}%`;
 
-          const pfEl = document.getElementById(`pf-${strategyId}-${symbol}`);
+          const pfEl = document.getElementById(`pf-${strategyId}-${symbol}-${timeframe}`);
           if (pfEl) pfEl.textContent = `${data.summary.profitFactor}`;
 
-          const trEl = document.getElementById(`trades-${strategyId}-${symbol}`);
+          const trEl = document.getElementById(`trades-${strategyId}-${symbol}-${timeframe}`);
           if (trEl) trEl.textContent = `${data.summary.totalTrades}`;
 
-          const barEl = document.getElementById(`bar-${strategyId}-${symbol}`);
+          const barEl = document.getElementById(`bar-${strategyId}-${symbol}-${timeframe}`);
           if (barEl) barEl.style.width = `${Math.min(data.summary.winRate, 100)}%`;
         }
       } catch (err) { console.error('Backtest error:', err); }
@@ -377,8 +429,26 @@
     }
 
     function updatePriceTicker(prices) {
+      // Update Main Gold Highlight
+      const gold = prices['XAUUSDT'];
+      if (gold) {
+        const goldPriceEl = document.getElementById('goldPriceMain');
+        const goldChangeEl = document.getElementById('goldChangeMain');
+        if (goldPriceEl) goldPriceEl.textContent = `$${gold.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+        if (goldChangeEl) {
+          const color = gold.change24h >= 0 ? 'text-primary' : 'text-red-500';
+          goldChangeEl.textContent = `${gold.change24h >= 0 ? '+' : ''}${gold.change24h.toFixed(2)}%`;
+          goldChangeEl.className = `text-xs font-bold ${color}`;
+        }
+      }
+
       const container = document.getElementById('priceItems');
-      const symbols = { BTCUSDT: 'BTC', ETHUSDT: 'ETH', SOLUSDT: 'SOL' };
+      const symbols = {
+        BTCUSDT: 'BTC',
+        ETHUSDT: 'ETH',
+        SOLUSDT: 'SOL',
+        XAUUSDT: 'GOLD'
+      };
       let html = '';
       for (const [sym, name] of Object.entries(symbols)) {
         const p = prices[sym];

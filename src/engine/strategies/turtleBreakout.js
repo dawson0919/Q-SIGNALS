@@ -24,9 +24,18 @@ if (se)
     strategy.entry("PivRevSE", strategy.short, comment="跌破空", stop=lprice - syminfo.mintick)`;
 
 function createStrategy(params = {}) {
-    const LEFT = params.leftBars || 4;
-    const RIGHT = params.rightBars || 2;
-    const MIN_HOLD_BARS = params.minHoldBars || 6;
+    let LEFT = params.leftBars || 4;
+    let RIGHT = params.rightBars || 2;
+    let MIN_HOLD_BARS = params.minHoldBars || 6;
+
+    // Apply Optimized Parameters for Gold
+    if (params.symbol === 'XAUUSDT') {
+        if (params.timeframe === '1h') {
+            LEFT = 8; RIGHT = 2; MIN_HOLD_BARS = 2;
+        } else if (params.timeframe === '4h') {
+            LEFT = 15; RIGHT = 2; MIN_HOLD_BARS = 4;
+        }
+    }
 
     // Persistent state inside closure
     let hprice = 0;

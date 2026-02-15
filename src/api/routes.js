@@ -392,7 +392,7 @@ router.post('/backtest', async (req, res) => {
         if (strategyId && strategies[strategyId]) {
             const s = strategies[strategyId];
             // Use factory if available, otherwise fallback to execute
-            strategyFn = s.createStrategy ? s.createStrategy(s.defaultParams) : s.execute;
+            strategyFn = s.createStrategy ? s.createStrategy({ ...s.defaultParams, symbol, timeframe }) : s.execute;
             strategyName = s.name;
         } else if (req.body.code) {
             const parsed = parsePineScript(req.body.code);
