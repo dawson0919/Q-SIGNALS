@@ -142,8 +142,16 @@ async function getSubscriptions(userId, token) {
 async function addSubscription(userId, strategyId, token) {
     const { data, error } = await getAuthenticatedClient(token)
         .from('subscriptions')
-        .upsert({ user_id: userId, strategy_id: strategyId });
-    if (error) throw error;
+        .upsert(
+            { user_id: userId, strategy_id: strategyId },
+            { onConflict: 'user_id, strategy_id', ignoreDuplicates: true }
+        );
+
+    if (error) {
+        // Ignore duplicate key error, treat as success
+        if (error.code === '23505') return { success: true };
+        throw error;
+    }
     return data;
 }
 
