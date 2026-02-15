@@ -152,7 +152,7 @@ module.exports = {
     id: 'three_blade',
     name: '均線三刀流 (Triple MA)',
     description: '使用 20/50/200 EMA 趨勢。黃金1H優化版為 8/15/30，專攻短線波動。',
-    category: 'Basic',
+    category: 'Premium',
     author: 'QuantSignal',
     pineScript,
     createStrategy,
