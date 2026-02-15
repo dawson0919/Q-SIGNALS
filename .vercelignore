@@ -1,0 +1,7 @@
+node_modules
+.env
+.git
+*.log
+opt_results*.txt
+optimization_*.json
+optimization_*.log
