@@ -16,6 +16,8 @@ coverage
 *.txt
 optimize_*.js
 test_*.js
+search_*.js
+generate_og_image.js
 manifest_result.json
 create_test_data.js
 verify_signal.js
