@@ -171,8 +171,8 @@
                 id="quantMetrics">
                 <div class="flex justify-between items-center p-4"><span class="text-slate-400 text-sm">Profit
                         Factor</span><span class="font-bold text-white" id="metricPF">--</span></div>
-                <div class="flex justify-between items-center p-4"><span class="text-slate-400 text-sm">Recovery
-                        Factor</span><span class="font-bold text-white" id="metricRF">--</span></div>
+                <div class="flex justify-between items-center p-4"><span class="text-slate-400 text-sm">盈虧比例</span><span
+                        class="font-bold text-white" id="metricRF">--</span></div>
                 <div class="flex justify-between items-center p-4"><span
                         class="text-slate-400 text-sm">Expectancy</span><span class="font-bold text-white"
                         id="metricExp">--</span></div>
@@ -320,7 +320,7 @@
             document.getElementById('metricPLRatio').textContent = s.plRatio ? s.plRatio.toFixed(2) : '--';
             document.getElementById('metricWinRate').textContent = `${s.winRate}%`;
             document.getElementById('metricPF').textContent = s.profitFactor;
-            document.getElementById('metricRF').textContent = s.recoveryFactor;
+            document.getElementById('metricRF').textContent = s.plRatio ? s.plRatio.toFixed(2) : '--';
             document.getElementById('metricExp').textContent = `${s.expectancy}% / trade`;
             document.getElementById('metricHold').textContent = `${s.avgHoldDays} Days`;
             document.getElementById('metricTotalTrades').textContent = s.totalTrades;
