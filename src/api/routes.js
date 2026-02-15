@@ -263,9 +263,17 @@ router.get('/subscriptions', requireAuth, async (req, res) => {
                 continue;
             }
 
+            let symbol = sub.symbol || s.defaultParams?.symbol || 'BTCUSDT';
+            let timeframe = '4h';
+
+            // Special handling for Gold strategies
+            if (s.id === 'three_blade') {
+                symbol = 'XAUUSDT';
+                timeframe = '1h'; // Show the best performance (1H)
+            }
+
             // Run a quick backtest to get latest trade
-            // Use 365 days of history to match typical backfill and ensure signals are found
-            const candles = await getCandleData(sub.symbol || 'BTCUSDT', '4h', 365);
+            const candles = await getCandleData(symbol, timeframe, 365);
             console.log(`[Subscriptions] Backtesting ${s.name} on ${sub.symbol || 'BTCUSDT'} with ${candles.length} candles`);
 
             const strategyFn = s.createStrategy ? s.createStrategy(s.defaultParams) : s.execute;
@@ -285,6 +293,8 @@ router.get('/subscriptions', requireAuth, async (req, res) => {
 
             results.push({
                 ...sub,
+                symbol,
+                timeframe,
                 strategyName: s.name,
                 latestSignal
             });
