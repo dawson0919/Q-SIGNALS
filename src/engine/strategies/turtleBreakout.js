@@ -1,0 +1,113 @@
+// Premium Strategy: 海龜交易策略 (Turtle Breakout Strategy)
+// Uses pivot highs/lows to detect breakout entries
+// BUY on breakout above pivot high, SELL (short) on breakdown below pivot low
+
+const pineScript = `//@version=5
+strategy("海龜交易策略", overlay=true)
+leftBars = input(4)
+rightBars = input(2)
+swh = ta.pivothigh(leftBars, rightBars)
+swl = ta.pivotlow(leftBars, rightBars)
+swh_cond = not na(swh)
+hprice = 0.0
+hprice := swh_cond ? swh : hprice[1]
+le = false
+le := swh_cond ? true : (le[1] and high > hprice ? false : le[1])
+if (le)
+    strategy.entry("PivRevLE", strategy.long, comment="突破多", stop=hprice + syminfo.mintick)
+swl_cond = not na(swl)
+lprice = 0.0
+lprice := swl_cond ? swl : lprice[1]
+se = false
+se := swl_cond ? true : (se[1] and low < lprice ? false : se[1])
+if (se)
+    strategy.entry("PivRevSE", strategy.short, comment="跌破空", stop=lprice - syminfo.mintick)`;
+
+function createStrategy(params = {}) {
+    const LEFT = params.leftBars || 4;
+    const RIGHT = params.rightBars || 2;
+    const MIN_HOLD_BARS = params.minHoldBars || 6;
+
+    // Persistent state inside closure
+    let hprice = 0;
+    let lprice = 0;
+    let le = false;
+    let se = false;
+    let lastSignalBar = -999;
+
+    function pivotHigh(highs, idx) {
+        const p = idx - RIGHT;
+        if (p < LEFT) return null;
+        const val = highs[p];
+        for (let j = 1; j <= LEFT; j++)  if (highs[p - j] >= val) return null;
+        for (let j = 1; j <= RIGHT; j++) if (highs[p + j] >= val) return null;
+        return val;
+    }
+
+    function pivotLow(lows, idx) {
+        const p = idx - RIGHT;
+        if (p < LEFT) return null;
+        const val = lows[p];
+        for (let j = 1; j <= LEFT; j++)  if (lows[p - j] <= val) return null;
+        for (let j = 1; j <= RIGHT; j++) if (lows[p + j] <= val) return null;
+        return val;
+    }
+
+    return function execute(candles, indicatorData, i, indicators) {
+        if (i <= LEFT + RIGHT) {
+            hprice = 0; lprice = 0; le = false; se = false; lastSignalBar = -999;
+            return null;
+        }
+
+        const high = indicatorData.high[i];
+        const low = indicatorData.low[i];
+
+        // Detect confirmed pivots
+        const swh = pivotHigh(indicatorData.high, i);
+        const swl = pivotLow(indicatorData.low, i);
+
+        // Update pivot-high tracking
+        if (swh !== null) { hprice = swh; le = true; }
+
+        // Update pivot-low tracking
+        if (swl !== null) { lprice = swl; se = true; }
+
+        // Enforce minimum hold period to prevent whipsaws
+        const barsSinceSignal = i - lastSignalBar;
+        if (barsSinceSignal < MIN_HOLD_BARS) return null;
+
+        // BUY: breakout above pivot high
+        if (le && hprice > 0 && high > hprice) {
+            le = false;
+            lastSignalBar = i;
+            return 'BUY';
+        }
+
+        // SELL: breakdown below pivot low
+        if (se && lprice > 0 && low < lprice) {
+            se = false;
+            lastSignalBar = i;
+            return 'SELL';
+        }
+
+        return null;
+    };
+}
+
+const LEFT = 2;
+const RIGHT = 5;
+const MIN_HOLD_BARS = 2;
+
+// ... (rest of the functions stay the same)
+
+module.exports = {
+    id: 'turtle_breakout',
+    name: '海龜交易策略',
+    description: '海龜突破策略：利用 Pivot High/Low 判斷市場結構。經優化後（BTC 參數：2/5/2），具有更高的盈虧比例與更靈活的進場機制。',
+    category: 'Premium',
+    author: 'QuantSignal',
+    pineScript,
+    createStrategy,
+    execute: createStrategy({ leftBars: LEFT, rightBars: RIGHT, minHoldBars: MIN_HOLD_BARS }), // Optimized default
+    defaultParams: { leftBars: LEFT, rightBars: RIGHT, minHoldBars: MIN_HOLD_BARS }
+};

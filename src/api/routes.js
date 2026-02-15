@@ -1,0 +1,372 @@
+// API Routes
+const express = require('express');
+const router = express.Router();
+const Backtester = require('../engine/backtester');
+const { getCandleData } = require('../engine/dataFetcher');
+const { parsePineScript } = require('../engine/pineParser');
+const { getCurrentPrices } = require('../data/priceMonitor');
+const {
+    getCandles,
+    getCandleCount,
+    getProfile,
+    getSubscriptions,
+    addSubscription,
+    removeSubscription,
+    applyPremium,
+    getApplications,
+    updateApplicationStatus,
+    getAllUsers,
+    deleteUser,
+    getSupabase
+} = require('../data/database');
+const indicators = require('../engine/indicators');
+
+// Strategy registry
+const strategies = {};
+const backtestCache = {};
+
+// Load built-in strategies
+const ma60 = require('../engine/strategies/ma60');
+strategies[ma60.id] = ma60;
+
+const threeBlade = require('../engine/strategies/threeBlade');
+strategies[threeBlade.id] = threeBlade;
+
+const turtleBreakout = require('../engine/strategies/turtleBreakout');
+strategies[turtleBreakout.id] = turtleBreakout;
+
+const dualEma = require('../engine/strategies/dualEma');
+strategies[dualEma.id] = dualEma;
+
+const macdMa = require('../engine/strategies/macdMa');
+strategies[macdMa.id] = macdMa;
+
+// List all strategies
+router.get('/strategies', (req, res) => {
+    const list = Object.values(strategies).map(s => ({
+        id: s.id,
+        name: s.name,
+        description: s.description,
+        category: s.category || 'Basic',
+        author: s.author || 'Unknown'
+    }));
+    res.json({ strategies: list });
+});
+
+// Get strategy by ID
+router.get('/strategies/:id', (req, res) => {
+    const s = strategies[req.params.id];
+    if (!s) return res.status(404).json({ error: 'Strategy not found' });
+    res.json({
+        id: s.id,
+        name: s.name,
+        description: s.description,
+        category: s.category || 'Basic',
+        author: s.author || 'Unknown'
+    });
+});
+
+// --- Auth Middleware ---
+async function requireAuth(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ error: 'Unauthorized' });
+
+    const token = authHeader.split(' ')[1];
+    const { data, error } = await getSupabase().auth.getUser(token);
+
+    if (error || !data.user) return res.status(401).json({ error: 'Invalid token' });
+    req.user = data.user;
+    req.token = token;
+    next();
+}
+
+async function requireAdmin(req, res, next) {
+    await requireAuth(req, res, async () => {
+        const profile = await getProfile(req.user.id, req.token);
+        if (profile?.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+        next();
+    });
+}
+
+// --- Membership & Subscriptions ---
+router.get('/profile', requireAuth, async (req, res) => {
+    const profile = await getProfile(req.user.id, req.token);
+    res.json(profile);
+});
+
+router.post('/apply-premium', requireAuth, async (req, res) => {
+    const { account } = req.body;
+    if (!account) return res.status(400).json({ error: 'Account required' });
+    try {
+        await applyPremium(req.user.id, req.user.email, account, req.token);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.post('/subscribe', requireAuth, async (req, res) => {
+    const { strategyId } = req.body;
+    const s = strategies[strategyId];
+    if (!s) return res.status(404).json({ error: 'Strategy not found' });
+
+    try {
+        // Enforce RBAC
+        let profile = await getProfile(req.user.id, req.token);
+
+        // Fallback or Override for Admin
+        if (req.user.email === 'nbamoment@gmail.com' || req.user.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd') {
+            profile = { ...profile, role: 'admin' };
+        }
+
+        const role = profile?.role || 'standard';
+
+        console.log(`[Subscribe] User: ${req.user.email} (${req.user.id}), Role: ${role}, Strategy: ${s.name} (${s.category})`);
+
+        if (s.category === 'Premium' && !['admin', 'advanced'].includes(role)) {
+            console.log(`[Subscribe] DENIED: Role '${role}' insufficient for Premium strategy.`);
+            return res.status(403).json({ error: 'Premium Membership required for this strategy.' });
+        }
+
+        await addSubscription(req.user.id, strategyId, req.token);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.post('/unsubscribe', requireAuth, async (req, res) => {
+    const { strategyId } = req.body;
+    try {
+        await removeSubscription(req.user.id, strategyId, req.token);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.get('/subscriptions', requireAuth, async (req, res) => {
+    try {
+        const subs = await getSubscriptions(req.user.id, req.token);
+        const results = [];
+
+        for (const sub of subs) {
+            const s = strategies[sub.strategy_id];
+            if (!s) {
+                console.log(`[Subscriptions] Strategy not found: ${sub.strategy_id}`);
+                continue;
+            }
+
+            // Run a quick backtest to get latest trade
+            // Use 365 days of history to match typical backfill and ensure signals are found
+            const candles = await getCandleData(sub.symbol || 'BTCUSDT', '4h', 365);
+            console.log(`[Subscriptions] Backtesting ${s.name} on ${sub.symbol || 'BTCUSDT'} with ${candles.length} candles`);
+
+            const strategyFn = s.createStrategy ? s.createStrategy(s.defaultParams) : s.execute;
+
+            const backtester = new Backtester();
+            const report = backtester.run(strategyFn, candles);
+
+            const latestSignal = report.recentTrades && report.recentTrades.length > 0
+                ? report.recentTrades[0]
+                : null;
+
+            if (latestSignal) {
+                console.log(`[Subscriptions] Signal found for ${s.name}: ${latestSignal.type} @ ${latestSignal.entryPrice}`);
+            } else {
+                console.log(`[Subscriptions] No signal found for ${s.name} (Trades: ${report.totalTrades})`);
+            }
+
+            results.push({
+                ...sub,
+                strategyName: s.name,
+                latestSignal
+            });
+        }
+        res.json(results);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// --- Admin Panel Routes ---
+router.get('/admin/users', requireAdmin, async (req, res) => {
+    const users = await getAllUsers(req.token);
+
+    // Mock Users for Testing Admin Panel
+    const mockUsers = [
+        { id: 'mock_1', email: 'trader.alex@test.com', role: 'standard', created_at: new Date().toISOString() },
+        { id: 'mock_2', email: 'crypto.sarah@test.com', role: 'standard', created_at: new Date().toISOString() },
+        { id: 'mock_3', email: 'investor.mike@test.com', role: 'standard', created_at: new Date().toISOString() }
+    ];
+
+    res.json([...users, ...mockUsers]);
+});
+
+router.get('/admin/applications', requireAdmin, async (req, res) => {
+    const apps = await getApplications(req.token);
+
+    // Mock Applications
+    const mockApps = [
+        { id: 'app_1', user_id: 'mock_1', email: 'trader.alex@test.com', trading_account: 'MT-882145', status: 'pending', created_at: new Date().toISOString() },
+        { id: 'app_2', user_id: 'mock_2', email: 'crypto.sarah@test.com', trading_account: 'MT-993214', status: 'pending', created_at: new Date().toISOString() },
+        { id: 'app_3', user_id: 'mock_3', email: 'investor.mike@test.com', trading_account: 'PX-774412', status: 'pending', created_at: new Date().toISOString() }
+    ];
+
+    res.json([...apps, ...mockApps]);
+});
+
+router.post('/admin/approve-application', requireAdmin, async (req, res) => {
+    const { id, userId, status } = req.body; // status: 'approved' or 'rejected'
+    try {
+        await updateApplicationStatus(id, userId, status, req.token);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.delete('/admin/users/:id', requireAdmin, async (req, res) => {
+    try {
+        await deleteUser(req.params.id, req.token);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Get strategy details
+router.get('/strategies/:id', (req, res) => {
+    const strategy = strategies[req.params.id];
+    if (!strategy) return res.status(404).json({ error: 'Strategy not found' });
+
+    res.json({
+        id: strategy.id,
+        name: strategy.name,
+        description: strategy.description,
+        category: strategy.category,
+        author: strategy.author,
+        defaultParams: strategy.defaultParams,
+        backtestResult: backtestCache[`${strategy.id}_BTCUSDT`] || null
+    });
+});
+
+// Add new strategy via PineScript
+router.post('/strategies', (req, res) => {
+    try {
+        const { name, code, category, description } = req.body;
+        if (!code) return res.status(400).json({ error: 'PineScript code is required' });
+
+        const parsed = parsePineScript(code);
+        const id = name ? name.toLowerCase().replace(/[^a-z0-9]+/g, '_') : `custom_${Date.now()}`;
+
+        strategies[id] = {
+            id,
+            name: name || parsed.metadata.name,
+            description: description || `Custom strategy: ${parsed.metadata.name}`,
+            category: category || 'Basic',
+            author: 'User',
+            pineScript: code,
+            execute: parsed.execute
+        };
+
+        res.json({ success: true, id, name: strategies[id].name });
+    } catch (err) {
+        res.status(400).json({ error: `Failed to parse PineScript: ${err.message}` });
+    }
+});
+
+// Run backtest
+router.post('/backtest', async (req, res) => {
+    try {
+        const { strategyId, symbol = 'BTCUSDT', timeframe = '4h', startTime, endTime } = req.body;
+
+        // Get or parse strategy
+        let strategyFn;
+        let strategyName;
+
+        if (strategyId && strategies[strategyId]) {
+            const s = strategies[strategyId];
+            // Use factory if available, otherwise fallback to execute
+            strategyFn = s.createStrategy ? s.createStrategy(s.defaultParams) : s.execute;
+            strategyName = s.name;
+        } else if (req.body.code) {
+            const parsed = parsePineScript(req.body.code);
+            strategyFn = parsed.execute;
+            strategyName = parsed.metadata.name;
+        } else {
+            return res.status(400).json({ error: 'Either strategyId or code is required' });
+        }
+
+        // Get candle data
+        const candles = await getCandleData(symbol, timeframe, startTime, endTime);
+        if (candles.length < 50) {
+            return res.status(400).json({ error: `Insufficient data: only ${candles.length} candles available` });
+        }
+
+        // Run backtest
+        const backtester = new Backtester({
+            initialCapital: 10000,
+            positionSize: 0.95,
+            commission: 0.001
+        });
+
+        console.log(`[Backtest] Running ${strategyName} for ${symbol}...`);
+        console.log(`[Backtest] StrategyFn: ${typeof strategyFn}, Candles: ${candles.length}`);
+
+        const result = backtester.run(strategyFn, candles);
+        console.log(`[Backtest] Result Summary exists: ${!!result.summary}`);
+
+        result.strategy = { name: strategyName, symbol, timeframe };
+        result.dataInfo = {
+            totalCandles: candles.length,
+            symbol,
+            timeframe
+        };
+
+        // Cache result
+        const cacheKey = `${strategyId || 'custom'}_${symbol}`;
+        backtestCache[cacheKey] = result;
+
+        res.json(result);
+    } catch (err) {
+        console.error('[Backtest] Error:', err);
+        res.status(500).json({ error: `Backtest failed: ${err.message}` });
+    }
+});
+
+// Get cached backtest result
+router.get('/backtest/:key', (req, res) => {
+    const result = backtestCache[req.params.key];
+    if (!result) return res.status(404).json({ error: 'No cached result found' });
+    res.json(result);
+});
+
+// Current prices
+router.get('/prices/current', (req, res) => {
+    res.json(getCurrentPrices());
+});
+
+// Historical candles from DB
+router.get('/prices/history', async (req, res) => {
+    const { symbol = 'BTCUSDT', timeframe = '4h', limit = 200 } = req.query;
+    const candles = await getCandles(symbol, timeframe);
+    res.json({
+        symbol,
+        timeframe,
+        count: candles.length,
+        candles: candles.slice(-parseInt(limit))
+    });
+});
+
+// DB stats
+router.get('/stats', async (req, res) => {
+    const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'];
+    const stats = {};
+    for (const s of symbols) {
+        stats[s] = await getCandleCount(s, '4h');
+    }
+    res.json({ candleCounts: stats, strategies: Object.keys(strategies).length });
+});
+
+module.exports = router;

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Notifications - QuantSignal</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: { "primary": "#00ff00", "background-dark": "#0a0c0a", "surface-dark": "#161b16", "border-dark": "#2a362a" },
+                    fontFamily: { "display": ["Inter", "sans-serif"] },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="bg-background-dark text-slate-100 min-h-screen pb-24 font-display" style="font-family:'Inter',sans-serif">
+    <header
+        class="sticky top-0 z-50 bg-background-dark/80 backdrop-blur-md border-b border-border-dark px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <a href="profile.html"><span class="material-symbols-outlined text-slate-400">arrow_back</span></a>
+            <h1 class="font-bold text-lg">Notifications</h1>
+        </div>
+    </header>
+    <main class="max-w-md mx-auto p-4 space-y-6">
+        <section>
+            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Trading Signals</h3>
+            <div class="bg-surface-dark border border-border-dark rounded-xl divide-y divide-border-dark">
+                <div class="flex items-center justify-between p-4">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-primary">candlestick_chart</span>
+                        <div>
+                            <p class="text-sm font-semibold">Strategy Alerts</p>
+                            <p class="text-xs text-slate-500">Buy / Sell signal notifications</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" checked class="sr-only peer" />
+                        <div
+                            class="w-11 h-6 bg-slate-700 peer-focus:ring-0 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+                        </div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between p-4">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-slate-400">trending_up</span>
+                        <div>
+                            <p class="text-sm font-semibold">Price Alerts</p>
+                            <p class="text-xs text-slate-500">BTC, ETH, SOL price milestones</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" checked class="sr-only peer" />
+                        <div
+                            class="w-11 h-6 bg-slate-700 peer-focus:ring-0 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+                        </div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between p-4">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-slate-400">analytics</span>
+                        <div>
+                            <p class="text-sm font-semibold">Backtest Complete</p>
+                            <p class="text-xs text-slate-500">When a backtest finishes running</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" />
+                        <div
+                            class="w-11 h-6 bg-slate-700 peer-focus:ring-0 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </section>
+        <section>
+            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Account & System</h3>
+            <div class="bg-surface-dark border border-border-dark rounded-xl divide-y divide-border-dark">
+                <div class="flex items-center justify-between p-4">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-slate-400">mail</span>
+                        <div>
+                            <p class="text-sm font-semibold">Email Notifications</p>
+                            <p class="text-xs text-slate-500">Daily digest and weekly report</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" checked class="sr-only peer" />
+                        <div
+                            class="w-11 h-6 bg-slate-700 peer-focus:ring-0 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+                        </div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between p-4">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-slate-400">security</span>
+                        <div>
+                            <p class="text-sm font-semibold">Security Alerts</p>
+                            <p class="text-xs text-slate-500">Login & suspicious activity</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" checked class="sr-only peer" />
+                        <div
+                            class="w-11 h-6 bg-slate-700 peer-focus:ring-0 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+                        </div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between p-4">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-slate-400">update</span>
+                        <div>
+                            <p class="text-sm font-semibold">System Updates</p>
+                            <p class="text-xs text-slate-500">New features and maintenance</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" />
+                        <div
+                            class="w-11 h-6 bg-slate-700 peer-focus:ring-0 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </section>
+        <section>
+            <h3 class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Delivery</h3>
+            <div class="bg-surface-dark border border-border-dark rounded-xl divide-y divide-border-dark">
+                <div class="flex items-center justify-between p-4">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-slate-400">smartphone</span>
+                        <div>
+                            <p class="text-sm font-semibold">Push Notifications</p>
+                            <p class="text-xs text-slate-500">Mobile push notification</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" checked class="sr-only peer" />
+                        <div
+                            class="w-11 h-6 bg-slate-700 peer-focus:ring-0 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+                        </div>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between p-4">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-slate-400">chat</span>
+                        <div>
+                            <p class="text-sm font-semibold">Telegram Bot</p>
+                            <p class="text-xs text-slate-500">Send signals to Telegram</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" class="sr-only peer" />
+                        <div
+                            class="w-11 h-6 bg-slate-700 peer-focus:ring-0 rounded-full peer peer-checked:bg-primary after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full">
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </section>
+    </main>
+    <nav
+        class="fixed bottom-0 left-0 right-0 bg-background-dark/95 backdrop-blur-md border-t border-border-dark px-6 pb-6 pt-3 flex justify-between items-center z-50">
+        <a href="index.html" class="flex flex-col items-center gap-1 text-slate-500"><span
+                class="material-symbols-outlined">home</span><span
+                class="text-[10px] font-bold uppercase">Home</span></a>
+        <a href="admin.html" class="flex flex-col items-center gap-1 text-slate-500"><span
+                class="material-symbols-outlined">terminal</span><span
+                class="text-[10px] font-bold uppercase">Admin</span></a>
+        <a href="profile.html" class="flex flex-col items-center gap-1 text-slate-500"><span
+                class="material-symbols-outlined">person</span><span
+                class="text-[10px] font-bold uppercase">Profile</span></a>
+    </nav>
+</body>
+
+</html>

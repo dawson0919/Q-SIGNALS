@@ -1,0 +1,114 @@
+{
+  "best": {
+    "roi": 36.4,
+    "plRatio": 7.11,
+    "winRate": 66.67,
+    "trades": 3,
+    "params": {
+      "period": 120,
+      "filterPeriod": 200
+    }
+  },
+  "top": [
+    {
+      "roi": 36.4,
+      "plRatio": 7.11,
+      "winRate": 66.67,
+      "trades": 3,
+      "params": {
+        "period": 120,
+        "filterPeriod": 200
+      }
+    },
+    {
+      "roi": 32.78,
+      "plRatio": 10.42,
+      "winRate": 40,
+      "trades": 5,
+      "params": {
+        "period": 120,
+        "filterPeriod": 250
+      }
+    },
+    {
+      "roi": 32.19,
+      "plRatio": 5.36,
+      "winRate": 66.67,
+      "trades": 3,
+      "params": {
+        "period": 30,
+        "filterPeriod": 250
+      }
+    },
+    {
+      "roi": 26.44,
+      "plRatio": 9.19,
+      "winRate": 28.57,
+      "trades": 7,
+      "params": {
+        "period": 60,
+        "filterPeriod": 250
+      }
+    },
+    {
+      "roi": 25.1,
+      "plRatio": 5.53,
+      "winRate": 40,
+      "trades": 5,
+      "params": {
+        "period": 50,
+        "filterPeriod": 200
+      }
+    },
+    {
+      "roi": 25.1,
+      "plRatio": 5.53,
+      "winRate": 40,
+      "trades": 5,
+      "params": {
+        "period": 50,
+        "filterPeriod": 250
+      }
+    },
+    {
+      "roi": 24.87,
+      "plRatio": 6.52,
+      "winRate": 29.41,
+      "trades": 17,
+      "params": {
+        "period": 120,
+        "filterPeriod": 100
+      }
+    },
+    {
+      "roi": 20.5,
+      "plRatio": 4.31,
+      "winRate": 33.33,
+      "trades": 12,
+      "params": {
+        "period": 60,
+        "filterPeriod": 100
+      }
+    },
+    {
+      "roi": 18.46,
+      "plRatio": 4.58,
+      "winRate": 33.33,
+      "trades": 6,
+      "params": {
+        "period": 60,
+        "filterPeriod": 200
+      }
+    },
+    {
+      "roi": 16.44,
+      "plRatio": 6.26,
+      "winRate": 24.24,
+      "trades": 33,
+      "params": {
+        "period": 120,
+        "filterPeriod": 0
+      }
+    }
+  ]
+}

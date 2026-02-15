@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>QuantSignal - Trading Strategies</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#00ff00",
+            "background-dark": "#0a0c0a",
+            "card-dark": "#161d16",
+            "border-dark": "#243324",
+          },
+          fontFamily: { "display": ["Inter", "sans-serif"] },
+        },
+      },
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .premium-gradient {
+      background: linear-gradient(135deg, rgba(0, 255, 0, 0.05) 0%, rgba(0, 0, 0, 0) 100%);
+    }
+
+    .glow-button {
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+    }
+
+    .price-ticker {
+      animation: ticker 30s linear infinite;
+    }
+
+    @keyframes ticker {
+      0% {
+        transform: translateX(0);
+      }
+
+      100% {
+        transform: translateX(-50%);
+      }
+    }
+
+    @keyframes pulse-green {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .pulse-green {
+      animation: pulse-green 2s ease-in-out infinite;
+    }
+  </style>
+</head>
+
+<body class="bg-background-dark text-slate-100 min-h-screen flex flex-col">
+  <!-- Header -->
+  <header
+    class="sticky top-0 z-50 bg-background-dark/80 backdrop-blur-md border-b border-border-dark px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <div class="bg-primary p-1.5 rounded-lg">
+        <span class="material-symbols-outlined text-background-dark font-bold text-xl">query_stats</span>
+      </div>
+      <h1 class="text-xl font-bold tracking-tight text-white">QuantSignal</h1>
+    </div>
+    <div class="flex items-center gap-3">
+      <button class="relative p-2 text-slate-400 hover:bg-card-dark rounded-full transition-colors">
+        <span class="material-symbols-outlined">notifications</span>
+        <span class="absolute top-2 right-2.5 w-2 h-2 bg-primary rounded-full border-2 border-background-dark"></span>
+      </button>
+      <a href="login.html" id="authLink" class="text-sm text-primary font-bold hover:underline">Login</a>
+    </div>
+  </header>
+
+  <!-- Live Price Ticker Bar -->
+  <div class="border-b border-border-dark bg-card-dark/50 overflow-hidden">
+    <div class="flex items-center py-2 px-4 gap-6" id="priceTicker">
+      <div class="flex items-center gap-2 shrink-0">
+        <span class="w-2 h-2 rounded-full bg-primary pulse-green"></span>
+        <span class="text-[10px] uppercase tracking-widest text-primary font-bold">LIVE</span>
+      </div>
+      <div class="flex gap-8 items-center text-sm" id="priceItems">
+        <span class="text-slate-500">Loading prices...</span>
+      </div>
+    </div>
+  </div>
+
+  <main class="flex-1 overflow-y-auto pb-24">
+    <!-- Strategy Type Tabs -->
+    <div class="px-4 pt-6">
+      <div class="flex border-b border-border-dark overflow-x-auto">
+        <button class="tab-btn px-4 py-3 text-sm font-semibold border-b-2 border-primary text-primary whitespace-nowrap"
+          data-filter="all">All Strategies</button>
+        <button
+          class="tab-btn px-4 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-200 whitespace-nowrap"
+          data-filter="Basic">Basic (Free)</button>
+        <button
+          class="tab-btn px-4 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-200 whitespace-nowrap"
+          data-filter="Premium">Premium</button>
+      </div>
+    </div>
+
+    <!-- Strategy List -->
+    <div class="p-4 space-y-4">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-slate-500">Live Strategies</h2>
+        <span class="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">LIVE FEED</span>
+      </div>
+      <div id="strategyList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Strategies loaded dynamically -->
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav
+    class="fixed bottom-0 left-0 right-0 bg-background-dark/95 backdrop-blur-md border-t border-border-dark px-6 pb-6 pt-3 flex justify-between items-center z-50">
+    <a class="flex flex-col items-center gap-1" href="index.html">
+      <span class="material-symbols-outlined text-primary font-bold"
+        style="font-variation-settings: 'FILL' 1">home</span>
+      <span class="text-[10px] font-bold text-primary uppercase tracking-tighter">Home</span>
+    </a>
+    <a class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-200" href="admin.html">
+      <span class="material-symbols-outlined">terminal</span>
+      <span class="text-[10px] font-bold uppercase tracking-tighter">Admin</span>
+    </a>
+    <a class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-200" href="profile.html">
+      <span class="material-symbols-outlined">person</span>
+      <span class="text-[10px] font-bold uppercase tracking-tighter">Profile</span>
+    </a>
+  </nav>
+
+  <script>
+    // Load strategies
+    async function loadStrategies() {
+      try {
+        const res = await fetch('/api/strategies');
+        const data = await res.json();
+
+        // Also run backtest for each strategy to get metrics
+        const strategyList = document.getElementById('strategyList');
+        strategyList.innerHTML = '';
+
+        // Add built-in strategies
+        const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'];
+        const symbolNames = { BTCUSDT: 'BTC', ETHUSDT: 'ETH', SOLUSDT: 'SOL' };
+
+        for (const strat of data.strategies) {
+          // Special handling to put MACD and Turtle at the top if desired, 
+          // but for now just the logic to add badges.
+          for (const symbol of symbols) {
+            const card = createStrategyCard(strat, symbol, symbolNames[symbol]);
+            strategyList.appendChild(card);
+            runBacktestForCard(strat.id, symbol, card);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load strategies:', err);
+      }
+    }
+
+    function createStrategyCard(strat, symbol, symbolShort) {
+      const div = document.createElement('div');
+      const isPremium = strat.category === 'Premium';
+      const isOptimized = strat.id === 'macd_ma_optimized';
+      const isTurtle = strat.id === 'turtle_breakout';
+
+      div.className = `strategy-card bg-card-dark rounded-xl border ${isPremium ? 'border-primary/30 premium-gradient' : 'border-border-dark'} overflow-hidden relative aspect-square flex flex-col`;
+      div.dataset.category = strat.category || 'Basic';
+
+      const badgeClass = isPremium
+        ? 'text-[10px] font-bold bg-primary text-background-dark rounded px-1.5 py-0.5 uppercase mb-1 inline-block'
+        : 'text-[10px] font-bold text-slate-400 border border-slate-700 rounded px-1.5 py-0.5 uppercase mb-1 inline-block';
+
+      const authorBadge = isPremium
+        ? `<span class="material-symbols-outlined text-primary text-xs ml-1" style="font-variation-settings: 'FILL' 1">verified</span>`
+        : '';
+
+      const featuredBadge = isOptimized
+        ? `<div class="absolute -right-12 top-6 bg-red-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">workspace_premium</span> MOST PROFITABLE</div>`
+        : isTurtle && symbol === 'BTCUSDT'
+          ? `<div class="absolute -right-12 top-6 bg-orange-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">local_fire_department</span> HOT BTCTRADE</div>`
+          : '';
+
+      div.innerHTML = `
+        ${featuredBadge}
+        <div class="p-3 relative z-0 flex flex-col h-full">
+          <div>
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <span class="${badgeClass}">${strat.category || 'Basic'}</span>
+                <h3 class="text-lg font-bold text-white leading-tight mt-0.5 line-clamp-1" title="${strat.name} (${symbolShort})">${strat.name} <span class="text-slate-500 text-sm">(${symbolShort})</span>${authorBadge}</h3>
+                ${isPremium ? `<p class="text-[10px] text-primary/60 mt-0.5">by ${strat.author || 'QuantSignal'}</p>` : ''}
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-1.5 mb-2">
+              <div class="bg-background-dark/50 p-1.5 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
+                <p class="text-[9px] text-slate-500 uppercase font-bold mb-0.5">Total ROI</p>
+                <p class="text-sm font-bold text-primary truncate" id="roi-${strat.id}-${symbol}">--</p>
+              </div>
+              <div class="bg-background-dark/50 p-1.5 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
+                <p class="text-[9px] text-slate-500 uppercase font-bold mb-0.5">Win Rate</p>
+                <p class="text-sm font-semibold text-white truncate" id="winrate-${strat.id}-${symbol}">--</p>
+              </div>
+              <div class="bg-background-dark/50 p-1.5 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
+                <p class="text-[9px] text-slate-500 uppercase font-bold mb-0.5">PF</p>
+                <p class="text-sm font-semibold text-white truncate" id="pf-${strat.id}-${symbol}">--</p>
+              </div>
+              <div class="bg-background-dark/50 p-1.5 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
+                <p class="text-[9px] text-slate-500 uppercase font-bold mb-0.5">Trades</p>
+                <p class="text-sm font-semibold text-white truncate" id="trades-${strat.id}-${symbol}">--</p>
+              </div>
+            </div>
+          </div>
+          
+          <a href="strategy-detail.html?strategy=${strat.id}&symbol=${symbol}" class="w-full py-2 rounded-lg ${isPremium ? 'bg-primary text-background-dark glow-button' : 'border border-primary text-primary'} font-bold text-xs hover:opacity-90 transition-colors flex items-center justify-center gap-2 cursor-pointer mt-auto">
+            ${isPremium ? '🔥 View Premium' : 'View Details'} <span class="material-symbols-outlined text-xs">arrow_forward</span>
+          </a>
+        </div>
+        <div class="h-1.5 w-full ${isPremium ? 'bg-primary/30' : 'bg-primary/20'} absolute bottom-0 left-0"><div class="absolute inset-0 bg-primary h-full opacity-50" style="width: 0%" id="bar-${strat.id}-${symbol}"></div></div>
+      `;
+      return div;
+    }
+
+    function createPremiumCard(ps) {
+      const div = document.createElement('div');
+      div.className = 'strategy-card bg-card-dark rounded-xl border border-border-dark overflow-hidden premium-gradient relative mb-4';
+      div.dataset.category = 'Premium';
+      div.innerHTML = `
+        <div class="absolute top-3 right-3"><span class="material-symbols-outlined text-slate-600">lock</span></div>
+        <div class="p-3 flex-1 flex flex-col h-full">
+          <div>
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <span class="text-[10px] font-bold bg-primary text-background-dark rounded px-1.5 py-0.5 uppercase mb-1 inline-block">Premium</span>
+                <h3 class="text-lg font-bold text-white leading-tight mt-0.5 line-clamp-1">${ps.name}</h3>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-1.5 mb-2">
+              <div class="bg-background-dark/50 p-1.5 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
+                <p class="text-[9px] text-slate-500 uppercase font-bold mb-0.5">Total ROI</p>
+                <p class="text-sm font-bold text-primary truncate">${ps.roi}</p>
+              </div>
+              <div class="bg-background-dark/50 p-1.5 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
+                <p class="text-[9px] text-slate-500 uppercase font-bold mb-0.5">Win Rate</p>
+                <p class="text-sm font-semibold text-white truncate">${ps.winRate}</p>
+              </div>
+              <div class="bg-background-dark/80 p-1.5 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
+                <p class="text-[9px] text-slate-500 uppercase font-bold mb-0.5">PF</p>
+                <span class="material-symbols-outlined text-xs text-slate-500">lock</span>
+              </div>
+              <div class="bg-background-dark/80 p-1.5 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
+                <p class="text-[9px] text-slate-500 uppercase font-bold mb-0.5">Trades</p>
+                <span class="material-symbols-outlined text-xs text-slate-500">lock</span>
+              </div>
+            </div>
+          </div>
+          
+          <button class="w-full py-2 rounded-lg bg-primary text-background-dark font-bold text-xs glow-button hover:bg-primary/90 transition-all flex items-center justify-center gap-2 mt-auto">Upgrade to Premium</button>
+        </div>
+      `;
+      return div;
+    }
+
+    async function runBacktestForCard(strategyId, symbol, card) {
+      try {
+        const res = await fetch('/api/backtest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ strategyId, symbol })
+        });
+        const data = await res.json();
+        if (data.summary) {
+          const roi = data.summary.totalReturn;
+          const roiEl = document.getElementById(`roi-${strategyId}-${symbol}`);
+          if (roiEl) roiEl.innerHTML = `${roi > 0 ? '+' : ''}${roi.toFixed(1)}%`;
+
+          const wrEl = document.getElementById(`winrate-${strategyId}-${symbol}`);
+          if (wrEl) wrEl.textContent = `${data.summary.winRate}%`;
+
+          const pfEl = document.getElementById(`pf-${strategyId}-${symbol}`);
+          if (pfEl) pfEl.textContent = `${data.summary.profitFactor}`;
+
+          const trEl = document.getElementById(`trades-${strategyId}-${symbol}`);
+          if (trEl) trEl.textContent = `${data.summary.totalTrades}`;
+
+          const barEl = document.getElementById(`bar-${strategyId}-${symbol}`);
+          if (barEl) barEl.style.width = `${Math.min(data.summary.winRate, 100)}%`;
+        }
+      } catch (err) { console.error('Backtest error:', err); }
+    }
+
+    // Tab filtering
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('border-primary', 'text-primary'); b.classList.add('border-transparent', 'text-slate-400'); });
+        btn.classList.add('border-primary', 'text-primary');
+        btn.classList.remove('border-transparent', 'text-slate-400');
+
+        const filter = btn.dataset.filter;
+        document.querySelectorAll('.strategy-card').forEach(card => {
+          card.style.display = (filter === 'all' || card.dataset.category === filter) ? 'block' : 'none';
+        });
+      });
+    });
+
+    // Live price WebSocket
+    function connectPriceWS() {
+      const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const ws = new WebSocket(`${wsProtocol}//${location.host}/ws/prices`);
+      ws.onmessage = (e) => {
+        const msg = JSON.parse(e.data);
+        if (msg.type === 'prices') updatePriceTicker(msg.data);
+      };
+      ws.onclose = () => setTimeout(connectPriceWS, 3000);
+    }
+
+    function updatePriceTicker(prices) {
+      const container = document.getElementById('priceItems');
+      const symbols = { BTCUSDT: 'BTC', ETHUSDT: 'ETH', SOLUSDT: 'SOL' };
+      let html = '';
+      for (const [sym, name] of Object.entries(symbols)) {
+        const p = prices[sym];
+        if (p) {
+          const color = p.change24h >= 0 ? 'text-primary' : 'text-red-500';
+          html += `<div class="flex items-center gap-2 shrink-0">
+            <span class="font-bold text-white">${name}</span>
+            <span class="font-mono">$${p.price?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '--'}</span>
+            <span class="${color} text-xs font-bold">${p.change24h >= 0 ? '+' : ''}${p.change24h?.toFixed(2) || '0.00'}%</span>
+          </div>`;
+        }
+      }
+      if (html) container.innerHTML = html;
+    }
+
+    // Also poll prices via REST
+    async function pollPrices() {
+      try {
+        const res = await fetch('/api/prices/current');
+        const data = await res.json();
+        if (Object.keys(data).length > 0) updatePriceTicker(data);
+      } catch (e) { }
+    }
+
+    // Init
+    loadStrategies();
+    connectPriceWS();
+    setInterval(pollPrices, 10000);
+  </script>
+  <script src="/js/auth.js"></script>
+  <script>
+    updateHeaderAuth();
+  </script>
+</body>
+
+</html>

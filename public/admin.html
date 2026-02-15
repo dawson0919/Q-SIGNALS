@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Strategy Builder - QuantSignal Admin</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: { "primary": "#00ff00", "background-dark": "#0a0a0a", "surface-dark": "#161b16", "border-dark": "#273a27" },
+                    fontFamily: { "display": ["Inter", "sans-serif"], "mono": ["JetBrains Mono", "monospace"] },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .code-editor {
+            background: linear-gradient(180deg, #111 0%, #0a0a0a 100%);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #273a27;
+            border-radius: 10px;
+        }
+
+        @keyframes spin-slow {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .animate-spin-slow {
+            animation: spin-slow 2s linear infinite;
+        }
+    </style>
+</head>
+
+<body class="bg-background-dark text-slate-100 min-h-screen flex flex-col">
+    <!-- Header -->
+    <header
+        class="sticky top-0 z-50 bg-background-dark/80 backdrop-blur-md border-b border-border-dark px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <a href="index.html"
+                class="flex items-center justify-center size-10 rounded-lg bg-primary/10 text-primary"><span
+                    class="material-symbols-outlined">terminal</span></a>
+            <div>
+                <h1 class="text-lg font-bold leading-none">Strategy Builder</h1>
+                <div class="flex items-center gap-1.5 mt-1">
+                    <span class="size-2 rounded-full bg-primary animate-pulse"></span>
+                    <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold">System Online</span>
+                </div>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <span id="dbStats" class="text-[10px] text-slate-500 mr-2"></span>
+            <a href="members.html"
+                class="size-10 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors"><span
+                    class="material-symbols-outlined">group</span></a>
+        </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto pb-40">
+        <!-- Strategy Metadata -->
+        <section class="p-4 space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-widest">Strategy Metadata</h2>
+                <span
+                    class="px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold border border-primary/20">BUILDER
+                    v1.0</span>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1.5 ml-1">Strategy Name</label>
+                    <input id="stratName"
+                        class="w-full bg-surface-dark border border-border-dark rounded-lg px-4 py-3 text-white placeholder:text-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all outline-none"
+                        placeholder="e.g. TrendFollower_BTC_H1" value="20 SMA Crossover" type="text" />
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1.5 ml-1">Category</label>
+                        <div class="flex bg-surface-dark border border-border-dark rounded-lg p-1">
+                            <button id="catBasic"
+                                class="flex-1 py-2 text-xs font-semibold rounded bg-primary text-black"
+                                onclick="selectCat('Basic')">Basic</button>
+                            <button id="catPremium" class="flex-1 py-2 text-xs font-semibold rounded text-slate-400"
+                                onclick="selectCat('Premium')">Premium</button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1.5 ml-1">Status</label>
+                        <div
+                            class="flex items-center h-[42px] px-4 bg-surface-dark border border-border-dark rounded-lg">
+                            <span class="material-symbols-outlined text-primary text-sm mr-2">check_circle</span>
+                            <span class="text-xs font-medium">Ready</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Code Editor -->
+        <section class="p-4 space-y-3">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-slate-400 text-lg">code</span>
+                    <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-widest">PineScript Source Code
+                    </h2>
+                </div>
+                <div class="flex gap-2">
+                    <button
+                        class="px-3 py-1 bg-surface-dark border border-border-dark rounded text-[10px] font-bold text-slate-300 hover:text-primary hover:border-primary transition-all"
+                        onclick="loadDefaultStrategy()">LOAD DEFAULT</button>
+                </div>
+            </div>
+            <div
+                class="code-editor rounded-xl border border-border-dark overflow-hidden font-mono text-[13px] relative">
+                <div class="flex border-b border-border-dark/50 bg-black/40 px-3 py-2 items-center justify-between">
+                    <div class="flex gap-1.5">
+                        <div class="size-2.5 rounded-full bg-red-500/30 border border-red-500/50"></div>
+                        <div class="size-2.5 rounded-full bg-yellow-500/30 border border-yellow-500/50"></div>
+                        <div class="size-2.5 rounded-full bg-green-500/30 border border-green-500/50"></div>
+                    </div>
+                    <span class="text-[10px] text-slate-500 font-mono uppercase">strategy.pine</span>
+                </div>
+                <textarea id="codeEditor"
+                    class="w-full bg-transparent text-slate-300 font-mono text-[13px] p-4 outline-none resize-none custom-scrollbar border-none focus:ring-0"
+                    rows="14" spellcheck="false">//@version=5
+strategy("20 SMA Crossover", overlay=true, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
+
+// Define the moving average
+sma20 = ta.sma(close, 20)
+
+// Define entry and exit conditions
+longCondition = ta.crossover(close, sma20)
+shortCondition = ta.crossunder(close, sma20)
+
+// Execute trades
+if longCondition
+    strategy.entry("Long", strategy.long)
+
+if shortCondition
+    strategy.close("Long")</textarea>
+            </div>
+        </section>
+
+        <!-- Backtest Parameters -->
+        <section class="p-4 space-y-4">
+            <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-widest">Backtest Parameters</h2>
+            <div class="bg-surface-dark border border-border-dark rounded-xl p-4 space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-2">Trading Pairs</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            class="pair-btn px-3 py-1.5 rounded-lg border border-primary bg-primary/10 text-primary text-xs font-bold"
+                            data-symbol="BTCUSDT" onclick="selectPair(this)">BTC/USDT</button>
+                        <button
+                            class="pair-btn px-3 py-1.5 rounded-lg border border-border-dark bg-background-dark/50 text-slate-400 text-xs font-medium"
+                            data-symbol="ETHUSDT" onclick="selectPair(this)">ETH/USDT</button>
+                        <button
+                            class="pair-btn px-3 py-1.5 rounded-lg border border-border-dark bg-background-dark/50 text-slate-400 text-xs font-medium"
+                            data-symbol="SOLUSDT" onclick="selectPair(this)">SOL/USDT</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-2">Timeframe</label>
+                        <select id="timeframe"
+                            class="w-full bg-background-dark border border-border-dark rounded-lg px-3 py-2 text-xs text-white focus:border-primary focus:ring-0 outline-none">
+                            <option value="4h" selected>4 Hours (4h)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-2">Initial Capital</label>
+                        <input id="capital" type="number" value="10000"
+                            class="w-full bg-background-dark border border-border-dark rounded-lg px-3 py-2 text-xs text-white focus:border-primary focus:ring-0 outline-none" />
+                    </div>
+                </div>
+                <div class="pt-2 flex items-center justify-between border-t border-border-dark/50">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-slate-500 text-sm">database</span>
+                        <span class="text-[10px] text-slate-500 font-medium uppercase tracking-tighter">Data via
+                            Supabase + Binance API</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Backtest Results (hidden initially) -->
+        <section class="p-4 space-y-4" id="resultsSection" style="display:none">
+            <h2 class="text-sm font-semibold text-primary uppercase tracking-widest flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">analytics</span> Backtest Results
+            </h2>
+
+            <div class="grid grid-cols-2 gap-3" id="resultGrid"></div>
+
+            <div class="bg-surface-dark border border-border-dark rounded-xl overflow-hidden p-4"
+                style="height: 250px;">
+                <canvas id="resultChart"></canvas>
+            </div>
+
+            <div class="bg-surface-dark border border-border-dark rounded-xl divide-y divide-border-dark"
+                id="resultMetrics"></div>
+
+            <div id="resultTrades" class="space-y-2"></div>
+        </section>
+    </main>
+
+    <!-- Footer Action -->
+    <footer
+        class="fixed bottom-0 left-0 right-0 p-4 bg-background-dark/90 backdrop-blur-xl border-t border-border-dark">
+        <div class="flex gap-4">
+            <button id="runBtn" onclick="runBacktest()"
+                class="flex-1 bg-primary hover:bg-primary/90 text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,255,0,0.2)] transition-all active:scale-[0.98]">
+                <span class="material-symbols-outlined font-bold">bolt</span>
+                RUN BACKTEST & DEPLOY
+            </button>
+        </div>
+        <nav class="flex justify-around items-center pt-4 pb-2 border-t border-border-dark mt-4">
+            <a class="flex flex-col items-center gap-1 text-slate-500" href="index.html"><span
+                    class="material-symbols-outlined">home</span><span
+                    class="text-[10px] font-medium uppercase">Home</span></a>
+            <a class="flex flex-col items-center gap-1 text-primary" href="admin.html"><span
+                    class="material-symbols-outlined">terminal</span><span
+                    class="text-[10px] font-medium uppercase">Builder</span></a>
+            <a class="flex flex-col items-center gap-1 text-slate-500" href="members.html"><span
+                    class="material-symbols-outlined">group</span><span
+                    class="text-[10px] font-medium uppercase">Members</span></a>
+            <a class="flex flex-col items-center gap-1 text-slate-500" href="profile.html"><span
+                    class="material-symbols-outlined">person</span><span
+                    class="text-[10px] font-medium uppercase">Profile</span></a>
+        </nav>
+    </footer>
+
+    <script>
+        let selectedSymbol = 'BTCUSDT';
+        let selectedCategory = 'Basic';
+        let resultChart = null;
+
+        function selectPair(btn) {
+            document.querySelectorAll('.pair-btn').forEach(b => { b.className = 'pair-btn px-3 py-1.5 rounded-lg border border-border-dark bg-background-dark/50 text-slate-400 text-xs font-medium'; });
+            btn.className = 'pair-btn px-3 py-1.5 rounded-lg border border-primary bg-primary/10 text-primary text-xs font-bold';
+            selectedSymbol = btn.dataset.symbol;
+        }
+
+        function selectCat(cat) {
+            selectedCategory = cat;
+            document.getElementById('catBasic').className = `flex-1 py-2 text-xs font-semibold rounded ${cat === 'Basic' ? 'bg-primary text-black' : 'text-slate-400'}`;
+            document.getElementById('catPremium').className = `flex-1 py-2 text-xs font-semibold rounded ${cat === 'Premium' ? 'bg-primary text-black' : 'text-slate-400'}`;
+        }
+
+        function loadDefaultStrategy() {
+            document.getElementById('codeEditor').value = `//@version=5
+strategy("60 MA Bidirectional", overlay=true, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
+
+// Define the moving average
+ma = ta.sma(close, 60)
+
+// Define entry and exit conditions
+longCondition = ta.crossover(close, ma)
+shortCondition = ta.crossunder(close, ma)
+
+// Execute trades
+if longCondition
+    strategy.entry("Long", strategy.long)
+
+if shortCondition
+    strategy.entry("Short", strategy.short)`;
+            document.getElementById('stratName').value = '60 MA Bidirectional';
+        }
+
+        async function runBacktest() {
+            const btn = document.getElementById('runBtn');
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin-slow">progress_activity</span> RUNNING BACKTEST...';
+            btn.disabled = true;
+
+            try {
+                const code = document.getElementById('codeEditor').value;
+                const name = document.getElementById('stratName').value;
+
+                // First add strategy
+                await fetch('/api/strategies', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, code, category: selectedCategory })
+                });
+
+                // Then run backtest
+                const res = await fetch('/api/backtest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code, symbol: selectedSymbol, strategyId: name.toLowerCase().replace(/[^a-z0-9]+/g, '_') })
+                });
+                const data = await res.json();
+
+                if (data.error) {
+                    alert('Backtest error: ' + data.error);
+                } else {
+                    renderResults(data);
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            } finally {
+                btn.innerHTML = '<span class="material-symbols-outlined font-bold">bolt</span> RUN BACKTEST & DEPLOY';
+                btn.disabled = false;
+            }
+        }
+
+        function renderResults(data) {
+            document.getElementById('resultsSection').style.display = 'block';
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+
+            const s = data.summary;
+            const grid = document.getElementById('resultGrid');
+            grid.innerHTML = `
+        <div class="bg-surface-dark border border-border-dark p-4 rounded-xl">
+          <p class="text-xs text-slate-400 uppercase">Total Return</p>
+          <p class="text-2xl font-bold ${s.totalReturn >= 0 ? 'text-primary' : 'text-red-500'}">${s.totalReturn > 0 ? '+' : ''}${s.totalReturn}%</p>
+        </div>
+        <div class="bg-surface-dark border border-border-dark p-4 rounded-xl">
+          <p class="text-xs text-slate-400 uppercase">Max Drawdown</p>
+          <p class="text-2xl font-bold text-white">-${s.maxDrawdown}%</p>
+        </div>
+        <div class="bg-surface-dark border border-border-dark p-4 rounded-xl">
+          <p class="text-xs text-slate-400 uppercase">Win Rate</p>
+          <p class="text-2xl font-bold text-white">${s.winRate}%</p>
+        </div>
+        <div class="bg-surface-dark border border-border-dark p-4 rounded-xl">
+          <p class="text-xs text-slate-400 uppercase">Sharpe Ratio</p>
+          <p class="text-2xl font-bold text-white">${s.sharpeRatio}</p>
+        </div>
+      `;
+
+            // Metrics table
+            const metrics = document.getElementById('resultMetrics');
+            metrics.innerHTML = `
+        <div class="flex justify-between p-3"><span class="text-slate-400 text-sm">Profit Factor</span><span class="font-bold">${s.profitFactor}</span></div>
+        <div class="flex justify-between p-3"><span class="text-slate-400 text-sm">Total Trades</span><span class="font-bold">${s.totalTrades}</span></div>
+        <div class="flex justify-between p-3"><span class="text-slate-400 text-sm">Winning / Losing</span><span class="font-bold">${s.winningTrades} / ${s.losingTrades}</span></div>
+        <div class="flex justify-between p-3"><span class="text-slate-400 text-sm">Avg Hold Time</span><span class="font-bold">${s.avgHoldDays} Days</span></div>
+        <div class="flex justify-between p-3"><span class="text-slate-400 text-sm">Expectancy</span><span class="font-bold">${s.expectancy}%/trade</span></div>
+        <div class="flex justify-between p-3"><span class="text-slate-400 text-sm">Period</span><span class="font-bold">${s.period.startDate} → ${s.period.endDate}</span></div>
+        <div class="flex justify-between p-3"><span class="text-slate-400 text-sm">Initial Capital</span><span class="font-bold">$${s.initialCapital.toLocaleString()}</span></div>
+        <div class="flex justify-between p-3"><span class="text-slate-400 text-sm">Final Equity</span><span class="font-bold text-primary">$${s.finalEquity.toLocaleString()}</span></div>
+      `;
+
+            // Chart
+            const ctx = document.getElementById('resultChart').getContext('2d');
+            if (resultChart) resultChart.destroy();
+            resultChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.equityCurve.map(p => new Date(p.time).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })),
+                    datasets: [{
+                        data: data.equityCurve.map(p => p.equity),
+                        borderColor: '#00ff00', backgroundColor: 'rgba(0,255,0,0.08)',
+                        fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { ticks: { color: '#666', maxTicksLimit: 6 }, grid: { color: '#273a2733' } },
+                        y: { ticks: { color: '#666', callback: v => '$' + v.toLocaleString() }, grid: { color: '#273a2733' } }
+                    }
+                }
+            });
+
+            // Recent trades
+            const trades = document.getElementById('resultTrades');
+            trades.innerHTML = '<h3 class="font-bold text-sm text-slate-400 uppercase mt-4">Recent Trades</h3>';
+            (data.recentTrades || []).slice(0, 5).forEach(t => {
+                const isProfit = t.pnlPercent > 0;
+                trades.innerHTML += `
+          <div class="bg-surface-dark border border-border-dark p-3 rounded-lg flex justify-between items-center">
+            <div><span class="px-1.5 py-0.5 rounded ${isProfit ? 'bg-primary/20 text-primary' : 'bg-red-500/20 text-red-500'} text-[10px] font-bold">LONG</span>
+            <span class="text-xs ml-2 text-slate-400">${t.entryDate?.split('T')[0] || ''}</span></div>
+            <span class="${isProfit ? 'text-primary' : 'text-red-500'} font-bold text-sm">${isProfit ? '+' : ''}${t.pnlPercent}%</span>
+          </div>`;
+            });
+        }
+
+        // Load DB stats
+        fetch('/api/stats').then(r => r.json()).then(d => {
+            const counts = d.candleCounts;
+            document.getElementById('dbStats').textContent = `DB: ${Object.values(counts).reduce((a, b) => a + b, 0)} candles`;
+        }).catch(() => { });
+    </script>
+</body>
+
+</html>

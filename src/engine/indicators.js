@@ -1,0 +1,144 @@
+// Technical Indicators Library
+
+/**
+ * Simple Moving Average
+ */
+function sma(data, period) {
+    const result = new Array(data.length).fill(null);
+    for (let i = period - 1; i < data.length; i++) {
+        let sum = 0;
+        for (let j = i - period + 1; j <= i; j++) {
+            sum += data[j];
+        }
+        result[i] = sum / period;
+    }
+    return result;
+}
+
+/**
+ * Exponential Moving Average
+ */
+function ema(data, period) {
+    const result = new Array(data.length).fill(null);
+    const multiplier = 2 / (period + 1);
+
+    // First EMA = SMA of first 'period' values
+    let sum = 0;
+    for (let i = 0; i < period; i++) {
+        sum += data[i];
+    }
+    result[period - 1] = sum / period;
+
+    for (let i = period; i < data.length; i++) {
+        result[i] = (data[i] - result[i - 1]) * multiplier + result[i - 1];
+    }
+    return result;
+}
+
+/**
+ * RSI - Relative Strength Index
+ */
+function rsi(data, period = 14) {
+    const result = new Array(data.length).fill(null);
+    const gains = [];
+    const losses = [];
+
+    for (let i = 1; i < data.length; i++) {
+        const diff = data[i] - data[i - 1];
+        gains.push(diff > 0 ? diff : 0);
+        losses.push(diff < 0 ? Math.abs(diff) : 0);
+    }
+
+    // First RSI uses SMA
+    let avgGain = 0, avgLoss = 0;
+    for (let i = 0; i < period; i++) {
+        avgGain += gains[i];
+        avgLoss += losses[i];
+    }
+    avgGain /= period;
+    avgLoss /= period;
+
+    if (avgLoss === 0) {
+        result[period] = 100;
+    } else {
+        result[period] = 100 - (100 / (1 + avgGain / avgLoss));
+    }
+
+    // Subsequent RSI uses Wilder's smoothing
+    for (let i = period; i < gains.length; i++) {
+        avgGain = (avgGain * (period - 1) + gains[i]) / period;
+        avgLoss = (avgLoss * (period - 1) + losses[i]) / period;
+        if (avgLoss === 0) {
+            result[i + 1] = 100;
+        } else {
+            result[i + 1] = 100 - (100 / (1 + avgGain / avgLoss));
+        }
+    }
+    return result;
+}
+
+/**
+ * MACD
+ */
+function macd(data, fastPeriod = 12, slowPeriod = 26, signalPeriod = 9) {
+    const fastEma = ema(data, fastPeriod);
+    const slowEma = ema(data, slowPeriod);
+
+    const macdLine = new Array(data.length).fill(null);
+    for (let i = 0; i < data.length; i++) {
+        if (fastEma[i] !== null && slowEma[i] !== null) {
+            macdLine[i] = fastEma[i] - slowEma[i];
+        }
+    }
+
+    // Signal line = EMA of MACD line
+    const validMacd = macdLine.filter(v => v !== null);
+    const signalLine = ema(validMacd, signalPeriod);
+
+    // Align signal line
+    const result = {
+        macd: macdLine,
+        signal: new Array(data.length).fill(null),
+        histogram: new Array(data.length).fill(null)
+    };
+
+    let signalIdx = 0;
+    for (let i = 0; i < data.length; i++) {
+        if (macdLine[i] !== null) {
+            if (signalIdx < signalLine.length && signalLine[signalIdx] !== null) {
+                result.signal[i] = signalLine[signalIdx];
+                result.histogram[i] = macdLine[i] - signalLine[signalIdx];
+            }
+            signalIdx++;
+        }
+    }
+
+    return result;
+}
+
+/**
+ * Crossover - returns true when a crosses above b at index i
+ */
+function crossover(a, b, i) {
+    if (i < 1) return false;
+    if (a[i] === null || a[i - 1] === null || b[i] === null || b[i - 1] === null) return false;
+    return a[i - 1] <= b[i - 1] && a[i] > b[i];
+}
+
+/**
+ * Crossunder - returns true when a crosses below b at index i
+ */
+function crossunder(a, b, i) {
+    if (i < 1) return false;
+    if (a[i] === null || a[i - 1] === null || b[i] === null || b[i - 1] === null) return false;
+    return a[i - 1] >= b[i - 1] && a[i] < b[i];
+}
+
+module.exports = {
+    sma,
+    ema,
+    rsi,
+    macd,
+    crossover,
+    crossunder
+};
