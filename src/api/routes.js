@@ -412,7 +412,8 @@ router.post('/backtest', async (req, res) => {
         const backtester = new Backtester({
             initialCapital: 10000,
             positionSize: 0.95,
-            commission: 0
+            commission: 0,
+            slippage: 0
         });
 
         console.log(`[Backtest] Running ${strategyName} for ${symbol}...`);

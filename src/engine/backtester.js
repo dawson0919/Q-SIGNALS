@@ -5,8 +5,8 @@ class Backtester {
     constructor(options = {}) {
         this.initialCapital = options.initialCapital || 10000;
         this.positionSize = options.positionSize || 1; // fraction of capital per trade
-        this.commission = options.commission || 0.001; // 0.1% per trade
-        this.slippage = options.slippage || 0.0005; // 0.05%
+        this.commission = options.commission !== undefined ? options.commission : 0.001; // 0.1% per trade
+        this.slippage = options.slippage !== undefined ? options.slippage : 0.0005; // 0.05%
     }
 
     /**
