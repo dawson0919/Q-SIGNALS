@@ -35,18 +35,22 @@
     </header>
     <main class="max-w-2xl mx-auto">
         <section class="p-4">
-            <div class="grid grid-cols-3 gap-3 mb-6">
-                <div class="bg-surface-dark border border-border-dark p-4 rounded-xl text-center">
-                    <p id="totalStat" class="text-primary text-2xl font-bold">0</p>
-                    <p class="text-[10px] text-slate-400 uppercase mt-1">Total</p>
+            <div class="grid grid-cols-4 gap-2 mb-6">
+                <div class="bg-surface-dark border border-border-dark p-3 rounded-xl text-center">
+                    <p id="totalStat" class="text-primary text-xl font-bold">0</p>
+                    <p class="text-[9px] text-slate-400 uppercase mt-0.5">Total</p>
                 </div>
-                <div class="bg-surface-dark border border-border-dark p-4 rounded-xl text-center">
-                    <p id="basicStat" class="text-2xl font-bold text-white">0</p>
-                    <p class="text-[10px] text-slate-400 uppercase mt-1">Basic</p>
+                <div class="bg-surface-dark border border-border-dark p-3 rounded-xl text-center">
+                    <p id="pendingStat" class="text-yellow-500 text-xl font-bold">0</p>
+                    <p class="text-[9px] text-slate-400 uppercase mt-0.5">Pending</p>
                 </div>
-                <div class="bg-surface-dark border border-primary/20 p-4 rounded-xl text-center">
-                    <p id="premiumStat" class="text-2xl font-bold text-primary">0</p>
-                    <p class="text-[10px] text-primary/60 uppercase mt-1">Premium</p>
+                <div class="bg-surface-dark border border-border-dark p-3 rounded-xl text-center">
+                    <p id="basicStat" class="text-xl font-bold text-white">0</p>
+                    <p class="text-[9px] text-slate-400 uppercase mt-0.5">Basic</p>
+                </div>
+                <div class="bg-surface-dark border border-primary/20 p-3 rounded-xl text-center">
+                    <p id="premiumStat" class="text-xl font-bold text-primary">0</p>
+                    <p class="text-[9px] text-primary/60 uppercase mt-0.5">Premium</p>
                 </div>
             </div>
         </section>
@@ -143,11 +147,18 @@
         }
 
         function updateStats() {
-            const total = allMembers.length;
+            const pending = allApplications.filter(a => a.status === 'pending').length;
             const basic = allMembers.filter(m => m.role === 'standard' || !m.role).length;
             const premium = allMembers.filter(m => m.role === 'advanced' || m.role === 'admin').length;
 
-            document.getElementById('totalStat').textContent = total;
+            // Get unique user IDs across members and applications
+            const allUserIds = new Set([
+                ...allMembers.map(m => m.id),
+                ...allApplications.map(a => a.user_id)
+            ]);
+
+            document.getElementById('totalStat').textContent = allUserIds.size;
+            document.getElementById('pendingStat').textContent = pending;
             document.getElementById('basicStat').textContent = basic;
             document.getElementById('premiumStat').textContent = premium;
         }
@@ -156,27 +167,45 @@
             const list = document.getElementById('memberList');
             list.innerHTML = '';
 
-            let filtered = allMembers;
-            if (filter === 'premium') filtered = allMembers.filter(m => m.role === 'advanced' || m.role === 'admin');
-            if (filter === 'basic') filtered = allMembers.filter(m => !m.role || m.role === 'standard');
+            let filtered = [];
+
             if (filter === 'pending') {
-                const pendingUserIds = allApplications.filter(a => a.status === 'pending').map(a => a.user_id);
-                filtered = allMembers.filter(m => pendingUserIds.includes(m.id));
+                // Show ALL pending applications, even if they don't have a profile yet
+                allApplications.filter(a => a.status === 'pending').forEach(app => {
+                    const member = allMembers.find(m => m.id === app.user_id) || {
+                        id: app.user_id,
+                        email: app.email,
+                        role: 'standard'
+                    };
+                    filtered.push({ ...member, app });
+                });
+            } else {
+                // For other filters, use allMembers as the base
+                allMembers.forEach(m => {
+                    const isPremium = m.role === 'advanced' || m.role === 'admin';
+                    if (filter === 'premium' && !isPremium) return;
+                    if (filter === 'basic' && isPremium) return;
+
+                    const app = allApplications.find(a => a.user_id === m.id && a.status === 'pending');
+                    filtered.push({ ...m, app });
+                });
             }
 
             if (filtered.length === 0) {
                 list.innerHTML = `
                     <div class="py-12 text-center">
                         <span class="material-symbols-outlined text-slate-600 text-4xl mb-2">group_off</span>
-                        <p class="text-slate-500 text-sm">No members found in this category.</p>
+                        <p class="text-slate-500 text-sm">No items found in this category.</p>
+                        <button onclick="location.reload()" class="mt-4 text-primary text-xs font-bold underline">Retry Refresh</button>
                     </div>
                 `;
                 return;
             }
 
-            filtered.forEach(m => {
+            filtered.forEach(item => {
+                const m = item;
                 const isPremium = m.role === 'advanced' || m.role === 'admin';
-                const app = allApplications.find(a => a.user_id === m.id && a.status === 'pending');
+                const app = m.app;
 
                 list.innerHTML += `
                     <div class="bg-surface-dark border border-border-dark rounded-xl p-4 member-card" data-role="${m.role}">
