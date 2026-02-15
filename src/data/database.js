@@ -158,12 +158,12 @@ async function getSubscriptions(userId, token) {
     return data;
 }
 
-async function addSubscription(userId, strategyId, token) {
+async function addSubscription(userId, strategyId, token, symbol = 'BTCUSDT', timeframe = '4h') {
     const { data, error } = await getAuthenticatedClient(token)
         .from('subscriptions')
         .upsert(
-            { user_id: userId, strategy_id: strategyId },
-            { onConflict: 'user_id, strategy_id', ignoreDuplicates: true }
+            { user_id: userId, strategy_id: strategyId, symbol, timeframe },
+            { onConflict: 'user_id, strategy_id, symbol, timeframe', ignoreDuplicates: true }
         );
 
     if (error) {
@@ -174,12 +174,14 @@ async function addSubscription(userId, strategyId, token) {
     return data;
 }
 
-async function removeSubscription(userId, strategyId, token) {
+async function removeSubscription(userId, strategyId, token, symbol = 'BTCUSDT', timeframe = '4h') {
     const { error } = await getAuthenticatedClient(token)
         .from('subscriptions')
         .delete()
         .eq('user_id', userId)
-        .eq('strategy_id', strategyId);
+        .eq('strategy_id', strategyId)
+        .eq('symbol', symbol)
+        .eq('timeframe', timeframe);
     if (error) throw error;
 }
 

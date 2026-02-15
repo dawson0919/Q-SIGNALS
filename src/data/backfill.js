@@ -1,14 +1,14 @@
 // Historical Data Backfill from Binance REST API
 const { insertCandles, getLatestCandleTime, getCandleCount } = require('./database');
 
-const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT'];
+const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'SPXUSDT'];
 const TIMEFRAMES = ['1h', '4h'];
 const BACKFILL_DAYS = parseInt(process.env.BACKFILL_DAYS || '365');
 const BINANCE_SPOT_API = 'https://api.binance.com/api/v3/klines';
 const BINANCE_FUTURES_API = 'https://fapi.binance.com/fapi/v1/klines';
 
 async function fetchKlines(symbol, interval, startTime, endTime, limit = 1000) {
-    const isFutures = symbol === 'XAUUSDT';
+    const isFutures = symbol === 'XAUUSDT' || symbol === 'SPXUSDT';
     const baseUrl = isFutures ? BINANCE_FUTURES_API : BINANCE_SPOT_API;
 
     const params = new URLSearchParams({

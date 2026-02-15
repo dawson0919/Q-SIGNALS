@@ -224,7 +224,7 @@ router.post('/apply-premium', requireAuth, async (req, res) => {
 });
 
 router.post('/subscribe', requireAuth, async (req, res) => {
-    const { strategyId } = req.body;
+    const { strategyId, symbol, timeframe } = req.body;
     const s = strategies[strategyId];
     if (!s) return res.status(404).json({ error: 'Strategy not found' });
 
@@ -247,7 +247,7 @@ router.post('/subscribe', requireAuth, async (req, res) => {
             return res.status(403).json({ error: 'Premium Membership required for this strategy.' });
         }
 
-        await addSubscription(req.user.id, strategyId, req.token);
+        await addSubscription(req.user.id, strategyId, req.token, symbol, timeframe);
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -255,9 +255,9 @@ router.post('/subscribe', requireAuth, async (req, res) => {
 });
 
 router.post('/unsubscribe', requireAuth, async (req, res) => {
-    const { strategyId } = req.body;
+    const { strategyId, symbol, timeframe } = req.body;
     try {
-        await removeSubscription(req.user.id, strategyId, req.token);
+        await removeSubscription(req.user.id, strategyId, req.token, symbol, timeframe);
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: e.message });
