@@ -152,6 +152,9 @@
         <button
           class="tab-btn px-4 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-200 whitespace-nowrap"
           data-filter="Premium">Premium</button>
+        <button
+          class="tab-btn px-4 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-200 whitespace-nowrap"
+          data-filter="Platinum">Platinum</button>
       </div>
     </div>
 
@@ -310,16 +313,18 @@
 
     function createStrategyCard(strat, symbol, symbolShort, timeframe = '4h') {
       const div = document.createElement('div');
-      const isPremium = strat.category === 'Premium';
-      const isOptimized = strat.id === 'macd_ma_optimized';
-      const isTurtle = strat.id === 'turtle_breakout';
+      const isIndex = (symbol === 'SPXUSDT' || symbol === 'NASUSDT');
+      const category = isIndex ? 'Platinum' : (strat.category || 'Basic');
+      const isPlatinum = category === 'Platinum';
 
-      div.className = `strategy-card bg-card-dark rounded-xl border ${isPremium ? 'border-primary/30 premium-gradient' : 'border-border-dark'} overflow-hidden relative flex flex-col`;
-      div.dataset.category = strat.category || 'Basic';
+      div.className = `strategy-card bg-card-dark rounded-xl border ${isPlatinum ? 'border-indigo-500/50 platinum-gradient' : (isPremium ? 'border-primary/30 premium-gradient' : 'border-border-dark')} overflow-hidden relative flex flex-col`;
+      div.dataset.category = category;
 
-      const badgeClass = isPremium
-        ? 'text-[10px] font-bold bg-primary text-background-dark rounded px-1.5 py-0.5 uppercase mb-1 inline-block'
-        : 'text-[10px] font-bold text-slate-400 border border-slate-700 rounded px-1.5 py-0.5 uppercase mb-1 inline-block';
+      const badgeClass = isPlatinum
+        ? 'text-[10px] font-bold bg-indigo-600 text-white rounded px-1.5 py-0.5 uppercase mb-1 inline-block'
+        : isPremium
+          ? 'text-[10px] font-bold bg-primary text-background-dark rounded px-1.5 py-0.5 uppercase mb-1 inline-block'
+          : 'text-[10px] font-bold text-slate-400 border border-slate-700 rounded px-1.5 py-0.5 uppercase mb-1 inline-block';
 
       const authorBadge = isPremium
         ? `<span class="material-symbols-outlined text-primary text-xs ml-1" style="font-variation-settings: 'FILL' 1">verified</span>`
@@ -341,10 +346,10 @@
           <div>
             <div class="flex justify-between items-start mb-3">
               <div>
-                <span class="${badgeClass}">${strat.category || 'Basic'}</span>
+                <span class="${badgeClass}">${category}</span>
                 <span class="text-[10px] font-bold text-slate-500 bg-slate-800 rounded px-1.5 py-0.5 uppercase mb-1 inline-block ml-1">${timeframe}</span>
-                <h3 class="text-xl font-bold text-white leading-tight mt-0.5 line-clamp-1" title="${strat.name} (${symbolShort})">${strat.name} <span class="text-slate-500 text-base">(${symbolShort})</span>${authorBadge}</h3>
-                ${isPremium ? `<p class="text-[10px] text-primary/60 mt-0.5">by ${strat.author || 'QuantSignal'}</p>` : ''}
+                <h3 class="text-xl font-bold text-white leading-tight mt-0.5 line-clamp-1" title="${strat.name} (${symbolShort})">${strat.name} <span class="text-slate-500 text-base">(${symbolShort})</span>${isPlatinum ? `<span class="material-symbols-outlined text-indigo-400 text-xs ml-1" style="font-variation-settings: 'FILL' 1">stars</span>` : authorBadge}</h3>
+                ${(isPremium || isPlatinum) ? `<p class="text-[10px] ${isPlatinum ? 'text-indigo-400/60' : 'text-primary/60'} mt-0.5">by ${strat.author || 'QuantSignal'}</p>` : ''}
               </div>
             </div>
 

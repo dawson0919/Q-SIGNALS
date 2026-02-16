@@ -65,6 +65,10 @@
             justify-content: center;
             z-index: 10;
         }
+
+        .glow-indigo {
+            box-shadow: 0 0 15px rgba(79, 70, 229, 0.4);
+        }
     </style>
 </head>
 
@@ -97,6 +101,8 @@
                             <span id="strategySymbol">--</span>
                             <span class="material-symbols-outlined text-primary text-xs"
                                 style="font-variation-settings: 'FILL' 1">verified</span>
+                            <span id="categoryBadge"
+                                class="text-[9px] bg-primary text-black px-2 py-0.5 rounded-full font-bold uppercase ml-2">--</span>
                         </div>
                     </div>
                 </div>
@@ -325,9 +331,26 @@
                 const sHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
                 const sRes = await fetch(`/api/strategies/${strategyId}`, { headers: sHeaders });
                 const strat = await sRes.json();
-                strategyCategory = strat.category || 'Basic'; // Store category
+
+                const isIndexAsset = (symbol === 'SPXUSDT' || symbol === 'NASUSDT');
+                strategyCategory = isIndexAsset ? 'Platinum' : (strat.category || 'Basic');
+                const isPlatinumAsset = strategyCategory === 'Platinum';
+
                 document.getElementById('strategyName').textContent = strat.name || strategyId;
                 document.getElementById('strategySymbol').textContent = `${symbol.replace('USDT', '/USDT')} • ${tfLabel} • QuantSignal`;
+
+                // Update Badge color
+                const badge = document.getElementById('categoryBadge');
+                if (badge) {
+                    badge.textContent = strategyCategory;
+                    if (isPlatinumAsset) {
+                        badge.className = 'text-[9px] font-bold bg-indigo-600 text-white rounded-full px-2 py-0.5 uppercase tracking-wider glow-indigo ml-2';
+                    } else if (strategyCategory === 'Premium') {
+                        badge.className = 'text-[9px] font-bold bg-primary text-black rounded-full px-2 py-0.5 uppercase tracking-wider ml-2';
+                    } else {
+                        badge.className = 'text-[9px] font-bold bg-slate-700 text-slate-300 rounded-full px-2 py-0.5 uppercase tracking-wider ml-2';
+                    }
+                }
 
                 // Show admin notes (Admin Only UI check + API check)
                 if (isAdmin && strat.adminNotes) {
