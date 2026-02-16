@@ -341,7 +341,17 @@
       const authorBadge = isPremium
         ? `<span class="material-symbols-outlined text-primary text-xs ml-1" style="font-variation-settings: 'FILL' 1">verified</span>`
         : '';
-      // ... (content omitted for brevity, logic continues below) ...
+
+      // RESTORED MISSING DEFINITION
+      const featuredBadge = isOptimized
+        ? `<div class="absolute -right-12 top-6 bg-red-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">workspace_premium</span> MOST PROFITABLE</div>`
+        : isTurtle && symbol === 'BTCUSDT'
+          ? `<div class="absolute -right-12 top-6 bg-orange-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">local_fire_department</span> HOT BTCTRADE</div>`
+          : isTurtle && symbol === 'SPXUSDT' && timeframe === '4h'
+            ? `<div class="absolute -right-12 top-6 bg-blue-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">show_chart</span> BEST FOR SPX</div>`
+            : isTurtle && symbol === 'NASUSDT' && timeframe === '4h'
+              ? `<div class="absolute -right-12 top-6 bg-indigo-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">trending_up</span> BEST FOR NAS</div>`
+              : '';
 
       div.innerHTML = `
         ${featuredBadge}
