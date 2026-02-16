@@ -249,26 +249,22 @@ async function updateSubscriptionSignal(userId, strategyId, symbol, timeframe, s
     try {
         console.log(`[DB] Aggressive sync for ${userId} - ${strategyId}`);
 
-        // 1. Try precise match first
+        // Precise match with symbol normalization
         const cleanTf = (timeframe || '4h').toLowerCase();
         let cleanSym = (symbol || 'BTCUSDT').toUpperCase();
+        if (!cleanSym.endsWith('USDT')) cleanSym += 'USDT';
 
         const { error, data } = await supabase
             .from('subscriptions')
             .update({ latest_signal: signalData })
-            .match({ user_id: userId, strategy_id: strategyId, symbol: cleanSym, timeframe: cleanTf })
-            .select();
+            .match({
+                user_id: userId,
+                strategy_id: strategyId,
+                symbol: cleanSym,
+                timeframe: cleanTf
+            });
 
-        // 2. Fallback: If no rows affected, update any record belonging to this user and strategy
-        // This handles cases where symbol formatting might differ (BTC vs BTCUSDT)
-        if (!data || data.length === 0) {
-            console.log(`[DB] Fallback sync for ${strategyId}`);
-            await supabase
-                .from('subscriptions')
-                .update({ latest_signal: signalData })
-                .eq('user_id', userId)
-                .eq('strategy_id', strategyId);
-        }
+        if (error) throw error;
     } catch (e) {
         console.error('[DB] Signal Persistence Exception:', e.message);
     }
