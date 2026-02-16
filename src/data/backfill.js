@@ -12,7 +12,18 @@ const BINANCE_SPOT_API = 'https://api.binance.com/api/v3/klines';
 const BINANCE_FUTURES_API = 'https://fapi.binance.com/fapi/v1/klines';
 
 async function fetchKlines(symbol, interval, startTime, endTime, limit = 1000) {
-    const isFutures = symbol === 'XAUUSDT' || !!CG_ID_MAP[symbol];
+    // Route to CoinGecko for SPX/NAS
+    if (CG_ID_MAP[symbol]) {
+        // Calculate days from start/end or default back (e.g. 90)
+        let days = 90;
+        if (startTime) {
+            const diff = Date.now() - startTime;
+            days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+        }
+        return fetchKlinesFromCG(symbol, interval, days);
+    }
+
+    const isFutures = symbol === 'XAUUSDT';
     const baseUrl = isFutures ? BINANCE_FUTURES_API : BINANCE_SPOT_API;
 
     const params = new URLSearchParams({
