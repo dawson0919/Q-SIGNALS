@@ -297,14 +297,13 @@ router.get('/subscriptions', requireAuth, async (req, res) => {
                 continue;
             }
 
+            // RESPECT DB VALUES: Use symbol/timeframe from subscription record
             let symbol = sub.symbol || s.defaultParams?.symbol || 'BTCUSDT';
-            let timeframe = '4h';
+            let timeframe = sub.timeframe || '4h'; // Use DB timeframe or default to 4h
 
-            // Special handling for Gold strategies
-            if (s.id === 'three_blade' || s.id === 'turtle_breakout') {
-                symbol = 'XAUUSDT';
-                timeframe = '1h'; // Show the best performance (1H)
-            }
+            // Only override if specifically needed for legacy reasons, but for Turtle/ThreeBlade we want dynamic symbols now.
+            // If DB has 'BTCUSDT' for ThreeBlade but it should be Gold, we might want to migrate DB data instead of hacking here.
+            // For now, removing the override fixes the SPX/NAS display issue.
 
             // Run a quick backtest to get latest trade
             const candles = await getCandleData(symbol, timeframe, { daysBack: 365 });
