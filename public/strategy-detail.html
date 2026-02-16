@@ -563,11 +563,26 @@
             const ctx = document.getElementById('equityChart').getContext('2d');
             if (equityChart) equityChart.destroy();
 
-            const labels = equityCurve.map(p => {
+            // Trim leading flat-line (no trades)
+            let startIndex = 0;
+            if (equityCurve.length > 0) {
+                const initialEquity = equityCurve[0].equity;
+                // Find first index where equity changes significantly (e.g. trade execution)
+                // Or just first non-initial value.
+                const firstChange = equityCurve.findIndex(p => Math.abs(p.equity - initialEquity) > 0.01);
+                if (firstChange > 0) {
+                    // Start a bit before the first change to show context, but not the whole empty period
+                    startIndex = Math.max(0, firstChange - 5);
+                }
+            }
+
+            const relevantData = equityCurve.slice(startIndex);
+
+            const labels = relevantData.map(p => {
                 const d = new Date(p.time);
                 return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:00`;
             });
-            const values = equityCurve.map(p => p.equity);
+            const values = relevantData.map(p => p.equity);
 
             equityChart = new Chart(ctx, {
                 type: 'line',
