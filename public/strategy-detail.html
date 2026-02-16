@@ -305,13 +305,15 @@
             }
 
             // CoinGecko Data Notice
-            if (isSPX) {
+            const isNasdaq = symbol === 'NASUSDT';
+            if (isSPX || isNasdaq) {
                 const infoMsg = document.createElement('div');
                 infoMsg.className = 'mx-4 mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-start gap-2';
+                const assetName = isNasdaq ? '納斯達克 100 (QQQ)' : '標普 500 (SPY)';
                 infoMsg.innerHTML = `
                     <span class="material-symbols-outlined text-blue-400 text-sm mt-0.5">info</span>
                     <div class="text-[11px] text-blue-400/90 leading-tight">
-                        說明：標普 500 (SPY) 數據源自 CoinGecko。受限於精度上限，回測涵蓋最近 <b>90 天</b> 真實股價數據。
+                        說明：${assetName} 數據源自 CoinGecko。受限於精度上限，回測涵蓋最近 <b>90 天</b> 真實股價數據。
                     </div>
                 `;
                 document.querySelector('main').insertBefore(infoMsg, document.getElementById('perfGrid').parentNode.nextSibling);
@@ -326,8 +328,8 @@
                 document.getElementById('strategyName').textContent = strat.name || strategyId;
                 document.getElementById('strategySymbol').textContent = `${symbol.replace('USDT', '/USDT')} • ${tfLabel} • QuantSignal`;
 
-                // Show admin notes if available
-                if (strat.adminNotes) {
+                // Show admin notes (Admin Only UI check + API check)
+                if (isAdmin && strat.adminNotes) {
                     document.getElementById('adminNotesSection').classList.remove('hidden');
                     document.getElementById('adminNotesContent').innerText = strat.adminNotes;
                 }

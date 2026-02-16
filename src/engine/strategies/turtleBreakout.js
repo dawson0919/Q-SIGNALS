@@ -124,7 +124,7 @@ module.exports = {
     description: '海龜突破策略：利用 Pivot High/Low 判斷市場結構。經優化後（BTC 參數：2/5/2；SPY 參數：6/5/15），具有極佳的趨勢捕捉能力，且標普 500 已適配最近 90 天真實股價數據。',
     category: 'Premium',
     author: 'QuantSignal',
-    adminNotes: '[Optimization Report - SPX / SPY]\nSource: CoinGecko (Real Price @ ~$680)\nUpdated: 2026-02-16\n\n4H (90d): L6, R5, Hold15 -> Return +2.12% (Steady)\n1H (90d): L20, R2, Hold40 -> Return +1.38% (Noise filtered)',
+    adminNotes: '[Optimization Report - Indices]\n\n[SPX / SPY]\n4H (90d): L6, R5, Hold15 -> Return +2.12%\n1H (90d): L20, R2, Hold40 -> Return +1.38%\n\n[NAS / QQQ]\n4H (180d): L4, R5, Hold20 -> Return +3.01%\n1H (90d): Volatile - Recommendation 4H only',
     pineScript,
     createStrategy,
     execute: createStrategy({ leftBars: LEFT, rightBars: RIGHT, minHoldBars: MIN_HOLD_BARS }), // Optimized default
