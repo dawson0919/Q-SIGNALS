@@ -86,4 +86,4 @@ start();
 
 // Force restart to clear backtest cache and ensure consistency
 
-// Force restart 2: Apply XAU data source change
+// Force restart 3: Revert XAU to Binance (Final)

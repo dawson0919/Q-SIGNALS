@@ -4,8 +4,7 @@ const { insertCandles, getLatestCandleTime, getCandleCount } = require('./databa
 const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'SPXUSDT', 'NASUSDT'];
 const CG_ID_MAP = {
     'SPXUSDT': 'spdr-s-p-500-etf-ondo-tokenized-etf', // or standard SPX if available
-    'NASUSDT': 'invesco-qqq-etf-ondo-tokenized-etf',
-    'XAUUSDT': 'tether-gold' // Use XAUT as proxy for Gold to bypass Binance limits
+    'NASUSDT': 'invesco-qqq-etf-ondo-tokenized-etf'
 };
 const TIMEFRAMES = ['1h', '4h'];
 const BACKFILL_DAYS = parseInt(process.env.BACKFILL_DAYS || '365');
