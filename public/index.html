@@ -315,23 +315,25 @@
         const strategyList = document.getElementById('strategyList');
         strategyList.innerHTML = '';
 
-        // Define strictly which cards to show as "Featured"
-        const featuredList = [
-          { id: 'granville_eth_4h', symbol: 'BTCUSDT', label: 'BTC', timeframe: '4h' },
-          { id: 'granville_eth_4h', symbol: 'ETHUSDT', label: 'ETH', timeframe: '4h' },
-          { id: 'granville_eth_4h', symbol: 'SOLUSDT', label: 'SOL', timeframe: '4h' },
-          { id: 'granville_eth_4h', symbol: 'XAUUSDT', label: 'GOLD', timeframe: '4h' }, // New XAUT/Gold 4h
-          { id: 'three_blade', symbol: 'XAUUSDT', label: 'GOLD', timeframe: '1h' },
-          { id: 'turtle_breakout', symbol: 'SPXUSDT', label: 'SPX', timeframe: '4h' },
-          { id: 'turtle_breakout', symbol: 'NASUSDT', label: 'NAS', timeframe: '4h' }
-        ];
+        const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'SPXUSDT', 'NASUSDT'];
+        const symbolNames = { BTCUSDT: 'BTC', ETHUSDT: 'ETH', SOLUSDT: 'SOL', XAUUSDT: 'GOLD', SPXUSDT: 'SPX', NASUSDT: 'NAS' };
 
-        for (const item of featuredList) {
-          const strat = data.strategies.find(s => s.id === item.id);
-          if (strat) {
-            const card = createStrategyCard(strat, item.symbol, item.label, item.timeframe);
-            strategyList.appendChild(card);
-            runBacktestForCard(strat.id, item.symbol, card, item.timeframe);
+        for (const strat of data.strategies) {
+          for (const symbol of symbols) {
+            // For Index strategies, only show Turtle Breakout
+            if ((symbol === 'SPXUSDT' || symbol === 'NASUSDT') && strat.id !== 'turtle_breakout') continue;
+
+            // For Gold, show both 1h and 4h
+            if (symbol === 'XAUUSDT' && (strat.id === 'three_blade' || strat.id === 'granville_eth_4h')) {
+              const tf = (strat.id === 'three_blade') ? '1h' : '4h';
+              const card = createStrategyCard(strat, symbol, symbolNames[symbol], tf);
+              strategyList.appendChild(card);
+              runBacktestForCard(strat.id, symbol, card, tf);
+            } else {
+              const card = createStrategyCard(strat, symbol, symbolNames[symbol], '4h');
+              strategyList.appendChild(card);
+              runBacktestForCard(strat.id, symbol, card, '4h');
+            }
           }
         }
       } catch (err) {
@@ -489,12 +491,8 @@
 
         const filter = btn.dataset.filter;
         document.querySelectorAll('.strategy-card').forEach(card => {
-          // Only consider ROI positive (or unknown) cards
-          const isRoiNegative = card.dataset.roiPositive === 'false';
           const categoryMatch = (filter === 'all' || card.dataset.category === filter);
-
-          // If ROI is negative, ALWAYS hide. Otherwise check category.
-          card.style.display = (categoryMatch && !isRoiNegative) ? 'flex' : 'none';
+          card.style.display = categoryMatch ? 'flex' : 'none';
         });
       });
     });
