@@ -246,34 +246,35 @@ async function updateSubscriptionSignal(userId, strategyId, symbol, timeframe, s
     const supabase = getAdminClient();
     if (!userId) return;
 
-    // Standardize for matching
+    // Standardize for matching (always use uppercase symbols with USDT suffix if missing)
     const cleanTf = (timeframe || '4h').toLowerCase();
-    const cleanSym = (symbol || 'BTCUSDT').toUpperCase();
+    let cleanSym = (symbol || 'BTCUSDT').toUpperCase();
+    if (cleanSym.length > 0 && !cleanSym.endsWith('USDT')) cleanSym += 'USDT';
 
     try {
         // Attempt precise match update
-        const { error, count } = await supabase
+        const { error, data } = await supabase
             .from('subscriptions')
             .update({
-                latest_signal: signalData,
-                updated_at: new Date().toISOString()
+                latest_signal: signalData
             })
             .match({
                 user_id: userId,
                 strategy_id: strategyId,
                 symbol: cleanSym,
                 timeframe: cleanTf
-            });
+            })
+            .select();
 
         if (error) {
             console.error(`[DB] Signal PERSIST ERROR for ${cleanSym} ${cleanTf}:`, error.message);
-        } else {
-            // If precise match didn't update anything, try matching just Strategy ID (fallback for legacy records)
-            const { data: check } = await supabase.from('subscriptions').select('id').match({ user_id: userId, strategy_id: strategyId }).limit(1);
-            if (check && check.length > 0) {
-                // Secondary update attempt
-                await supabase.from('subscriptions').update({ latest_signal: signalData }).eq('user_id', userId).eq('strategy_id', strategyId);
-            }
+        } else if (!data || data.length === 0) {
+            // If precise match didn't update anything, try fallback by Strategy ID and Symbol
+            await supabase.from('subscriptions')
+                .update({ latest_signal: signalData })
+                .eq('user_id', userId)
+                .eq('strategy_id', strategyId)
+                .eq('symbol', cleanSym);
         }
     } catch (e) {
         console.error('[DB] Signal Persistence Exception:', e.message);
