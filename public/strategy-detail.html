@@ -391,14 +391,24 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const subs = await res.json();
+
+                console.log('[CheckSub] All Subs:', subs);
+                console.log(`[CheckSub] Looking for: ID=${strategyId}, Sym=${symbol}, TF=${timeframe}`);
+
                 // Check if subscribed to THIS specific variation (Symbol + Timeframe)
                 // Note: Old subscriptions might distinguish only by ID, so be careful.
                 // But for new logic (SPX/NAS), we must check symbol.
-                const isSubscribed = subs.some(s =>
-                    s.strategy_id === strategyId &&
-                    (s.symbol === symbol || !s.symbol) && // If DB has no symbol, assume match (or default)
-                    (s.timeframe === timeframe || !s.timeframe)
-                );
+                const isSubscribed = subs.some(s => {
+                    const matchId = s.strategy_id === strategyId;
+                    const matchSymbol = (s.symbol === symbol || !s.symbol);
+                    const matchTf = (s.timeframe === timeframe || !s.timeframe);
+
+                    // console.log(`[CheckSub] Comparing vs ${s.strategy_id}/${s.symbol}/${s.timeframe}: ID=${matchId}, Sym=${matchSymbol}, TF=${matchTf}`);
+                    return matchId && matchSymbol && matchTf;
+                });
+
+                console.log('[CheckSub] Match Found?', isSubscribed);
+
                 const btn = document.getElementById('subBtn');
                 if (isSubscribed) {
                     btn.textContent = 'Unsubscribe';
@@ -407,7 +417,9 @@
                     btn.textContent = 'Subscribe';
                     btn.className = 'bg-primary text-black font-bold px-5 py-2 rounded-lg glow-primary hover:opacity-90 transition-all text-sm';
                 }
-            } catch (e) { }
+            } catch (e) {
+                console.error('[CheckSub] Error:', e);
+            }
         }
 
         // Expose toggleSubscription to window so we can debug it, 
