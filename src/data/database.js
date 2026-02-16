@@ -173,38 +173,54 @@ async function getSubscriptions(userId, token) {
 }
 
 async function addSubscription(userId, strategyId, token, symbol = 'BTCUSDT', timeframe = '4h') {
-    // 1. Try NEW way (with symbol/timeframe)
     const client = getAuthenticatedClient(token);
 
-    // Note: If columns don't exist, Supabase returns error code '42703' (Undefined Column)
-    // Or if unique constraint doesn't match, it might error on conflict.
-
+    // 1. Try Optimized Upsert (New Schema: ID + Symbol + Timeframe)
+    // We explicitly specify onConflict to target the NEW constraint.
+    // If the OLD constraint (ID only) exists, this might throw a violation error instead of ignoring.
     const { data, error } = await client
         .from('subscriptions')
         .upsert(
             { user_id: userId, strategy_id: strategyId, symbol, timeframe },
             { onConflict: 'user_id, strategy_id, symbol, timeframe', ignoreDuplicates: true }
-        );
+        )
+        .select();
 
     if (error) {
-        console.warn(`[DB] Enhanced subscription failed (${error.code || error.message}). Falling back to legacy mode...`);
+        console.warn(`[DB] Enhanced subscription upsert failed: ${error.message}. Attempting cleanup...`);
 
-        // 2. Fallback (Legacy Mode - ignore symbol/timeframe)
-        // This ensures the site doesn't crash if DB migration hasn't run.
-        const { data: legacyData, error: legacyError } = await client
+        // 2. Conflict Handling (Likely "Key (user_id, strategy_id)=(...) already exists")
+        // If we can't coexist (due to old DB constraint), we SWAP.
+        // DELETE existing subscription for this strategy to make room.
+        const { error: delError } = await client
             .from('subscriptions')
-            .upsert(
-                { user_id: userId, strategy_id: strategyId },
-                { onConflict: 'user_id, strategy_id', ignoreDuplicates: true }
-            );
+            .delete()
+            .eq('user_id', userId)
+            .eq('strategy_id', strategyId); // Delete ANY version of this strategy
 
-        if (legacyError) {
-            // Ignore duplicate key error in legacy mode too
-            if (legacyError.code === '23505') return { success: true };
-            throw legacyError;
+        if (!delError) {
+            console.log(`[DB] Cleared old subscription for ${strategyId} to allow new insertion.`);
+            // 3. Retry Insert after Delete
+            const { data: retryData, error: retryError } = await client
+                .from('subscriptions')
+                .insert(
+                    { user_id: userId, strategy_id: strategyId, symbol, timeframe }
+                )
+                .select();
+
+            if (retryError) {
+                console.error(`[DB] Retry insert failed: ${retryError.message}`);
+                throw retryError;
+            }
+            return retryData;
+        } else {
+            console.error(`[DB] Failed to delete old sub: ${delError.message}`);
         }
-        return legacyData;
+
+        // Fallback to legacy (just in case it's a completely different error)
+        return { success: false, error: error.message };
     }
+
     return data;
 }
 
