@@ -5,8 +5,8 @@
  */
 module.exports = {
     id: 'granville_eth_4h',
-    name: 'Granville Pro (ETH/BTC/SOL)',
-    description: '葛蘭碧法則終極版。針對 BTC/ETH/SOL 自動適配多空、乖離抄底信號。所有參數皆針對最近 180 天行情進行動態最佳化。',
+    name: 'Granville Pro',
+    description: '葛蘭碧法則精華版。自動適配各大資產（BTC/ETH/SOL/GOLD）的多空與趨勢信號。',
     category: 'Premium',
     author: 'QuantSignal Pro',
     params: { ma_p: 110, sl: 0.04 },
@@ -20,9 +20,11 @@ module.exports = {
         let ma_p = 60, sl = 0.04, dev_limit = 999, useShort = true;
 
         if (symbol.includes('BTC')) {
-            ma_p = 180; sl = 0.02; dev_limit = 999; useShort = true; // NEW: Deep Optimized for 49.73% ROI
+            ma_p = 180; sl = 0.02; dev_limit = 999; useShort = true;
         } else if (symbol.includes('SOL')) {
             ma_p = 115; sl = 0.04; dev_limit = 999; useShort = true;
+        } else if (symbol.includes('XAU') || symbol.includes('GOLD')) {
+            ma_p = 30; sl = 0.01; dev_limit = 999; useShort = false; // XAUT/Gold Optimized
         } else {
             ma_p = 110; sl = 0.04; dev_limit = 999; useShort = true; // ETH
         }

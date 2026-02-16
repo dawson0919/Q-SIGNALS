@@ -315,28 +315,23 @@
         const strategyList = document.getElementById('strategyList');
         strategyList.innerHTML = '';
 
-        const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'SPXUSDT', 'NASUSDT'];
-        const symbolNames = { BTCUSDT: 'BTC', ETHUSDT: 'ETH', SOLUSDT: 'SOL', XAUUSDT: 'GOLD', SPXUSDT: 'SPX', NASUSDT: 'NAS' };
+        // Define strictly which cards to show as "Featured"
+        const featuredList = [
+          { id: 'granville_eth_4h', symbol: 'BTCUSDT', label: 'BTC', timeframe: '4h' },
+          { id: 'granville_eth_4h', symbol: 'ETHUSDT', label: 'ETH', timeframe: '4h' },
+          { id: 'granville_eth_4h', symbol: 'SOLUSDT', label: 'SOL', timeframe: '4h' },
+          { id: 'granville_eth_4h', symbol: 'XAUUSDT', label: 'GOLD', timeframe: '4h' }, // New XAUT/Gold 4h
+          { id: 'three_blade', symbol: 'XAUUSDT', label: 'GOLD', timeframe: '1h' },
+          { id: 'turtle_breakout', symbol: 'SPXUSDT', label: 'SPX', timeframe: '4h' },
+          { id: 'turtle_breakout', symbol: 'NASUSDT', label: 'NAS', timeframe: '4h' }
+        ];
 
-        for (const strat of data.strategies) {
-          for (const symbol of symbols) {
-            // Filter redundant cards but keep all core combinations
-            if ((symbol === 'SPXUSDT' || symbol === 'NASUSDT') && strat.id !== 'turtle_breakout') continue;
-
-            // For Gold, show both 1h and 4h
-            if (symbol === 'XAUUSDT' && (strat.id === 'turtle_breakout' || strat.id === 'three_blade')) {
-              const card1h = createStrategyCard(strat, symbol, symbolNames[symbol], '1h');
-              strategyList.appendChild(card1h);
-              runBacktestForCard(strat.id, symbol, card1h, '1h');
-
-              const card4h = createStrategyCard(strat, symbol, symbolNames[symbol], '4h');
-              strategyList.appendChild(card4h);
-              runBacktestForCard(strat.id, symbol, card4h, '4h');
-            } else {
-              const card = createStrategyCard(strat, symbol, symbolNames[symbol], '4h');
-              strategyList.appendChild(card);
-              runBacktestForCard(strat.id, symbol, card, '4h');
-            }
+        for (const item of featuredList) {
+          const strat = data.strategies.find(s => s.id === item.id);
+          if (strat) {
+            const card = createStrategyCard(strat, item.symbol, item.label, item.timeframe);
+            strategyList.appendChild(card);
+            runBacktestForCard(strat.id, item.symbol, card, item.timeframe);
           }
         }
       } catch (err) {
@@ -398,6 +393,7 @@
             ${symbol === 'BTCUSDT' && strat.id === 'granville_eth_4h' ? `<p class="text-[11px] text-amber-500/90 leading-tight mb-4 font-medium border-l-2 border-amber-500 pl-2">特性：針對 BTC 優化的葛蘭碧法則。具備極限乖離過濾器，專注於捕捉主流幣大波段行情。</p>` : ''}
             ${symbol === 'ETHUSDT' && strat.id === 'granville_eth_4h' ? `<p class="text-[11px] text-primary/90 leading-tight mb-4 font-medium border-l-2 border-primary pl-2">特性：針對 ETH 優化的葛蘭碧法則。旗艦級多空雙向策略，結合動態均線濾鏡，捕捉以太坊強勢波段。</p>` : ''}
             ${symbol === 'SOLUSDT' && strat.id === 'granville_eth_4h' ? `<p class="text-[11px] text-purple-400/90 leading-tight mb-4 font-medium border-l-2 border-purple-400 pl-2">特性：針對 SOL 優化的葛蘭碧法則。高波動捕手設計，具備專屬風險防護機制，適合捕捉強勢噴發行情。</p>` : ''}
+            ${(symbol === 'XAUUSDT' || symbol === 'XAUTUSDT') && strat.id === 'granville_eth_4h' ? `<p class="text-[11px] text-yellow-500/90 leading-tight mb-4 font-medium border-l-2 border-yellow-500 pl-2">特性：針對黃金(XAUT)優化的葛蘭碧法則。極致窄幅止損設計，專注於捕捉貴金屬避險趨勢。</p>` : ''}
             
             ${symbol === 'XAUUSDT' && timeframe === '1h' && strat.id === 'three_blade' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：短線爆發型。專為黃金日內交易優化，具備極高的反應速度。</p>` : ''}
             ${symbol === 'XAUUSDT' && timeframe === '4h' && strat.id === 'three_blade' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：穩健波段型。專注於捕捉黃金長期趨勢，適合長線佈局。</p>` : ''}
@@ -538,22 +534,23 @@
       lastTickerUpdate = now;
 
       const container = document.getElementById('priceItems');
-      const symbols = {
-        BTCUSDT: 'BTC',
-        ETHUSDT: 'ETH',
-        SOLUSDT: 'SOL',
-        XAUUSDT: 'GOLD',
-        SPXUSDT: 'SPX',
-        NASUSDT: 'NAS'
-      };
+      const featuredPairs = [
+        { symbol: 'BTCUSDT', timeframe: '4h', id: 'granville_eth_4h', label: 'BTC' },
+        { symbol: 'ETHUSDT', timeframe: '4h', id: 'granville_eth_4h', label: 'ETH' },
+        { symbol: 'SOLUSDT', timeframe: '4h', id: 'granville_eth_4h', label: 'SOL' },
+        { symbol: 'XAUUSDT', timeframe: '4h', id: 'granville_eth_4h', label: 'GOLD' },
+        { symbol: 'XAUUSDT', timeframe: '1h', id: 'three_blade', label: 'GOLD' },
+        { symbol: 'SPXUSDT', timeframe: '4h', id: 'turtle_breakout', label: 'SPX' },
+        { symbol: 'NASUSDT', timeframe: '4h', id: 'turtle_breakout', label: 'NAS' },
+      ];
 
       let itemHtml = '';
-      for (const [sym, name] of Object.entries(symbols)) {
-        const p = prices[sym];
+      for (const pair of featuredPairs) {
+        const p = prices[pair.symbol];
         if (p) {
           const color = p.change24h >= 0 ? 'text-primary' : 'text-red-500';
           itemHtml += `<div class="flex items-center gap-2 shrink-0 px-4">
-            <span class="font-bold text-white text-xs">${name}</span>
+            <span class="font-bold text-white text-xs">${pair.label}</span>
             <span class="font-mono text-xs">$${p.price?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '--'}</span>
             <span class="${color} text-[10px] font-bold">${p.change24h >= 0 ? '+' : ''}${p.change24h?.toFixed(2) || '0.00'}%</span>
           </div>`;
