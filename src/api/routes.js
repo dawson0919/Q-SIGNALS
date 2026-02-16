@@ -43,6 +43,15 @@ strategies[dualEma.id] = dualEma;
 const macdMa = require('../engine/strategies/macdMa');
 strategies[macdMa.id] = macdMa;
 
+// Debug Cache
+router.get('/debug/cache', (req, res) => {
+    res.json({
+        keys: Object.keys(backtestCache),
+        size: Object.keys(backtestCache).length,
+        sample: Object.keys(backtestCache).length > 0 ? backtestCache[Object.keys(backtestCache)[0]].strategy : null
+    });
+});
+
 // List all strategies
 router.get('/strategies', async (req, res) => {
     // Check if admin to show hidden
