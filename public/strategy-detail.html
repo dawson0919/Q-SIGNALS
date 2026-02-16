@@ -410,26 +410,44 @@
             } catch (e) { }
         }
 
-        async function toggleSubscription() {
-            // FIX: Re-parse params to ensure we have the correct scope context
-            const params = new URLSearchParams(window.location.search);
-            const strategyId = params.get('strategy');
-            const symbol = params.get('symbol') || 'BTCUSDT';
-            const timeframe = params.get('timeframe') || '4h';
-
-            const { user, token } = await getUser();
-            if (!user) {
-                if (confirm('Please login to subscribe to strategy signals. Go to login page?')) {
-                    window.location.href = '/login.html';
-                }
-                return;
-            }
-
+        // Expose toggleSubscription to window so we can debug it, 
+        // but primarily we will bind it via event listener.
+        window.toggleSubscription = async function () {
+            console.log('[Subscribe] Button clicked');
             const btn = document.getElementById('subBtn');
-            const isSubscribed = btn.textContent === 'Unsubscribe';
-            const endpoint = isSubscribed ? '/api/unsubscribe' : '/api/subscribe';
+            const originalText = btn.textContent;
+
+            // 1. Visual Feedback immediately
+            btn.textContent = 'Processing...';
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
 
             try {
+                // FIX: Re-parse params 
+                const params = new URLSearchParams(window.location.search);
+                const strategyId = params.get('strategy');
+                const symbol = params.get('symbol') || 'BTCUSDT';
+                const timeframe = params.get('timeframe') || '4h';
+
+                console.log(`[Subscribe] Params: ${strategyId}, ${symbol}, ${timeframe}`);
+
+                const { user, token } = await getUser();
+                if (!user) {
+                    if (confirm('Please login to subscribe. Go to login page?')) {
+                        window.location.href = '/login.html';
+                        return;
+                    }
+                    // Revert button
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    return;
+                }
+
+                const isSubscribed = originalText === 'Unsubscribe'; // Use text content as source of truth
+                const endpoint = isSubscribed ? '/api/unsubscribe' : '/api/subscribe';
+                console.log(`[Subscribe] Sending request to ${endpoint}`);
+
                 const res = await fetch(endpoint, {
                     method: 'POST',
                     headers: {
@@ -440,15 +458,35 @@
                 });
 
                 if (res.ok) {
-                    checkSubStatus(token);
+                    console.log('[Subscribe] Success');
+                    await checkSubStatus(token); // refresh status
+                    // Button state is updated by checkSubStatus
                 } else {
                     const data = await res.json();
+                    console.error('[Subscribe] Error:', data);
                     alert(data.error || 'Operation failed');
+                    // Revert button on error
+                    btn.textContent = originalText;
                 }
             } catch (e) {
-                alert('Request failed. Please try again later.');
+                console.error('[Subscribe] Exception:', e);
+                alert('Request failed: ' + e.message);
+                btn.textContent = originalText;
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
-        }
+        };
+
+        // Bind Event Listener safely
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('subBtn');
+            if (btn) {
+                // Remove old onclick attribute to be safe
+                btn.removeAttribute('onclick');
+                btn.addEventListener('click', window.toggleSubscription);
+            }
+        });
 
         function renderReport(data) {
             const s = data.summary;
