@@ -301,9 +301,27 @@ router.get('/subscriptions', requireAuth, async (req, res) => {
             let symbol = sub.symbol || s.defaultParams?.symbol || 'BTCUSDT';
             let timeframe = sub.timeframe || '4h'; // Use DB timeframe or default to 4h
 
-            // Only override if specifically needed for legacy reasons, but for Turtle/ThreeBlade we want dynamic symbols now.
-            // If DB has 'BTCUSDT' for ThreeBlade but it should be Gold, we might want to migrate DB data instead of hacking here.
-            // For now, removing the override fixes the SPX/NAS display issue.
+            // OPTIMIZATION: Check backtest cache first to ensure consistency with Detail Page
+            const cacheKey = `${sub.strategy_id}_${symbol}_${timeframe}`;
+            const cachedResult = backtestCache[cacheKey];
+
+            // If cache exists and is fresh (e.g. < 60 mins), use it directly
+            if (cachedResult && cachedResult.recentTrades && cachedResult.recentTrades.length > 0) {
+                // Check freshness (optional, but good practice)
+                // Assuming cache is populated by frequent visits or cron, it's likely better than re-calc
+                console.log(`[Subscriptions] Using cached result for ${cacheKey}`);
+                const latestSignal = cachedResult.recentTrades[0];
+
+                results.push({
+                    ...sub,
+                    strategy_name: s.name,
+                    latest_signal: latestSignal,
+                    performance: cachedResult.performance || {} // Use cached perf too
+                });
+                continue; // Skip re-calculation
+            }
+
+            // ALIGN BACKTEST LOGIC WITH DETAIL PAGE (Fallback if no cache)
 
             // ALIGN BACKTEST LOGIC WITH DETAIL PAGE
             // Ensure data length matches what users see on strategy detail to produce consistent signals (EMA drift etc.)
