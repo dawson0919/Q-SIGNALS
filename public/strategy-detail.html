@@ -391,10 +391,13 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const subs = await res.json();
+                // Check if subscribed to THIS specific variation (Symbol + Timeframe)
+                // Note: Old subscriptions might distinguish only by ID, so be careful.
+                // But for new logic (SPX/NAS), we must check symbol.
                 const isSubscribed = subs.some(s =>
                     s.strategy_id === strategyId &&
-                    (s.symbol === symbol || (!s.symbol && symbol === 'BTCUSDT')) &&
-                    (s.timeframe === timeframe || (!s.timeframe && timeframe === '4h'))
+                    (s.symbol === symbol || !s.symbol) && // If DB has no symbol, assume match (or default)
+                    (s.timeframe === timeframe || !s.timeframe)
                 );
                 const btn = document.getElementById('subBtn');
                 if (isSubscribed) {
@@ -408,6 +411,12 @@
         }
 
         async function toggleSubscription() {
+            // FIX: Re-parse params to ensure we have the correct scope context
+            const params = new URLSearchParams(window.location.search);
+            const strategyId = params.get('strategy');
+            const symbol = params.get('symbol') || 'BTCUSDT';
+            const timeframe = params.get('timeframe') || '4h';
+
             const { user, token } = await getUser();
             if (!user) {
                 if (confirm('Please login to subscribe to strategy signals. Go to login page?')) {
