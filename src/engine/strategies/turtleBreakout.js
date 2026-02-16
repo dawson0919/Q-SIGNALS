@@ -121,10 +121,10 @@ const MIN_HOLD_BARS = 2;
 module.exports = {
     id: 'turtle_breakout',
     name: '海龜交易策略',
-    description: '海龜突破策略：利用 Pivot High/Low 判斷市場結構。經優化後（BTC 參數：2/5/2；SPY 參數：6/5/15），具有極佳的趨勢捕捉能力，且標普 500 已適配最近 90 天真實股價數據。',
+    description: '海龜突破策略：利用 Pivot High/Low 判斷市場結構，具有極佳的趨勢捕捉能力。已針對黃金 (15/2/4)、標普 500 (6/5/15) 及主流加密貨幣完成參數優化調校。',
     category: 'Premium',
     author: 'QuantSignal',
-    adminNotes: '[Optimization Report - Indices]\n\n[SPX / SPY]\n4H (90d): L6, R5, Hold15 -> Return +2.12%\n1H (90d): L20, R2, Hold40 -> Return +1.38%\n\n[NAS / QQQ]\n4H (180d): L4, R5, Hold20 -> Return +3.01%\n1H (90d): Volatile - Recommendation 4H only',
+    adminNotes: '[Optimization Report]\n\n[XAU / GOLD]\n4H (180d): L15, R2, Hold4 -> Return +15.51%\n1H (45d): L8, R2, Hold2 -> Return +1.57%\n\n[SPX / SPY]\n4H (90d): L6, R5, Hold15 -> Return +2.12%\n1H (90d): L20, R2, Hold40 -> Return +1.38%\n\n[NAS / QQQ]\n4H (180d): L4, R5, Hold20 -> Return +3.01%\n1H (90d): Recommendation 4H only (Noise)',
     pineScript,
     createStrategy,
     execute: createStrategy({ leftBars: LEFT, rightBars: RIGHT, minHoldBars: MIN_HOLD_BARS }), // Optimized default

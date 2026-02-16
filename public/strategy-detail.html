@@ -354,8 +354,26 @@
 
                 // Show admin notes (Admin Only UI check + API check)
                 if (isAdmin && strat.adminNotes) {
+                    let notes = strat.adminNotes;
+
+                    // Smart Filter: Filter by symbol to prevent "misplacement" confusion
+                    const mapping = {
+                        'XAUUSDT': '[XAU / GOLD]',
+                        'SPXUSDT': '[SPX / SPY]',
+                        'SPYUSDT': '[SPX / SPY]',
+                        'NASUSDT': '[NAS / QQQ]'
+                    };
+                    const header = mapping[symbol];
+                    if (header && notes.includes(header)) {
+                        const globalHeader = notes.split('[')[0];
+                        const start = notes.indexOf(header);
+                        let end = notes.indexOf('[', start + 1);
+                        if (end === -1) end = notes.length;
+                        notes = (globalHeader + notes.substring(start, end)).trim();
+                    }
+
                     document.getElementById('adminNotesSection').classList.remove('hidden');
-                    document.getElementById('adminNotesContent').innerText = strat.adminNotes;
+                    document.getElementById('adminNotesContent').innerText = notes;
                 }
             } catch (e) { }
 

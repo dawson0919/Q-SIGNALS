@@ -121,7 +121,7 @@ function createStrategy(params = {}) {
 module.exports = {
     id: 'three_blade',
     name: '均線三刀流 (Triple MA)',
-    description: '使用 20/50/200 EMA 趨勢。黃金1H優化版為 8/15/30，專攻短線波動。',
+    description: '三刀流趨勢策略：利用三條不同週期的 EMA 形成的多空排列捕捉趨勢。已針對黃金 1H (8/15/30) 與 4H (20/60/120) 以及主流幣完成優化。',
     category: 'Premium',
     author: 'QuantSignal',
     pineScript,
