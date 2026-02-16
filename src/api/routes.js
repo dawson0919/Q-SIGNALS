@@ -255,10 +255,11 @@ router.post('/subscribe', requireAuth, async (req, res) => {
 
         console.log(`[Subscribe] User: ${req.user.email} (${req.user.id}), Role: ${role}, Strategy: ${s.name} (${s.category}), Symbol: ${symbol}`);
 
-        // SPX Restriction
-        if (symbol === 'SPXUSDT' && !['admin', 'platinum'].includes(role)) {
-            console.log(`[Subscribe] DENIED: SPX requiring Platinum.`);
-            return res.status(403).json({ error: 'Platinum Membership required for S&P 500 signals.' });
+        // Index Restrictions (SPX/NAS)
+        const isIndex = (symbol === 'SPXUSDT' || symbol === 'NASUSDT');
+        if (isIndex && !['admin', 'platinum'].includes(role)) {
+            console.log(`[Subscribe] DENIED: ${symbol} requiring Platinum.`);
+            return res.status(403).json({ error: 'Platinum Membership required for Index (SPY/QQQ) signals.' });
         }
 
         if (s.category === 'Premium' && !['admin', 'advanced', 'platinum'].includes(role)) {

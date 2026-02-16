@@ -275,13 +275,14 @@
             const isSPX = symbol === 'SPXUSDT';
 
             // Base Visibility Logic
-            if (isSPX) {
-                // SPX is restricted to Admin or Platinum
+            const isIndex = (symbol === 'SPXUSDT' || symbol === 'NASUSDT');
+            if (isIndex) {
+                // Indices are restricted to Admin or Platinum
                 if (isAdmin || isPlatinum) {
                     document.getElementById('signalSection').style.display = 'block';
                     document.getElementById('signalPremiumOverlay').style.display = 'none';
                 } else {
-                    // Show chart but hide/blur signal for SPX
+                    // Show chart but hide/blur signal for Indices
                     document.getElementById('signalSection').style.display = 'block';
                     document.getElementById('signalPremiumOverlay').style.display = 'flex';
                     const link = document.querySelector('#signalPremiumOverlay a');

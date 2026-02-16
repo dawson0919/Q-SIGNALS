@@ -331,7 +331,9 @@
           ? `<div class="absolute -right-12 top-6 bg-orange-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">local_fire_department</span> HOT BTCTRADE</div>`
           : isTurtle && symbol === 'SPXUSDT' && timeframe === '4h'
             ? `<div class="absolute -right-12 top-6 bg-blue-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">show_chart</span> BEST FOR SPX</div>`
-            : '';
+            : isTurtle && symbol === 'NASUSDT' && timeframe === '4h'
+              ? `<div class="absolute -right-12 top-6 bg-indigo-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">trending_up</span> BEST FOR NAS</div>`
+              : '';
 
       div.innerHTML = `
         ${featuredBadge}
@@ -354,11 +356,13 @@
             ${symbol === 'XAUUSDT' && timeframe === '4h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：波段趨勢型。使用寬鬆參數 (15K/2K)，捕捉黃金較大級別的趨勢突破，避免過度頻繁交易。</p>` : ''}
             
             ${symbol === 'SPXUSDT' && timeframe === '1h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-blue-400/80 leading-tight mb-4 font-medium italic">特性：穩健型。參數 (20/2/40) 專為過濾標普 500 日內雜訊設計，專注於捕捉中長線真實動量。</p>` : ''}
-            ${symbol === 'SPXUSDT' && timeframe === '4h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-blue-400/80 leading-tight mb-4 font-medium italic">特性：波段捕手。採用參數 (6/5/15) 針對近年標普 500 的階梯式漲勢進行優化，回測收益回歸真實股價表現。</p>` : ''}
+            ${symbol === 'SPXUSDT' && timeframe === '4h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-blue-400/80 leading-tight mb-4 font-medium italic">特性：波段捕手。採用參數 (6/5/15) 針對近年標普 500 的階梯式漲勢進行優化。</p>` : ''}
+            
+            ${symbol === 'NASUSDT' && timeframe === '4h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-indigo-400/80 leading-tight mb-4 font-medium italic">特性：高增長趨勢。優化參數 (4/5/20) 專為納斯達克 100 強勢波段設計，靈敏捕捉科技股升浪。</p>` : ''}
             
             <div class="grid grid-cols-2 gap-2 mb-4">
               <div class="bg-background-dark/50 p-2 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
-                <p class="text-[10px] text-slate-500 uppercase font-bold mb-0.5" id="roi-label-${strat.id}-${symbol}-${timeframe}">Total ROI (${symbol === 'SPXUSDT' ? '90d' : (timeframe === '1h' ? '45d' : '180d')})</p>
+                <p class="text-[10px] text-slate-500 uppercase font-bold mb-0.5" id="roi-label-${strat.id}-${symbol}-${timeframe}">Total ROI (${(symbol === 'SPXUSDT' || symbol === 'NASUSDT') ? '90d' : (timeframe === '1h' ? '45d' : '180d')})</p>
                 <p class="text-xl font-black text-primary truncate" id="roi-${strat.id}-${symbol}-${timeframe}">--</p>
               </div>
               <div class="bg-background-dark/50 p-2 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
@@ -508,7 +512,8 @@
         ETHUSDT: 'ETH',
         SOLUSDT: 'SOL',
         XAUUSDT: 'GOLD',
-        SPXUSDT: 'SPX'
+        SPXUSDT: 'SPX',
+        NASUSDT: 'NAS'
       };
 
       let itemHtml = '';
