@@ -413,8 +413,9 @@
 
         if (data.summary) {
           const roi = data.summary.totalReturn;
-          // === UPDATED LOGIC: Hide ONLY if confirmed negative ===
-          const isNegative = roi <= 0;
+          // === UPDATED LOGIC: Hide ONLY if strictly negative ===
+          // Allow 0% (neutral/no data) to be visible
+          const isNegative = roi < 0;
 
           if (isNegative) {
             card.style.display = 'none';
