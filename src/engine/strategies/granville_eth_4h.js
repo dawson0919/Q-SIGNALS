@@ -1,12 +1,8 @@
 /**
- * Granville Pro (Ultimate Master Version) 
+ * Granville Pro (Ultimate Master Version) - STATELESS REfACTORED
  * ROI: ETH ~55%, BTC ~52%, SOL ~46%
- * Fixed: Added internal state tracking for Stop Loss support in Stepper Engine.
+ * Fixed: Removed dangerous global state. Uses per-run cache in indicatorData.
  */
-
-let lastEntryPrice = 0;
-let currentPos = 0;
-
 module.exports = {
     id: 'granville_eth_4h',
     name: 'Granville Pro (ETH/BTC/SOL)',
@@ -16,73 +12,74 @@ module.exports = {
     params: { ma_p: 60, sl: 0.06 },
 
     execute: (candles, indicatorData, i, indicators) => {
-        if (i < 100) return null;
+        // 1. Initialize per-run signals cache if not present
+        // This makes the strategy thread-safe and request-isolated.
+        if (!indicatorData._granvilleSignals) {
+            const symbol = (candles[0] && candles[0].symbol || 'ETHUSDT').toUpperCase();
 
-        const symbol = (candles[0] && candles[0].symbol || 'ETHUSDT').toUpperCase();
+            // Parameter Selection based on our deep optimization
+            let ma_p = 60;
+            let sl = 0.06;
+            let dev_limit = 999;
+            let useShort = true;
 
-        // 1. Parameter Selection
-        let ma_p = 60;
-        let sl = 0.06;
-        let dev_limit = 999;
-        let useShort = true;
+            if (symbol.includes('BTC')) {
+                ma_p = 100; sl = 0.05; dev_limit = 0.08; useShort = false;
+            } else if (symbol.includes('SOL')) {
+                ma_p = 60; sl = 0.05; dev_limit = 0.10; useShort = false;
+            } else {
+                ma_p = 60; sl = 0.06; useShort = true;
+            }
 
-        if (symbol.includes('BTC')) {
-            ma_p = 100; sl = 0.05; dev_limit = 0.08; useShort = false;
-        } else if (symbol.includes('SOL')) {
-            ma_p = 60; sl = 0.05; dev_limit = 0.10; useShort = false;
-        } else {
-            ma_p = 60; sl = 0.06; useShort = true;
+            const close = indicatorData.close;
+            const emaArr = indicatorData.ema[ma_p] || indicators.ema(close, ma_p);
+
+            const signals = new Array(candles.length).fill(null);
+            let internalPos = 0;
+            let entryP = 0;
+
+            // Pre-calculate all signals for the entire period
+            for (let j = 1; j < candles.length; j++) {
+                const ma = emaArr[j];
+                const maPrev = emaArr[j - 1];
+                if (ma === undefined || maPrev === undefined) continue;
+
+                const curP = close[j];
+                const prevP = close[j - 1];
+                const dev = (curP - ma) / ma;
+
+                // EXIT LOGIC
+                if (internalPos > 0) {
+                    if (curP <= entryP * (1 - sl)) {
+                        signals[j] = 'CLOSE_LONG'; internalPos = 0;
+                    } else if (curP < ma && prevP >= maPrev) {
+                        signals[j] = useShort ? 'SELL' : 'CLOSE_LONG';
+                        internalPos = useShort ? -1 : 0;
+                        if (useShort) entryP = curP;
+                    }
+                } else if (internalPos < 0) {
+                    if (curP >= entryP * (1 + sl)) {
+                        signals[j] = 'CLOSE_SHORT'; internalPos = 0;
+                    } else if (curP > ma && prevP <= maPrev) {
+                        signals[j] = 'BUY';
+                        internalPos = 1;
+                        entryP = curP;
+                    }
+                }
+
+                // ENTRY LOGIC
+                if (internalPos === 0) {
+                    if ((curP > ma && prevP <= maPrev) || (dev < -dev_limit)) {
+                        signals[j] = 'BUY'; internalPos = 1; entryP = curP;
+                    } else if (useShort && curP < ma && prevP >= maPrev) {
+                        signals[j] = 'SELL'; internalPos = -1; entryP = curP;
+                    }
+                }
+            }
+            indicatorData._granvilleSignals = signals;
         }
 
-        const close = indicatorData.close;
-        const emaArr = indicatorData.ema[ma_p] || indicators.ema(close, ma_p);
-
-        const ma = emaArr[i];
-        const maPrev = emaArr[i - 1];
-        const curPrice = close[i];
-        const prevPrice = close[i - 1];
-        const deviation = (curPrice - ma) / ma;
-
-        // Reset state on first candle of backtest
-        if (i === 100) { lastEntryPrice = 0; currentPos = 0; }
-
-        // --- 2. EXIT / STOP LOSS LOGIC ---
-        if (currentPos > 0) {
-            // Trend Exit (Cross Below MA)
-            if (curPrice < ma && prevPrice >= maPrev) {
-                currentPos = 0; return 'CLOSE_LONG';
-            }
-            // Stop Loss
-            if (curPrice <= lastEntryPrice * (1 - sl)) {
-                currentPos = 0; return 'CLOSE_LONG';
-            }
-        } else if (currentPos < 0) {
-            // Trend Exit (Cross Above MA)
-            if (curPrice > ma && prevPrice <= maPrev) {
-                currentPos = 0; return 'CLOSE_SHORT';
-            }
-            // Stop Loss
-            if (curPrice >= lastEntryPrice * (1 + sl)) {
-                currentPos = 0; return 'CLOSE_SHORT';
-            }
-        }
-
-        // --- 3. ENTRY LOGIC ---
-        if (currentPos === 0) {
-            // S1 (Cross Above) or S4 (Deep Negative Deviation)
-            if ((curPrice > ma && prevPrice <= maPrev) || (deviation < -dev_limit)) {
-                lastEntryPrice = curPrice;
-                currentPos = 1;
-                return 'BUY'; // Signal to open LONG
-            }
-            // S5 (Death Cross)
-            if (useShort && curPrice < ma && prevPrice >= maPrev) {
-                lastEntryPrice = curPrice;
-                currentPos = -1;
-                return 'SELL'; // Signal to open SHORT
-            }
-        }
-
-        return null;
+        // 2. Return the pre-calculated signal for the current candle index
+        return indicatorData._granvilleSignals[i];
     }
 };
