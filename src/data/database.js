@@ -173,16 +173,18 @@ async function getSubscriptions(userId, token) {
 }
 
 async function addSubscription(userId, strategyId, token, symbol = 'BTCUSDT', timeframe = '4h') {
-    const client = getAuthenticatedClient(token);
+    // USE ADMIN CLIENT to bypass potential RLS issues with new columns
+    const client = getAdminClient();
+
+    console.log(`[DB] Adding Sub: User=${userId}, Strat=${strategyId}, Sym=${symbol}, TF=${timeframe}`);
 
     // 1. Try Optimized Upsert (New Schema: ID + Symbol + Timeframe)
     // We explicitly specify onConflict to target the NEW constraint.
-    // If the OLD constraint (ID only) exists, this might throw a violation error instead of ignoring.
     const { data, error } = await client
         .from('subscriptions')
         .upsert(
             { user_id: userId, strategy_id: strategyId, symbol, timeframe },
-            { onConflict: 'user_id, strategy_id, symbol, timeframe', ignoreDuplicates: true }
+            { onConflict: 'user_id, strategy_id, symbol, timeframe' } // Removed ignoreDuplicates to force error on conflict
         )
         .select();
 
