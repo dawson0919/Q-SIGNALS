@@ -479,7 +479,7 @@
                         const time = new Date(timeStr).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
 
                         const priceValue = signal.entryPrice || signal.price || 0;
-                        const priceDisplay = typeof priceValue === 'number' ? priceValue.toLocaleString() : priceValue;
+                        const priceDisplay = typeof priceValue === 'number' ? priceValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : priceValue;
 
                         signalHtml = `
                         <div class="flex flex-col items-end">
@@ -490,7 +490,12 @@
                     `;
                     }
 
-                    const displayStratName = sub.strategy_name || sub.strategy_id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                    let displayStratName = sub.strategy_name || sub.strategy_id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+                    // Force update for renamed Granville Pro
+                    if (sub.strategy_id === 'granville_eth_4h') {
+                        displayStratName = 'Granville Pro';
+                    }
 
                     list.innerHTML += `
                     <div class="bg-surface-dark border border-border-dark p-3 rounded-xl flex items-center justify-between hover:border-primary/20 transition-all cursor-pointer" onclick="window.location.href='strategy-detail.html?strategy=${sub.strategy_id}&symbol=${sub.symbol}&timeframe=${sub.timeframe}'">
