@@ -107,6 +107,51 @@ function startPriceMonitor() {
 
     connect(spotUrl, false);
     connect(futuresUrl, true);
+
+    // CoinGecko Polling for SPX/SPY Real Price
+    function pollCoinGecko() {
+        const https = require('https');
+        const cgId = 'spdr-s-p-500-etf-ondo-tokenized-etf';
+        const options = {
+            hostname: 'api.coingecko.com',
+            path: `/api/v3/simple/price?ids=${cgId}&vs_currencies=usd&include_24hr_change=true`,
+            headers: { 'User-Agent': 'Mozilla/5.0' }
+        };
+
+        https.get(options, res => {
+            let data = '';
+            res.on('data', d => data += d);
+            res.on('end', () => {
+                try {
+                    const json = JSON.parse(data);
+                    if (json[cgId]) {
+                        const price = json[cgId].usd;
+                        const change = json[cgId].usd_24h_change || 0;
+
+                        // Treat it as SPXUSDT in our system
+                        currentPrices['SPXUSDT'] = {
+                            price: price,
+                            change24h: change,
+                            timestamp: Date.now(),
+                            source: 'coingecko'
+                        };
+
+                        if (global.broadcastPrices) {
+                            global.broadcastPrices(currentPrices);
+                        }
+                    }
+                } catch (e) {
+                    console.error('[PriceMonitor] CoinGecko parse error:', e.message);
+                }
+            });
+        }).on('error', e => {
+            console.error('[PriceMonitor] CoinGecko fetch error:', e.message);
+        });
+    }
+
+    // Initial fetch and 60s interval
+    pollCoinGecko();
+    setInterval(pollCoinGecko, 60000);
 }
 
 function stopPriceMonitor() {

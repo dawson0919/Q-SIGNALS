@@ -420,7 +420,9 @@
                 signalType.textContent = isBuy ? 'BUY' : 'SELL';
                 signalType.className = `text-3xl font-black italic ${isBuy ? 'text-primary' : 'text-red-500'}`;
 
-                document.getElementById('signalPrice').textContent = `@ $${latest.entryPrice.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+                const price = latest.entryPrice;
+                const precision = price < 1 ? 4 : 2;
+                document.getElementById('signalPrice').textContent = `@ $${price.toLocaleString('en-US', { minimumFractionDigits: precision, maximumFractionDigits: precision })}`;
                 const entryDate = new Date(latest.entryTime);
                 const timeStr = entryDate.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
                 document.getElementById('signalTime').querySelector('span:last-child').textContent = `Signal Time: ${timeStr}`;

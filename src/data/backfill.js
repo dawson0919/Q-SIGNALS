@@ -43,11 +43,73 @@ async function fetchKlines(symbol, interval, startTime, endTime, limit = 1000) {
     }
 }
 
+async function fetchKlinesFromCG(symbol, interval, days) {
+    const cgId = 'spdr-s-p-500-etf-ondo-tokenized-etf';
+    const baseUrl = `https://api.coingecko.com/api/v3/coins/${cgId}/market_chart?vs_currency=usd&days=${days}`;
+
+    console.log(`[Backfill] Fetching ${symbol} from CoinGecko (${days} days)...`);
+
+    try {
+        const res = await fetch(baseUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+        if (!res.ok) throw new Error(`CG API error: ${res.status}`);
+        const data = await res.json();
+
+        if (!data.prices || data.prices.length === 0) return [];
+
+        // CG returns [ts, price]. We need to convert/group into candles.
+        const candles = [];
+        const intervalMs = (interval === '4h' ? 4 : 1) * 60 * 60 * 1000;
+
+        // Group points by interval
+        const groups = {};
+        for (const [ts, price] of data.prices) {
+            const bucket = Math.floor(ts / intervalMs) * intervalMs;
+            if (!groups[bucket]) groups[bucket] = [];
+            groups[bucket].push(price);
+        }
+
+        const sortedBuckets = Object.keys(groups).sort((a, b) => parseInt(a) - parseInt(b));
+
+        for (const bucketStr of sortedBuckets) {
+            const bucket = parseInt(bucketStr);
+            const prices = groups[bucket];
+            candles.push({
+                openTime: bucket,
+                open: prices[0],
+                high: Math.max(...prices),
+                low: Math.min(...prices),
+                close: prices[prices.length - 1],
+                volume: 0,
+                closeTime: bucket + intervalMs - 1
+            });
+        }
+
+        return candles;
+    } catch (err) {
+        console.error(`[Backfill] CG Failed for ${symbol}:`, err.message);
+        return [];
+    }
+}
+
 // Backfill a single symbol with pagination
 async function backfillSymbol(symbol, timeframe) {
+    const isCG = symbol === 'SPXUSDT';
     const latestTime = await getLatestCandleTime(symbol, timeframe);
     const now = Date.now();
     let startTime;
+
+    if (isCG) {
+        // CoinGecko historical data handling
+        // CG gives hourly for 90d, daily for the rest.
+        // We'll fetch 90d to ensure good 1h/4h resolution.
+        const days = 90;
+        const candles = await fetchKlinesFromCG(symbol, timeframe, days);
+        if (candles.length > 0) {
+            const count = await insertCandles(symbol, timeframe, candles);
+            console.log(`[Backfill] ${symbol} (${timeframe}): Inserted ${count} candles from CoinGecko`);
+        }
+        return;
+    }
 
     if (latestTime) {
         // Incremental: start from last known candle
