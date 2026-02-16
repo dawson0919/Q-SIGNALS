@@ -1,6 +1,7 @@
 // API Routes
 const express = require('express');
 const router = express.Router();
+const jwt = require('jsonwebtoken'); // Import JWT
 const Backtester = require('../engine/backtester');
 const { getCandleData } = require('../engine/dataFetcher');
 const { parsePineScript } = require('../engine/pineParser');
@@ -12,6 +13,7 @@ const {
     getSubscriptions,
     addSubscription,
     removeSubscription,
+    updateSubscriptionSignal, // New Import
     applyPremium,
     getApplications,
     updateApplicationStatus,
@@ -310,45 +312,54 @@ router.get('/subscriptions', requireAuth, async (req, res) => {
                 // RESPECT DB VALUES: Use symbol/timeframe from subscription record
                 let symbol = sub.symbol || s.defaultParams?.symbol || 'BTCUSDT';
                 let timeframe = sub.timeframe || '4h'; // Use DB timeframe or default to 4h
+                // STRATEGY: 
+                // 1. Check DB Persistence (The new "Direct from Detail" method)
+                // 2. Check Memory Cache (The old method)
 
-                // OPTIMIZATION: Check backtest cache first to ensure consistency with Detail Page
-                // Try multiple keys to handle potential case mismatch (4h vs 4H)
-                const keysToTry = [
-                    `${sub.strategy_id}_${symbol}_${timeframe}`,
-                    `${sub.strategy_id}_${symbol}_${timeframe.toLowerCase()}`,
-                    `${sub.strategy_id}_${symbol}_${timeframe.toUpperCase()}`
-                ];
+                let latestSignal = null;
+                let performance = {};
 
-                let cachedResult = null;
-                for (const key of keysToTry) {
-                    if (backtestCache[key]) {
-                        cachedResult = backtestCache[key];
-                        // console.log(`[Subscriptions] Cache hit for ${key}`);
-                        break;
+                // 1. DB Persistence
+                if (sub.latest_signal) {
+                    // console.log(`[Subscriptions] Using DB Persisted signal for ${sub.strategy_id}`);
+                    latestSignal = sub.latest_signal;
+                    // Note: performance might not be stored in latest_signal? 
+                    // latest_signal is just the trade signal. 
+                    // Performance is usually calculated from full backtest. 
+                    // However, for the 'Signal' badge, we only need the trade.
+                    // If we want performance stats on profile card, we might need to store them too?
+                    // But Profile card only shows signal status (BUY/SELL).
+                }
+
+                // 2. Memory Cache Fallback (if DB is empty)
+                else {
+                    const keysToTry = [
+                        `${sub.strategy_id}_${symbol}_${timeframe}`,
+                        `${sub.strategy_id}_${symbol}_${timeframe.toLowerCase()}`,
+                        `${sub.strategy_id}_${symbol}_${timeframe.toUpperCase()}`
+                    ];
+
+                    let cachedResult = null;
+                    for (const key of keysToTry) {
+                        if (backtestCache[key]) {
+                            cachedResult = backtestCache[key];
+                            break;
+                        }
+                    }
+
+                    if (cachedResult && cachedResult.recentTrades && cachedResult.recentTrades.length > 0) {
+                        // console.log(`[Subscriptions] Using cached result for ${cachedResult.strategy.name}`);
+                        latestSignal = cachedResult.recentTrades[0];
+                        performance = cachedResult.performance || {};
                     }
                 }
 
-                if (cachedResult && cachedResult.recentTrades && cachedResult.recentTrades.length > 0) {
-                    // console.log(`[Subscriptions] Using cached result for ${cachedResult.strategy.name} (${cachedResult.strategy.symbol}, ${cachedResult.strategy.timeframe})`);
-                    const latestSignal = cachedResult.recentTrades[0];
-
-                    results.push({
-                        ...sub,
-                        strategy_name: s.name,
-                        latest_signal: latestSignal,
-                        performance: cachedResult.performance || {}
-                    });
-                } else {
-                    // NO RE-CALCULATION: Just return basic info if no cache
-                    // User explicitly requested to NOT re-calculate on profile page.
-                    // This relies on detail page visits or background jobs to populate cache.
-                    results.push({
-                        ...sub,
-                        strategy_name: s.name,
-                        latest_signal: null,
-                        performance: {}
-                    });
-                }
+                results.push({
+                    ...sub,
+                    strategy_name: s.name,
+                    latest_signal: latestSignal,
+                    performance: performance
+                });
             } catch (err) {
                 console.error(`[Subscriptions] Error processing ${sub.strategy_id} for user ${req.user.id}: ${err.message}`);
                 // Continue to next sub, don't crash whole list
@@ -519,6 +530,32 @@ router.post('/backtest', async (req, res) => {
         // Cache result (include timeframe in key!)
         const cacheKey = `${strategyId || 'custom'}_${symbol}_${timeframe}`;
         backtestCache[cacheKey] = result;
+
+        // PERSIST SIGNAL FOR SUBSCRIBED USER (if logged in)
+        // This solves the 'Profile Page No Signal' issue permanently.
+        const authHeader = req.headers['authorization'];
+        let userId = null;
+        if (authHeader) {
+            const token = authHeader.split(' ')[1];
+            if (token) {
+                const jwt = require('jsonwebtoken'); // Ensure this is available or use existing import if any
+                // If not imported globally, require it here.
+                // Actually authenticatToken usually puts user in req.user, but we skipped middleware.
+                try {
+                    const user = jwt.verify(token, process.env.JWT_SECRET);
+                    userId = user.id;
+                } catch (e) { }
+            }
+        }
+
+        if (userId && result.recentTrades && result.recentTrades.length > 0) {
+            // Assuming updateSubscriptionSignal is imported or defined elsewhere
+            // For example: const { updateSubscriptionSignal } = require('../data/database');
+            updateSubscriptionSignal(userId, strategyId, symbol, timeframe, result.recentTrades[0]);
+        } else if (userId) {
+            // Even if no trades (null signal), update it so profile knows "No Signal" is current state.
+            updateSubscriptionSignal(userId, strategyId, symbol, timeframe, null);
+        }
 
         res.json(result);
     } catch (err) {

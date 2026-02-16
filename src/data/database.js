@@ -237,6 +237,35 @@ async function removeSubscription(userId, strategyId, token, symbol = 'BTCUSDT',
     if (error) throw error;
 }
 
+// Update latest_signal for a subscription (Persistent Cache)
+async function updateSubscriptionSignal(userId, strategyId, symbol, timeframe, signalData) {
+    const supabase = getSupabase();
+    if (!userId) return;
+
+    try {
+        const { error } = await supabase
+            .from('subscriptions')
+            .update({
+                latest_signal: signalData,
+                // last_signal_at: new Date() // Optional if column exists
+            })
+            .match({
+                user_id: userId,
+                strategy_id: strategyId,
+                symbol: symbol,
+                timeframe: timeframe
+            });
+
+        if (error) {
+            console.error('[DB] Failed to persist signal:', error.message);
+        } else {
+            // console.log(`[DB] Persisted signal for ${symbol} ${timeframe}`);
+        }
+    } catch (e) {
+        console.error('[DB] Exception saving signal:', e.message);
+    }
+}
+
 // --- Premium Applications ---
 async function applyPremium(userId, email, account, token) {
     const { data, error } = await getAuthenticatedClient(token)
@@ -351,6 +380,7 @@ module.exports = {
     getSubscriptions,
     addSubscription,
     removeSubscription,
+    updateSubscriptionSignal,
     applyPremium,
     getApplications,
     updateApplicationStatus,
