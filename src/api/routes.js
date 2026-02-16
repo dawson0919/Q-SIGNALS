@@ -291,68 +291,53 @@ router.get('/subscriptions', requireAuth, async (req, res) => {
         const results = [];
 
         for (const sub of subs) {
-            const s = strategies[sub.strategy_id];
-            if (!s) {
-                console.log(`[Subscriptions] Strategy not found: ${sub.strategy_id}`);
-                continue;
-            }
+            try {
+                const s = strategies[sub.strategy_id];
+                if (!s) {
+                    console.log(`[Subscriptions] Strategy not found: ${sub.strategy_id}`);
+                    continue;
+                }
 
-            // RESPECT DB VALUES: Use symbol/timeframe from subscription record
-            let symbol = sub.symbol || s.defaultParams?.symbol || 'BTCUSDT';
-            let timeframe = sub.timeframe || '4h'; // Use DB timeframe or default to 4h
+                // RESPECT DB VALUES: Use symbol/timeframe from subscription record
+                let symbol = sub.symbol || s.defaultParams?.symbol || 'BTCUSDT';
+                let timeframe = sub.timeframe || '4h'; // Use DB timeframe or default to 4h
 
-            // OPTIMIZATION: Check backtest cache first to ensure consistency with Detail Page
-            const cacheKey = `${sub.strategy_id}_${symbol}_${timeframe}`;
-            const cachedResult = backtestCache[cacheKey];
+                // OPTIMIZATION: Check backtest cache first to ensure consistency with Detail Page
+                const cacheKey = `${sub.strategy_id}_${symbol}_${timeframe}`;
+                const cachedResult = backtestCache[cacheKey];
 
-            // If cache exists and is fresh (e.g. < 60 mins), use it directly
-            if (cachedResult && cachedResult.recentTrades && cachedResult.recentTrades.length > 0) {
-                // Check freshness (optional, but good practice)
-                // Assuming cache is populated by frequent visits or cron, it's likely better than re-calc
-                console.log(`[Subscriptions] Using cached result for ${cacheKey}`);
-                const latestSignal = cachedResult.recentTrades[0];
+                if (cachedResult && cachedResult.recentTrades && cachedResult.recentTrades.length > 0) {
+                    console.log(`[Subscriptions] Using cached result for ${cacheKey}`);
+                    const latestSignal = cachedResult.recentTrades[0];
 
+                    results.push({
+                        ...sub,
+                        strategy_name: s.name,
+                        latest_signal: latestSignal,
+                        performance: cachedResult.performance || {}
+                    });
+                } else {
+                    // NO RE-CALCULATION: Just return basic info if no cache
+                    // User explicitly requested to NOT re-calculate on profile page.
+                    // This relies on detail page visits or background jobs to populate cache.
+                    results.push({
+                        ...sub,
+                        strategy_name: s.name,
+                        latest_signal: null,
+                        performance: {}
+                    });
+                }
+            } catch (err) {
+                console.error(`[Subscriptions] Error processing ${sub.strategy_id} for user ${req.user.id}: ${err.message}`);
+                // Continue to next sub, don't crash whole list
+                // Optionally push an error state so UI knows?
                 results.push({
                     ...sub,
-                    strategy_name: s.name,
-                    latest_signal: latestSignal,
-                    performance: cachedResult.performance || {} // Use cached perf too
+                    strategy_name: strategies[sub.strategy_id]?.name || sub.strategy_id,
+                    latest_signal: null,
+                    error: "Data unavailable"
                 });
-                continue; // Skip re-calculation
             }
-
-            // ALIGN BACKTEST LOGIC WITH DETAIL PAGE (Fallback if no cache)
-
-            // ALIGN BACKTEST LOGIC WITH DETAIL PAGE
-            // Ensure data length matches what users see on strategy detail to produce consistent signals (EMA drift etc.)
-            const isIndex = (symbol === 'SPXUSDT' || symbol === 'NASUSDT');
-            const daysBack = isIndex ? 90 : (timeframe === '1h' ? 45 : 180);
-
-            const candles = await getCandleData(symbol, timeframe, { daysBack });
-            console.log(`[Subscriptions] Backtesting ${s.name} on ${symbol} with ${candles.length} candles`);
-
-            const strategyFn = s.createStrategy ? s.createStrategy(s.defaultParams) : s.execute;
-
-            const backtester = new Backtester();
-            const report = backtester.run(strategyFn, candles);
-
-            const latestSignal = report.recentTrades && report.recentTrades.length > 0
-                ? report.recentTrades[0]
-                : null;
-
-            if (latestSignal) {
-                console.log(`[Subscriptions] Signal found for ${s.name}: ${latestSignal.type} @ ${latestSignal.entryPrice}`);
-            } else {
-                console.log(`[Subscriptions] No signal found for ${s.name} (Trades: ${report.totalTrades})`);
-            }
-
-            results.push({
-                ...sub,
-                symbol,
-                timeframe,
-                strategyName: s.name,
-                latestSignal
-            });
         }
         res.json(results);
     } catch (e) {
