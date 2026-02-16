@@ -40,7 +40,7 @@ class Backtester {
             volume: candles.map(c => c.volume),
         };
 
-        [5, 8, 10, 15, 20, 30, 35, 50, 60, 90, 100, 120, 130, 200, 250].forEach(p => {
+        [5, 8, 10, 15, 17, 20, 30, 35, 50, 60, 90, 100, 120, 130, 200, 250].forEach(p => {
             indicatorData.sma[p] = indicators.sma(closes, p);
             indicatorData.ema[p] = indicators.ema(closes, p);
         });
