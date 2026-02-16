@@ -305,8 +305,12 @@ router.get('/subscriptions', requireAuth, async (req, res) => {
             // If DB has 'BTCUSDT' for ThreeBlade but it should be Gold, we might want to migrate DB data instead of hacking here.
             // For now, removing the override fixes the SPX/NAS display issue.
 
-            // Run a quick backtest to get latest trade
-            const candles = await getCandleData(symbol, timeframe, { daysBack: 365 });
+            // ALIGN BACKTEST LOGIC WITH DETAIL PAGE
+            // Ensure data length matches what users see on strategy detail to produce consistent signals (EMA drift etc.)
+            const isIndex = (symbol === 'SPXUSDT' || symbol === 'NASUSDT');
+            const daysBack = isIndex ? 90 : (timeframe === '1h' ? 45 : 180);
+
+            const candles = await getCandleData(symbol, timeframe, { daysBack });
             console.log(`[Subscriptions] Backtesting ${s.name} on ${symbol} with ${candles.length} candles`);
 
             const strategyFn = s.createStrategy ? s.createStrategy(s.defaultParams) : s.execute;
