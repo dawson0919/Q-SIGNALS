@@ -79,7 +79,10 @@
         <div class="flex items-center gap-3">
             <a href="index.html"><span
                     class="material-symbols-outlined cursor-pointer text-slate-400">arrow_back</span></a>
-            <h1 class="font-bold text-lg tracking-tight">Strategy Detail</h1>
+            <div class="flex flex-col">
+                <h1 class="font-bold text-lg tracking-tight leading-none">Strategy Detail</h1>
+                <span class="text-[9px] text-slate-500 font-bold uppercase mt-0.5">策略詳情</span>
+            </div>
         </div>
         <div class="flex gap-4">
             <span class="material-symbols-outlined text-slate-400">share</span>
@@ -107,33 +110,43 @@
                     </div>
                 </div>
                 <button id="subBtn" onclick="toggleSubscription()"
-                    class="bg-primary text-black font-bold px-5 py-2 rounded-lg glow-primary hover:opacity-90 transition-all text-sm">Subscribe</button>
+                    class="flex flex-col items-center bg-primary text-black font-bold px-5 py-1.5 rounded-lg glow-primary hover:opacity-90 transition-all leading-none">
+                    <span class="text-sm">Subscribe</span>
+                    <span class="text-[8px] font-bold opacity-70">訂閱追蹤</span>
+                </button>
             </div>
 
             <!-- Performance Grid -->
             <div class="grid grid-cols-2 gap-3" id="perfGrid">
                 <div class="bg-surface-dark border border-border-dark p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1">Total Return (<span
-                            id="roiTitlePeriod">--</span>)</p>
+                    <p class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1 leading-none">Total
+                        Return (<span id="roiTitlePeriod">--</span>)</p>
+                    <span class="text-[8px] text-slate-600 font-bold uppercase block mb-1">累計回報率</span>
                     <p class="text-2xl font-bold text-primary" id="metricReturn">--</p>
                     <p class="text-[10px] text-primary/60 mt-1 flex items-center gap-1"><span
                             class="material-symbols-outlined text-xs">trending_up</span> <span
-                            id="returnPeriodLabel">Performance</span></p>
+                            id="returnPeriodLabel">回測績效</span></p>
                 </div>
                 <div class="bg-surface-dark border border-border-dark p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1">Max Drawdown</p>
+                    <p class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1 leading-none">Max
+                        Drawdown</p>
+                    <span class="text-[8px] text-slate-600 font-bold uppercase block mb-1">最大回撤</span>
                     <p class="text-2xl font-bold" id="metricDD">--</p>
-                    <p class="text-[10px] text-slate-500 mt-1" id="metricDDLabel">Risk Profile</p>
+                    <p class="text-[10px] text-slate-500 mt-1" id="metricDDLabel">風險評估</p>
                 </div>
                 <div class="bg-surface-dark border border-border-dark p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1">盈虧比</p>
+                    <p class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1 leading-none">Profit
+                        Factor</p>
+                    <span class="text-[8px] text-slate-600 font-bold uppercase block mb-1">盈虧比</span>
                     <p class="text-2xl font-bold text-white" id="metricPLRatio">--</p>
-                    <p class="text-[10px] text-slate-500 mt-1">Avg Win / Avg Loss</p>
+                    <p class="text-[10px] text-slate-500 mt-1">累積盈利 / 累積虧損</p>
                 </div>
                 <div class="bg-surface-dark border border-border-dark p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1">Win Rate</p>
+                    <p class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1 leading-none">Win Rate
+                    </p>
+                    <span class="text-[8px] text-slate-600 font-bold uppercase block mb-1">勝率</span>
                     <p class="text-2xl font-bold text-white" id="metricWinRate">--</p>
-                    <p class="text-[10px] text-slate-500 mt-1">Historical avg.</p>
+                    <p class="text-[10px] text-slate-500 mt-1">歷史平均勝率</p>
                 </div>
             </div>
         </section>
@@ -167,11 +180,12 @@
                 <!-- Premium Overlay (hidden by default) -->
                 <div id="signalPremiumOverlay" class="premium-overlay" style="display:none">
                     <span class="material-symbols-outlined text-primary text-4xl mb-2">lock</span>
-                    <p class="text-white font-bold text-sm mb-1">🔒 Premium Feature</p>
+                    <p class="text-white font-bold text-sm mb-1 leading-none">🔒 Premium Feature</p>
+                    <span class="text-[9px] text-slate-500 font-bold uppercase mb-2">進階會員專屬</span>
                     <p class="text-slate-400 text-xs text-center px-4 mb-3">Upgrade to Advanced to view live signals</p>
                     <a href="/profile.html"
                         class="bg-primary text-black px-4 py-2 rounded-lg font-bold text-xs hover:opacity-90 transition-all">UPGRADE
-                        NOW</a>
+                        NOW <span class="text-[10px] block opacity-70">立即升級</span></a>
                 </div>
                 <!-- Signal Content -->
                 <div id="signalContent">
@@ -182,7 +196,9 @@
                             <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                         </span>
                     </div>
-                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-widest">Latest Signal</p>
+                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-widest leading-none">Latest Signal
+                    </p>
+                    <span class="text-[9px] text-slate-600 font-bold uppercase">最新交易信號</span>
                     <div class="flex items-baseline gap-2 mt-2">
                         <span class="text-3xl font-black italic" id="signalType">--</span>
                         <span class="text-xl font-bold text-white" id="signalPrice">--</span>
@@ -196,8 +212,9 @@
 
         <!-- Quant Metrics -->
         <section class="p-4">
-            <h3 class="font-bold text-base mb-3">Quant Metrics</h3>
-            <div class="bg-surface-dark border border-border-dark rounded-xl divide-y divide-border-dark"
+            <h3 class="font-bold text-base leading-none">Quant Metrics</h3>
+            <span class="text-[9px] text-slate-600 font-bold uppercase">量化績效指標表</span>
+            <div class="bg-surface-dark border border-border-dark rounded-xl divide-y divide-border-dark mt-3"
                 id="quantMetrics">
                 <div class="flex justify-between items-center p-4"><span class="text-slate-400 text-sm">Profit
                         Factor</span><span class="font-bold text-white" id="metricPF">--</span></div>
@@ -217,8 +234,9 @@
 
         <!-- Recent Trades -->
         <section class="p-4">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="font-bold text-base">Recent Trades</h3>
+            <div class="flex flex-col items-start mb-4">
+                <h3 class="font-bold text-base leading-none">Recent Trades</h3>
+                <span class="text-[9px] text-slate-600 font-bold uppercase mt-0.5">近期交易紀錄</span>
             </div>
             <div class="space-y-3" id="tradeList"></div>
         </section>
@@ -226,15 +244,23 @@
 
     </main>
 
-    <!-- Bottom Nav -->
     <nav
-        class="fixed bottom-0 left-0 right-0 bg-background-dark border-t border-border-dark px-6 py-3 flex justify-between items-center z-50">
-        <a href="index.html" class="flex flex-col items-center gap-1 text-slate-500"><span
-                class="material-symbols-outlined">home</span><span class="text-[10px]">Home</span></a>
-        <a id="adminNavLink" href="admin.html" class="hidden flex-col items-center gap-1 text-slate-500"><span
-                class="material-symbols-outlined">terminal</span><span class="text-[10px]">Admin</span></a>
-        <a href="profile.html" class="flex flex-col items-center gap-1 text-slate-500"><span
-                class="material-symbols-outlined">person</span><span class="text-[10px]">Profile</span></a>
+        class="fixed bottom-0 left-0 right-0 bg-background-dark/95 backdrop-blur-md border-t border-border-dark px-6 pb-6 pt-3 flex justify-between items-center z-50">
+        <a href="index.html" class="flex flex-col items-center gap-1 text-slate-500">
+            <span class="material-symbols-outlined">home</span>
+            <span class="text-[10px] font-black leading-none">HOME</span>
+            <span class="text-[8px] font-bold opacity-60">首頁</span>
+        </a>
+        <a id="adminNavLink" href="admin.html" class="hidden flex-col items-center gap-1 text-slate-500">
+            <span class="material-symbols-outlined">terminal</span>
+            <span class="text-[10px] font-black leading-none">ADMIN</span>
+            <span class="text-[8px] font-bold opacity-60">管理端</span>
+        </a>
+        <a href="profile.html" class="flex flex-col items-center gap-1 text-slate-500">
+            <span class="material-symbols-outlined">person</span>
+            <span class="text-[10px] font-black leading-none">PROFILE</span>
+            <span class="text-[8px] font-bold opacity-60">個人資料</span>
+        </a>
     </nav>
 
     <script>

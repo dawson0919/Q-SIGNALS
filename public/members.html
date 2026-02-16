@@ -28,7 +28,10 @@
         class="sticky top-0 z-50 bg-background-dark/80 backdrop-blur-md border-b border-border-dark px-4 py-3 flex items-center justify-between">
         <div class="flex items-center gap-3">
             <a href="admin.html"><span class="material-symbols-outlined text-slate-400">arrow_back</span></a>
-            <h1 class="font-bold text-lg">Member Audit</h1>
+            <div class="flex flex-col">
+                <h1 class="font-bold text-lg leading-none">Member Audit</h1>
+                <span class="text-[9px] text-slate-500 font-bold uppercase mt-0.5">會員審核中心</span>
+            </div>
         </div>
         <div class="flex items-center gap-2">
             <span class="px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold">ADMIN</span>
@@ -60,18 +63,26 @@
 
     <nav
         class="fixed bottom-0 left-0 right-0 bg-background-dark/95 backdrop-blur-md border-t border-border-dark px-6 pb-6 pt-3 flex justify-between items-center z-50">
-        <a href="index.html" class="flex flex-col items-center gap-1 text-slate-500"><span
-                class="material-symbols-outlined">home</span><span
-                class="text-[10px] font-bold uppercase">Home</span></a>
-        <a href="admin.html" class="flex flex-col items-center gap-1 text-slate-500"><span
-                class="material-symbols-outlined">terminal</span><span
-                class="text-[10px] font-bold uppercase">Admin</span></a>
-        <a href="members.html" class="flex flex-col items-center gap-1 text-primary"><span
-                class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">group</span><span
-                class="text-[10px] font-bold uppercase text-primary">Members</span></a>
-        <a href="profile.html" class="flex flex-col items-center gap-1 text-slate-500"><span
-                class="material-symbols-outlined">person</span><span
-                class="text-[10px] font-bold uppercase">Profile</span></a>
+        <a href="index.html" class="flex flex-col items-center gap-1 text-slate-500">
+            <span class="material-symbols-outlined">home</span>
+            <span class="text-[10px] font-black leading-none">HOME</span>
+            <span class="text-[8px] font-bold opacity-60">首頁</span>
+        </a>
+        <a href="admin.html" class="flex flex-col items-center gap-1 text-slate-500">
+            <span class="material-symbols-outlined">terminal</span>
+            <span class="text-[10px] font-black leading-none">ADMIN</span>
+            <span class="text-[8px] font-bold opacity-60">管理端</span>
+        </a>
+        <a href="members.html" class="flex flex-col items-center gap-1 text-primary">
+            <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">group</span>
+            <span class="text-[10px] font-black leading-none text-primary">MEMBERS</span>
+            <span class="text-[8px] font-bold opacity-80 text-primary/60">成員審核</span>
+        </a>
+        <a href="profile.html" class="flex flex-col items-center gap-1 text-slate-500">
+            <span class="material-symbols-outlined">person</span>
+            <span class="text-[10px] font-black leading-none">PROFILE</span>
+            <span class="text-[8px] font-bold opacity-60">個人資料</span>
+        </a>
     </nav>
 
     <script src="/js/auth.js"></script>
@@ -135,16 +146,19 @@
             const statsHtml = `
             <div class="grid grid-cols-3 gap-2 mb-3">
                 <div class="bg-surface-dark border border-border-dark p-3 rounded-xl text-center">
-                    <p class="text-white text-xl font-bold">${total}</p>
-                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Total Members</p>
+                    <p class="text-white text-xl font-bold leading-none">${total}</p>
+                    <p class="text-[10px] text-slate-500 uppercase font-black tracking-widest mt-2">Total</p>
+                    <p class="text-[8px] text-slate-600 font-bold uppercase mt-0.5">總會員數</p>
                 </div>
                 <div class="bg-primary/5 border border-primary/20 p-3 rounded-xl text-center">
-                    <p class="text-primary text-xl font-bold">${onlineCount}</p>
-                    <p class="text-[10px] text-primary/60 uppercase font-bold tracking-wider">Online Now</p>
+                    <p class="text-primary text-xl font-bold leading-none">${onlineCount}</p>
+                    <p class="text-[10px] text-primary/60 uppercase font-black tracking-widest mt-2">Online</p>
+                    <p class="text-[8px] text-primary/40 font-bold uppercase mt-0.5">在線人數</p>
                 </div>
                 <div class="bg-surface-dark border border-border-dark p-3 rounded-xl text-center">
-                    <p class="text-yellow-500 text-xl font-bold">${pending}</p>
-                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Pending Apps</p>
+                    <p class="text-yellow-500 text-xl font-bold leading-none">${pending}</p>
+                    <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest mt-2">Pending</p>
+                    <p class="text-[8px] text-slate-600 font-bold uppercase mt-0.5">待審核</p>
                 </div>
             </div>
             <div class="grid grid-cols-3 gap-2 mb-6 text-center">
@@ -166,17 +180,18 @@
 
         function renderFilters() {
             const filters = [
-                { id: 'all', label: 'All' },
-                { id: 'platinum', label: 'Platinum' },
-                { id: 'premium', label: 'Advanced' },
-                { id: 'basic', label: 'Basic' },
-                { id: 'pending', label: 'Pending' }
+                { id: 'all', label: 'All', zh: '全部' },
+                { id: 'platinum', label: 'Platinum', zh: '白金' },
+                { id: 'premium', label: 'Advanced', zh: '進階' },
+                { id: 'basic', label: 'Basic', zh: '基礎' },
+                { id: 'pending', label: 'Pending', zh: '待審' }
             ];
 
             const html = filters.map(f => `
                 <button onclick="setFilter('${f.id}')" 
-                    class="member-filter px-3 py-1 text-xs font-bold rounded-lg transition-colors whitespace-nowrap ${currentFilter === f.id ? 'bg-primary text-black' : 'bg-surface-dark text-slate-400 border border-border-dark'}">
-                    ${f.label}
+                    class="member-filter flex flex-col items-center px-3 py-1 text-xs font-bold rounded-lg transition-colors whitespace-nowrap ${currentFilter === f.id ? 'bg-primary text-black' : 'bg-surface-dark text-slate-400 border border-border-dark'} leading-none">
+                    <span class="uppercase">${f.label}</span>
+                    <span class="text-[7px] opacity-70 mt-0.5">${f.zh}</span>
                 </button>
             `).join('');
             document.getElementById('filterButtons').innerHTML = html;

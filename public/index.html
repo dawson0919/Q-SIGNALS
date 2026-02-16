@@ -103,7 +103,10 @@
       <div class="bg-primary p-1.5 rounded-lg">
         <span class="material-symbols-outlined text-background-dark font-bold text-xl">query_stats</span>
       </div>
-      <h1 class="text-xl font-bold tracking-tight text-white">QuantSignal</h1>
+      <div class="flex flex-col">
+        <h1 class="text-xl font-bold tracking-tight text-white leading-none">QuantSignal</h1>
+        <span class="text-[9px] text-slate-500 font-bold uppercase tracking-tighter mt-0.5">量化交易信號平台</span>
+      </div>
     </div>
     <div class="flex items-center gap-3">
       <div id="dbStatus"
@@ -111,7 +114,10 @@
         <span class="w-1.5 h-1.5 rounded-full bg-red-500" id="dbStatusDot"></span>
         <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter" id="dbStatusText">DB Error</span>
       </div>
-      <a href="login.html" id="authLink" class="text-sm text-primary font-bold hover:underline">Login</a>
+      <a href="login.html" id="authLink" class="flex flex-col items-end">
+        <span class="text-sm text-primary font-bold hover:underline">Login</span>
+        <span class="text-[9px] text-slate-500 font-medium">登入 / 註冊</span>
+      </a>
     </div>
   </header>
 
@@ -120,7 +126,10 @@
     <div id="priceTicker" class="flex items-center py-2 px-4">
       <div class="flex items-center gap-2 shrink-0 bg-card-dark z-10 pr-4">
         <span class="w-2 h-2 rounded-full bg-primary pulse-green"></span>
-        <span class="text-[10px] uppercase tracking-widest text-primary font-bold">LIVE</span>
+        <div class="flex flex-col items-center leading-none">
+          <span class="text-[10px] uppercase tracking-widest text-primary font-bold">LIVE</span>
+          <span class="text-[8px] text-primary/60 font-medium">實時行情</span>
+        </div>
       </div>
       <div id="priceItems" class="price-ticker">
         <span class="text-slate-500 px-4">Loading prices...</span>
@@ -135,10 +144,12 @@
         class="bg-gradient-to-r from-yellow-500/10 to-transparent border border-yellow-500/20 rounded-xl p-3 flex items-start gap-3">
         <span class="material-symbols-outlined text-yellow-500 text-xl shrink-0 mt-0.5">campaign</span>
         <div>
-          <p class="text-xs text-yellow-500 font-bold mb-1">FREE PREMIUM ACCESS</p>
+          <p class="text-xs text-yellow-500 font-bold mb-1 italic">FREE PREMIUM ACCESS <span
+              class="text-[10px] font-normal not-italic text-yellow-500/70">免費獲得進階權限</span></p>
           <p class="text-[11px] text-slate-300 leading-relaxed">Register on our partner exchange to get <span
-              class="text-white font-bold">FREE Premium Strategy Signals</span>! Submit your Account ID in Profile to
-            apply.</p>
+              class="text-white font-bold">FREE Premium Strategy Signals</span>!
+            <br /><span class="text-slate-500 text-[10px]">在合作交易平台註冊，即可免費獲得進階策略信號！請至個人資料提交帳號 ID。</span>
+          </p>
         </div>
         <a href="profile.html"
           class="ml-auto text-[10px] bg-yellow-500/20 text-yellow-500 px-2 py-1 rounded font-bold hover:bg-yellow-500/30 whitespace-nowrap">GO
@@ -149,17 +160,20 @@
     <!-- Strategy Type Tabs -->
     <div class="px-4 pt-4">
       <div class="flex border-b border-border-dark overflow-x-auto">
-        <button class="tab-btn px-4 py-3 text-sm font-semibold border-b-2 border-primary text-primary whitespace-nowrap"
-          data-filter="all">All Strategies</button>
         <button
-          class="tab-btn px-4 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-200 whitespace-nowrap"
-          data-filter="Basic">Basic (Free)</button>
+          class="tab-btn px-4 py-2 text-sm font-semibold border-b-2 border-primary text-primary whitespace-nowrap flex flex-col items-center"
+          data-filter="all"><span>All Strategies</span><span
+            class="text-[9px] font-normal opacity-70">全部策略</span></button>
         <button
-          class="tab-btn px-4 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-200 whitespace-nowrap"
-          data-filter="Premium">Premium</button>
+          class="tab-btn px-4 py-2 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-200 whitespace-nowrap flex flex-col items-center"
+          data-filter="Basic"><span>Basic</span><span class="text-[9px] font-normal opacity-70">基礎 (免費)</span></button>
         <button
-          class="tab-btn px-4 py-3 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-200 whitespace-nowrap"
-          data-filter="Platinum">Platinum</button>
+          class="tab-btn px-4 py-2 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-200 whitespace-nowrap flex flex-col items-center"
+          data-filter="Premium"><span>Premium</span><span class="text-[9px] font-normal opacity-70">進階會員</span></button>
+        <button
+          class="tab-btn px-4 py-2 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-200 whitespace-nowrap flex flex-col items-center"
+          data-filter="Platinum"><span>Platinum</span><span
+            class="text-[9px] font-normal opacity-70">白金專屬</span></button>
       </div>
     </div>
 
@@ -191,6 +205,7 @@
             <span
               class="text-[10px] font-black bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded uppercase tracking-widest">Market
               Top Asset</span>
+            <span class="text-[9px] text-yellow-500/60 font-bold uppercase">市場熱門資產</span>
           </div>
           <div class="flex justify-between items-end">
             <div>
@@ -216,8 +231,15 @@
     <!-- Strategy List -->
     <div class="p-4 space-y-4">
       <div class="flex items-center justify-between mb-2">
-        <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400">Trading Signals</h2>
-        <span class="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">LIVE FEED</span>
+        <div class="flex flex-col">
+          <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 leading-none">Trading Signals</h2>
+          <span class="text-[9px] text-slate-600 font-bold uppercase mt-0.5">交易策略信號</span>
+        </div>
+        <div class="flex flex-col items-end leading-none">
+          <span class="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold uppercase">LIVE
+            FEED</span>
+          <span class="text-[8px] text-primary/50 font-bold mr-1 mt-0.5 uppercase italic">實時推播</span>
+        </div>
       </div>
       <div id="strategyList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <!-- Strategies loaded dynamically -->
@@ -226,8 +248,11 @@
 
     <!-- Official Partners -->
     <div class="px-4 pb-6 mt-8">
-      <h2 class="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4 text-center">Official Partners -
-        Register for Premium</h2>
+      <div class="flex flex-col items-center mb-4">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-slate-500 leading-none text-center">Official
+          Partners - Register for Premium</h2>
+        <span class="text-[9px] text-slate-600 font-bold uppercase mt-1 leading-none">官方合作夥伴 — 註冊以獲得進階權限</span>
+      </div>
       <div class="grid grid-cols-2 gap-4">
         <a href="https://reurl.cc/oKAgxg" target="_blank"
           class="bg-card-dark border border-border-dark hover:border-primary/50 p-4 rounded-xl flex flex-col items-center justify-center gap-2 group transition-all">
@@ -263,16 +288,19 @@
     <a class="flex flex-col items-center gap-1" href="index.html">
       <span class="material-symbols-outlined text-primary font-bold"
         style="font-variation-settings: 'FILL' 1">home</span>
-      <span class="text-[10px] font-bold text-primary uppercase tracking-tighter">Home</span>
+      <span class="text-[10px] font-bold text-primary uppercase tracking-tighter leading-none">Home</span>
+      <span class="text-[8px] text-primary/60 font-medium">首頁</span>
     </a>
     <a id="adminNavLink" class="hidden flex-col items-center gap-1 text-slate-500 hover:text-slate-200"
       href="admin.html">
       <span class="material-symbols-outlined">terminal</span>
-      <span class="text-[10px] font-bold uppercase tracking-tighter">Admin</span>
+      <span class="text-[10px] font-bold uppercase tracking-tighter leading-none">Admin</span>
+      <span class="text-[8px] text-slate-600 font-medium group-hover:text-slate-400">管理端</span>
     </a>
     <a class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-200" href="profile.html">
       <span class="material-symbols-outlined">person</span>
-      <span class="text-[10px] font-bold uppercase tracking-tighter">Profile</span>
+      <span class="text-[10px] font-bold uppercase tracking-tighter leading-none">Profile</span>
+      <span class="text-[8px] text-slate-600 font-medium group-hover:text-slate-400">個人資料</span>
     </a>
   </nav>
 

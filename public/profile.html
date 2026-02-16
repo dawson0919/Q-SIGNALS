@@ -48,11 +48,16 @@
         <div class="flex items-center gap-3">
             <a href="index.html"><span
                     class="material-symbols-outlined cursor-pointer text-slate-400">arrow_back</span></a>
-            <h1 class="font-bold text-lg tracking-tight">Profile</h1>
+            <div class="flex flex-col">
+                <h1 class="font-bold text-lg tracking-tight leading-none">Profile</h1>
+                <span class="text-[9px] text-slate-500 font-bold uppercase mt-0.5">個人資料</span>
+            </div>
         </div>
-        <button onclick="handleSignOut()"
-            class="text-sm text-red-400 font-semibold hover:text-red-300 flex items-center gap-1">
-            <span class="material-symbols-outlined text-sm">logout</span> Sign Out
+        <button onclick="handleSignOut()" class="flex flex-col items-end leading-none">
+            <div class="flex items-center gap-1 text-red-500 text-sm font-bold hover:text-red-400">
+                <span class="material-symbols-outlined text-sm">logout</span> Sign Out
+            </div>
+            <span class="text-[8px] text-slate-600 font-bold mt-1">退出登錄</span>
         </button>
     </header>
 
@@ -91,24 +96,29 @@
             <section class="px-4 mb-4">
                 <div class="grid grid-cols-3 gap-3">
                     <div class="bg-surface-dark border border-border-dark rounded-xl p-4 text-center">
-                        <p class="text-2xl font-bold text-primary" id="statStrategies">0</p>
-                        <p class="text-[10px] text-slate-500 uppercase font-bold mt-1">Strategies</p>
+                        <p class="text-2xl font-bold text-primary leading-none" id="statStrategies">0</p>
+                        <p class="text-[10px] text-slate-500 uppercase font-black mt-2">Strategies</p>
+                        <p class="text-[8px] text-slate-600 font-bold">訂閱策略</p>
                     </div>
                     <div class="bg-surface-dark border border-border-dark rounded-xl p-4 text-center">
-                        <p class="text-2xl font-bold text-white" id="statBacktests">0</p>
-                        <p class="text-[10px] text-slate-500 uppercase font-bold mt-1">Backtests</p>
+                        <p class="text-2xl font-bold text-white leading-none" id="statBacktests">0</p>
+                        <p class="text-[10px] text-slate-500 uppercase font-black mt-2">Backtests</p>
+                        <p class="text-[8px] text-slate-600 font-bold">回測次數</p>
                     </div>
                     <div class="bg-surface-dark border border-border-dark rounded-xl p-4 text-center">
-                        <p class="text-2xl font-bold text-white" id="statDays">0</p>
-                        <p class="text-[10px] text-slate-500 uppercase font-bold mt-1">Days Active</p>
+                        <p class="text-2xl font-bold text-white leading-none" id="statDays">0</p>
+                        <p class="text-[10px] text-slate-500 uppercase font-black mt-2">Days Active</p>
+                        <p class="text-[8px] text-slate-600 font-bold">活躍天數</p>
                     </div>
                 </div>
             </section>
 
             <!-- Subscription Signals (Visible for Advanced Members) -->
             <section id="signalsSection" class="hidden px-4 mb-4">
-                <h3 class="font-bold text-sm text-slate-400 uppercase tracking-widest mb-3">Subscribed Signals</h3>
-                <div id="signalList" class="space-y-3">
+                <h3 class="font-bold text-xs text-slate-400 uppercase tracking-widest leading-none">Subscribed Signals
+                </h3>
+                <span class="text-[9px] text-slate-600 font-bold uppercase">已訂閱之交易信號</span>
+                <div id="signalList" class="space-y-3 mt-3">
                     <!-- Signals populated here -->
                 </div>
             </section>
@@ -123,7 +133,16 @@
 
                     <!-- Sponsor / Registration Steps -->
                     <div class="mb-6">
-                        <p class="text-[10px] font-bold text-slate-500 uppercase mb-3">1. Register with a Partner</p>
+                        <p class="text-[10px] font-bold text-slate-500 uppercase leading-none">Official Partners -
+                            Register for Premium</p>
+                        <span class="block text-[8px] text-slate-600 font-bold mb-4 uppercase mt-1">官方合作夥伴 —
+                            註冊以獲得進階權限</span>
+
+                        <p
+                            class="text-[10px] font-bold text-slate-400 uppercase mb-3 leading-none text-left ml-2 border-l-2 border-primary pl-2">
+                            Step 1. Register with a Partner</p>
+                        <span
+                            class="block text-[8px] text-slate-600 font-bold mb-3 uppercase text-left ml-6">第一步：在合作夥伴平台註冊</span>
                         <div class="grid grid-cols-2 gap-3 mb-4">
                             <a href="https://reurl.cc/oKAgxg" target="_blank"
                                 class="bg-black/20 border border-border-dark hover:border-primary/50 p-3 rounded-xl flex flex-col items-center justify-center gap-1 group transition-all">
@@ -131,8 +150,9 @@
                                     class="h-6 object-contain opacity-80 group-hover:opacity-100 transition-opacity"
                                     onerror="this.onerror=null; this.src='https://placehold.co/120x40/000000/FFFFFF?text=Pionex'">
                                 <span
-                                    class="text-[9px] text-slate-500 uppercase font-bold group-hover:text-primary transition-colors">Register
-                                    &rarr;</span>
+                                    class="text-[9px] text-slate-500 uppercase font-bold group-hover:text-primary transition-colors leading-none">Register</span>
+                                <span
+                                    class="text-[7px] text-slate-600 font-bold group-hover:text-primary/70 uppercase">立即註冊</span>
                             </a>
                             <a href="https://mytd.cc/py0h" target="_blank"
                                 class="bg-black/20 border border-border-dark hover:border-blue-500/50 p-3 rounded-xl flex flex-col items-center justify-center gap-1 group transition-all">
@@ -141,17 +161,23 @@
                                     class="h-6 object-contain opacity-80 group-hover:opacity-100 transition-opacity"
                                     onerror="this.onerror=null; this.src='https://placehold.co/120x40/000000/FFFFFF?text=MiTRADE'">
                                 <span
-                                    class="text-[9px] text-slate-500 uppercase font-bold group-hover:text-blue-500 transition-colors">Register
-                                    &rarr;</span>
+                                    class="text-[9px] text-slate-500 uppercase font-bold group-hover:text-blue-500 transition-colors leading-none">Register</span>
+                                <span
+                                    class="text-[7px] text-slate-600 font-bold group-hover:text-blue-500/70 uppercase">立即註冊</span>
                             </a>
                         </div>
-                        <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">2. Submit Account ID</p>
+                        <p class="text-[10px] font-bold text-slate-500 uppercase mb-1 leading-none">2. Submit Account ID
+                        </p>
+                        <span class="block text-[8px] text-slate-600 font-bold mb-3 uppercase">第二步：提交您的帳號 ID
+                            (UID)</span>
                     </div>
 
                     <div id="applyForm" class="space-y-4">
                         <div class="text-left">
-                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1.5 ml-1">Exchange Account
-                                Number</label>
+                            <label class="block text-xs font-bold text-slate-500 uppercase leading-none ml-1">Exchange
+                                Account Number</label>
+                            <span class="block text-[8px] text-slate-600 font-bold mb-1.5 ml-1 uppercase">交易所帳號
+                                (UID)</span>
                             <input id="tradingAccount" type="text" placeholder="e.g. 12345678"
                                 class="w-full bg-surface-dark border border-border-dark rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all outline-none">
                         </div>
@@ -164,6 +190,7 @@
                         <div
                             class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-500/10 text-yellow-500 text-xs font-bold">
                             <span class="animate-pulse">●</span> APPLICATION PENDING REVIEW
+                            <span class="ml-1 text-[10px] opacity-70">申請審核中</span>
                         </div>
                     </div>
                 </div>
@@ -171,8 +198,10 @@
 
             <!-- Account Info -->
             <section class="p-4">
-                <h3 class="font-bold text-sm text-slate-400 uppercase tracking-widest mb-3">Account Information</h3>
-                <div class="bg-surface-dark border border-border-dark rounded-xl divide-y divide-border-dark">
+                <h3 class="font-bold text-xs text-slate-400 uppercase tracking-widest leading-none">Account Information
+                </h3>
+                <span class="text-[9px] text-slate-600 font-bold uppercase">帳戶詳細資訊</span>
+                <div class="bg-surface-dark border border-border-dark rounded-xl divide-y divide-border-dark mt-3">
                     <div class="flex justify-between items-center p-4">
                         <div class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-slate-500 text-lg">email</span>
@@ -206,13 +235,17 @@
 
             <!-- Quick Links -->
             <section class="p-4">
-                <h3 class="font-bold text-sm text-slate-400 uppercase tracking-widest mb-3">Quick Links</h3>
-                <div class="space-y-2">
+                <h3 class="font-bold text-xs text-slate-400 uppercase tracking-widest leading-none">Quick Links</h3>
+                <span class="text-[9px] text-slate-600 font-bold uppercase">快速連結</span>
+                <div class="space-y-2 mt-3">
                     <a href="index.html"
                         class="bg-surface-dark border border-border-dark rounded-xl p-4 flex items-center justify-between hover:border-primary/30 transition-colors block">
                         <div class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-primary text-lg">explore</span>
-                            <span class="text-sm font-medium text-white">Strategy Marketplace</span>
+                            <div class="flex flex-col">
+                                <span class="text-sm font-medium text-white leading-none">Strategy Marketplace</span>
+                                <span class="text-[9px] text-slate-500 mt-0.5">策略市場</span>
+                            </div>
                         </div>
                         <span class="material-symbols-outlined text-slate-600 text-sm">chevron_right</span>
                     </a>
@@ -220,7 +253,10 @@
                         class="hidden bg-surface-dark border border-primary/30 rounded-xl p-4 flex items-center justify-between hover:border-primary/50 transition-colors">
                         <div class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-primary text-lg">terminal</span>
-                            <span class="text-sm font-bold text-primary">Admin Panel</span>
+                            <div class="flex flex-col">
+                                <span class="text-sm font-bold text-primary leading-none">Admin Panel</span>
+                                <span class="text-[9px] text-primary/60 mt-0.5">管理員面板</span>
+                            </div>
                         </div>
                         <span class="material-symbols-outlined text-primary text-sm">chevron_right</span>
                     </a>
@@ -240,18 +276,22 @@
     <!-- Bottom Navigation -->
     <nav
         class="fixed bottom-0 left-0 right-0 bg-background-dark/95 backdrop-blur-md border-t border-border-dark px-6 pb-6 pt-3 flex justify-between items-center z-50">
-        <a class="flex flex-col items-center gap-1 text-slate-500" href="index.html">
+        <a class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300" href="index.html">
             <span class="material-symbols-outlined">home</span>
-            <span class="text-[10px] font-bold uppercase tracking-tighter">Home</span>
+            <span class="text-[10px] font-bold uppercase tracking-tighter leading-none">Home</span>
+            <span class="text-[8px] text-slate-600 font-medium">首頁</span>
         </a>
-        <a id="adminNavLink" class="hidden flex-col items-center gap-1 text-slate-500" href="admin.html">
+        <a id="adminNavLink" class="hidden flex-col items-center gap-1 text-slate-500 hover:text-slate-300"
+            href="admin.html">
             <span class="material-symbols-outlined">terminal</span>
-            <span class="text-[10px] font-bold uppercase tracking-tighter">Admin</span>
+            <span class="text-[10px] font-bold uppercase tracking-tighter leading-none">Admin</span>
+            <span class="text-[8px] text-slate-600 font-medium">管理端</span>
         </a>
         <a class="flex flex-col items-center gap-1" href="profile.html">
             <span class="material-symbols-outlined text-primary font-bold"
                 style="font-variation-settings: 'FILL' 1">person</span>
-            <span class="text-[10px] font-bold text-primary uppercase tracking-tighter">Profile</span>
+            <span class="text-[10px] font-bold text-primary uppercase tracking-tighter leading-none">Profile</span>
+            <span class="text-[8px] text-primary/60 font-medium">個人資料</span>
         </a>
     </nav>
 
