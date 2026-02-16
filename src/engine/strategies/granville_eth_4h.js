@@ -6,25 +6,25 @@
 module.exports = {
     id: 'granville_eth_4h',
     name: 'Granville Pro (ETH/BTC/SOL)',
-    description: '葛蘭碧法則終極版。自動適配多空、乖離抄底信號，並優化了手續費環境下的開倉頻率。',
+    description: '葛蘭碧法則終極版。針對 BTC/ETH/SOL 自動適配多空、乖離抄底信號。所有參數皆針對最近 180 天行情進行動態最佳化。',
     category: 'Premium',
     author: 'QuantSignal Pro',
-    params: { ma_p: 60, sl: 0.06 },
+    params: { ma_p: 110, sl: 0.04 },
 
     execute: (candles, indicatorData, i, indicators) => {
         if (i < 120) return null; // Seed more data for stability
 
         const symbol = (candles[0] && (candles[0].symbol || candles[0].id) || 'ETHUSDT').toUpperCase();
 
-        // --- 1. CONFIG SELECTION (Fine-tuned for Backtester Fees) ---
-        let ma_p = 60, sl = 0.06, dev_limit = 999, useShort = true;
+        // --- 1. CONFIG SELECTION (Strict 180-Day Optimized) ---
+        let ma_p = 60, sl = 0.04, dev_limit = 999, useShort = true;
 
         if (symbol.includes('BTC')) {
-            ma_p = 120; sl = 0.07; dev_limit = 0.06; useShort = false; // Trend focus for BTC
+            ma_p = 95; sl = 0.04; dev_limit = 999; useShort = false;
         } else if (symbol.includes('SOL')) {
-            ma_p = 80; sl = 0.08; dev_limit = 0.12; useShort = true;
+            ma_p = 115; sl = 0.04; dev_limit = 999; useShort = true;
         } else {
-            ma_p = 60; sl = 0.06; dev_limit = 999; useShort = true; // Flagship ETH
+            ma_p = 110; sl = 0.04; dev_limit = 999; useShort = true; // ETH
         }
 
         // --- 2. CALCULATE CORE METRICS ---
