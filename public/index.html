@@ -315,23 +315,29 @@
         const strategyList = document.getElementById('strategyList');
         strategyList.innerHTML = '';
 
-        // CURATED SELECTION: Display high-performance cards specifically
-        const curated = [
-          { id: 'granville_eth_4h', symbol: 'BTCUSDT', name: 'BTC', tf: '4h' },
-          { id: 'granville_eth_4h', symbol: 'ETHUSDT', name: 'ETH', tf: '4h' },
-          { id: 'granville_eth_4h', symbol: 'SOLUSDT', name: 'SOL', tf: '4h' },
-          { id: 'macd_ma_optimized', symbol: 'SOLUSDT', name: 'SOL', tf: '4h' },
-          { id: 'three_blade', symbol: 'XAUUSDT', name: 'GOLD', tf: '1h' },
-          { id: 'turtle_breakout', symbol: 'NASUSDT', name: 'NAS', tf: '4h' }
-        ];
+        const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'SPXUSDT', 'NASUSDT'];
+        const symbolNames = { BTCUSDT: 'BTC', ETHUSDT: 'ETH', SOLUSDT: 'SOL', XAUUSDT: 'GOLD', SPXUSDT: 'SPX', NASUSDT: 'NAS' };
 
-        for (const item of curated) {
-          const strat = data.strategies.find(s => s.id === item.id);
-          if (!strat) continue;
+        for (const strat of data.strategies) {
+          for (const symbol of symbols) {
+            // Filter redundant cards but keep all core combinations
+            if ((symbol === 'SPXUSDT' || symbol === 'NASUSDT') && strat.id !== 'turtle_breakout') continue;
 
-          const card = createStrategyCard(strat, item.symbol, item.name, item.tf);
-          strategyList.appendChild(card);
-          runBacktestForCard(strat.id, item.symbol, card, item.tf);
+            // For Gold, show both 1h and 4h
+            if (symbol === 'XAUUSDT' && (strat.id === 'turtle_breakout' || strat.id === 'three_blade')) {
+              const card1h = createStrategyCard(strat, symbol, symbolNames[symbol], '1h');
+              strategyList.appendChild(card1h);
+              runBacktestForCard(strat.id, symbol, card1h, '1h');
+
+              const card4h = createStrategyCard(strat, symbol, symbolNames[symbol], '4h');
+              strategyList.appendChild(card4h);
+              runBacktestForCard(strat.id, symbol, card4h, '4h');
+            } else {
+              const card = createStrategyCard(strat, symbol, symbolNames[symbol], '4h');
+              strategyList.appendChild(card);
+              runBacktestForCard(strat.id, symbol, card, '4h');
+            }
+          }
         }
       } catch (err) {
         console.error('Failed to load strategies:', err);
@@ -444,28 +450,13 @@
 
         if (data.summary) {
           const roi = data.summary.totalReturn;
-          // === UPDATED LOGIC: Hide ONLY if strictly negative ===
-          // Allow 0% (neutral/no data) to be visible
-          const isNegative = roi < 0;
-
-          if (isNegative) {
-            card.style.display = 'none';
-            card.dataset.roiPositive = 'false';
-          } else {
-            // Ensure it's visible (in case it was hidden by tab filter previously)
-            // But we must respect the current Tab Filter
-            const activeBtn = document.querySelector('.tab-btn.border-primary');
-            const currentFilter = activeBtn ? activeBtn.dataset.filter : 'all';
-            const categoryMatch = (currentFilter === 'all' || card.dataset.category === currentFilter);
-
-            if (categoryMatch) {
-              card.style.display = 'flex';
-            }
-            card.dataset.roiPositive = 'true';
-          }
+          card.dataset.roiPositive = roi >= 0 ? 'true' : 'false';
 
           const roiEl = document.getElementById(`roi-${strategyId}-${symbol}-${timeframe}`);
-          if (roiEl) roiEl.innerHTML = `${roi > 0 ? '+' : ''}${roi.toFixed(1)}%`;
+          if (roiEl) {
+            roiEl.innerHTML = `${roi > 0 ? '+' : ''}${roi.toFixed(1)}%`;
+            roiEl.className = `text-xl font-black ${roi >= 0 ? 'text-primary' : 'text-red-500'} truncate`;
+          }
 
           const wrEl = document.getElementById(`winrate-${strategyId}-${symbol}-${timeframe}`);
           if (wrEl) wrEl.textContent = `${data.summary.winRate}%`;
