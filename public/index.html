@@ -326,8 +326,7 @@
 
       div.className = `strategy-card bg-card-dark rounded-xl border ${isPlatinum ? 'border-indigo-500/50 platinum-gradient' : (isPremium ? 'border-primary/30 premium-gradient' : 'border-border-dark')} overflow-hidden relative flex flex-col`;
       div.dataset.category = category;
-      div.dataset.roiPositive = 'false'; // Default to false
-      div.style.display = 'none'; // Default hidden until backtest proves positive
+      div.dataset.roiPositive = 'true'; // Default to true (optimistic)
 
       const badgeClass = isPlatinum
         ? 'text-[10px] font-bold bg-indigo-600 text-white rounded px-1.5 py-0.5 uppercase mb-1 inline-block'
@@ -407,21 +406,26 @@
           body: JSON.stringify({ strategyId, symbol, timeframe })
         });
         const data = await res.json();
+
         if (data.summary) {
           const roi = data.summary.totalReturn;
-          // === NEW LOGIC: Visibility based on Positive ROI ===
-          const isPositive = roi > 0;
-          card.dataset.roiPositive = isPositive.toString();
+          // === UPDATED LOGIC: Hide ONLY if confirmed negative ===
+          const isNegative = roi <= 0;
 
-          // Check current filter (Basic/Premium)
-          const activeBtn = document.querySelector('.tab-btn.border-primary');
-          const currentFilter = activeBtn ? activeBtn.dataset.filter : 'all';
-          const categoryMatch = (currentFilter === 'all' || card.dataset.category === currentFilter);
-
-          if (isPositive && categoryMatch) {
-            card.style.display = 'flex'; // Use flex to maintain layout
-          } else {
+          if (isNegative) {
             card.style.display = 'none';
+            card.dataset.roiPositive = 'false';
+          } else {
+            // Ensure it's visible (in case it was hidden by tab filter previously)
+            // But we must respect the current Tab Filter
+            const activeBtn = document.querySelector('.tab-btn.border-primary');
+            const currentFilter = activeBtn ? activeBtn.dataset.filter : 'all';
+            const categoryMatch = (currentFilter === 'all' || card.dataset.category === currentFilter);
+
+            if (categoryMatch) {
+              card.style.display = 'flex';
+            }
+            card.dataset.roiPositive = 'true';
           }
 
           const roiEl = document.getElementById(`roi-${strategyId}-${symbol}-${timeframe}`);
@@ -442,13 +446,14 @@
           const barEl = document.getElementById(`bar-${strategyId}-${symbol}-${timeframe}`);
           if (barEl) barEl.style.width = `${Math.min(data.summary.winRate, 100)}%`;
         } else {
-          // No summary data -> Hide
-          card.style.display = 'none';
-          card.dataset.roiPositive = 'false';
+          // API returned but no summary (could be error). 
+          // Decision: Keep visible or Hide? 
+          // Let's Keep visible so user sees card exists but failed data.
+          // No action needed on display.
         }
       } catch (err) {
         console.error('Backtest error:', err);
-        card.style.display = 'none'; // Error -> Hide
+        // On error, keep visible (don't hide).
       }
     }
 
@@ -461,9 +466,12 @@
 
         const filter = btn.dataset.filter;
         document.querySelectorAll('.strategy-card').forEach(card => {
-          const roiMatch = card.dataset.roiPositive === 'true';
+          // Only consider ROI positive (or unknown) cards
+          const isRoiNegative = card.dataset.roiPositive === 'false';
           const categoryMatch = (filter === 'all' || card.dataset.category === filter);
-          card.style.display = (categoryMatch && roiMatch) ? 'flex' : 'none';
+
+          // If ROI is negative, ALWAYS hide. Otherwise check category.
+          card.style.display = (categoryMatch && !isRoiNegative) ? 'flex' : 'none';
         });
       });
     });
