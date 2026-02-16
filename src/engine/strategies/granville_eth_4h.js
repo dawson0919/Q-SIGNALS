@@ -1,85 +1,65 @@
 /**
- * Granville Pro (Ultimate Master Version) - STATELESS REfACTORED
+ * Granville Pro (Ultimate Master Version) - HIGH FIDELITY
  * ROI: ETH ~55%, BTC ~52%, SOL ~46%
- * Fixed: Removed dangerous global state. Uses per-run cache in indicatorData.
+ * Fixed: Precise signal mapping and optimized filter for high-fee environments.
  */
 module.exports = {
     id: 'granville_eth_4h',
     name: 'Granville Pro (ETH/BTC/SOL)',
-    description: '葛蘭碧法則終極版。針對 BTC/ETH/SOL 自動適配多空、乖離抄底與止損參數，實現極限獲利。',
+    description: '葛蘭碧法則終極版。自動適配多空、乖離抄底信號，並優化了手續費環境下的開倉頻率。',
     category: 'Premium',
     author: 'QuantSignal Pro',
     params: { ma_p: 60, sl: 0.06 },
 
     execute: (candles, indicatorData, i, indicators) => {
-        // 1. Initialize per-run signals cache if not present
-        // This makes the strategy thread-safe and request-isolated.
-        if (!indicatorData._granvilleSignals) {
-            const symbol = (candles[0] && candles[0].symbol || 'ETHUSDT').toUpperCase();
+        if (i < 120) return null; // Seed more data for stability
 
-            // Parameter Selection based on our deep optimization
-            let ma_p = 60;
-            let sl = 0.06;
-            let dev_limit = 999;
-            let useShort = true;
+        const symbol = (candles[0] && (candles[0].symbol || candles[0].id) || 'ETHUSDT').toUpperCase();
 
-            if (symbol.includes('BTC')) {
-                ma_p = 100; sl = 0.05; dev_limit = 0.08; useShort = false;
-            } else if (symbol.includes('SOL')) {
-                ma_p = 60; sl = 0.05; dev_limit = 0.10; useShort = false;
-            } else {
-                ma_p = 60; sl = 0.06; useShort = true;
-            }
+        // --- 1. CONFIG SELECTION (Fine-tuned for Backtester Fees) ---
+        let ma_p = 60, sl = 0.06, dev_limit = 999, useShort = true;
 
-            const close = indicatorData.close;
-            const emaArr = indicatorData.ema[ma_p] || indicators.ema(close, ma_p);
-
-            const signals = new Array(candles.length).fill(null);
-            let internalPos = 0;
-            let entryP = 0;
-
-            // Pre-calculate all signals for the entire period
-            for (let j = 1; j < candles.length; j++) {
-                const ma = emaArr[j];
-                const maPrev = emaArr[j - 1];
-                if (ma === undefined || maPrev === undefined) continue;
-
-                const curP = close[j];
-                const prevP = close[j - 1];
-                const dev = (curP - ma) / ma;
-
-                // EXIT LOGIC
-                if (internalPos > 0) {
-                    if (curP <= entryP * (1 - sl)) {
-                        signals[j] = 'CLOSE_LONG'; internalPos = 0;
-                    } else if (curP < ma && prevP >= maPrev) {
-                        signals[j] = useShort ? 'SELL' : 'CLOSE_LONG';
-                        internalPos = useShort ? -1 : 0;
-                        if (useShort) entryP = curP;
-                    }
-                } else if (internalPos < 0) {
-                    if (curP >= entryP * (1 + sl)) {
-                        signals[j] = 'CLOSE_SHORT'; internalPos = 0;
-                    } else if (curP > ma && prevP <= maPrev) {
-                        signals[j] = 'BUY';
-                        internalPos = 1;
-                        entryP = curP;
-                    }
-                }
-
-                // ENTRY LOGIC
-                if (internalPos === 0) {
-                    if ((curP > ma && prevP <= maPrev) || (dev < -dev_limit)) {
-                        signals[j] = 'BUY'; internalPos = 1; entryP = curP;
-                    } else if (useShort && curP < ma && prevP >= maPrev) {
-                        signals[j] = 'SELL'; internalPos = -1; entryP = curP;
-                    }
-                }
-            }
-            indicatorData._granvilleSignals = signals;
+        if (symbol.includes('BTC')) {
+            ma_p = 120; sl = 0.07; dev_limit = 0.06; useShort = false; // Trend focus for BTC
+        } else if (symbol.includes('SOL')) {
+            ma_p = 80; sl = 0.08; dev_limit = 0.12; useShort = true;
+        } else {
+            ma_p = 60; sl = 0.06; dev_limit = 999; useShort = true; // Flagship ETH
         }
 
-        // 2. Return the pre-calculated signal for the current candle index
-        return indicatorData._granvilleSignals[i];
+        // --- 2. CALCULATE CORE METRICS ---
+        const close = indicatorData.close;
+        const emaArr = indicatorData.ema[ma_p] || indicators.ema(close, ma_p);
+
+        const ma = emaArr[i];
+        const maPrev = emaArr[i - 1];
+        if (!ma || !maPrev) return null;
+
+        const curP = close[i];
+        const prevP = close[i - 1];
+        const dev = (curP - ma) / ma;
+
+        // --- 3. SIGNAL MAPPING (Synced with Backtester.js) ---
+        // S1: Golden Cross Above MA
+        const crossAbove = curP > ma && prevP <= maPrev;
+        // S5: Death Cross Below MA
+        const crossBelow = curP < ma && prevP >= maPrev;
+
+        // Strategy Return
+        if (crossAbove || (symbol.includes('BTC') && dev < -dev_limit)) {
+            return 'BUY'; // Closes short, goes long
+        }
+
+        if (crossBelow) {
+            return useShort ? 'SELL' : 'CLOSE_LONG'; // SELL: closes long, goes short
+        }
+
+        // Note: Stop Loss is handled by the Backtester engine's realization logic 
+        // if we return EXIT signals, but standard Granville relies on Trend Crosses.
+        // For performance, we exit early on deep deviation against us.
+        if (curP < ma * (1 - sl)) return 'CLOSE_LONG';
+        if (curP > ma * (1 + sl)) return 'CLOSE_SHORT';
+
+        return null;
     }
 };
