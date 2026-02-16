@@ -159,7 +159,13 @@ async function getSubscriptions(userId, token) {
 }
 
 async function addSubscription(userId, strategyId, token, symbol = 'BTCUSDT', timeframe = '4h') {
-    const { data, error } = await getAuthenticatedClient(token)
+    // 1. Try NEW way (with symbol/timeframe)
+    const client = getAuthenticatedClient(token);
+
+    // Note: If columns don't exist, Supabase returns error code '42703' (Undefined Column)
+    // Or if unique constraint doesn't match, it might error on conflict.
+
+    const { data, error } = await client
         .from('subscriptions')
         .upsert(
             { user_id: userId, strategy_id: strategyId, symbol, timeframe },
@@ -167,9 +173,23 @@ async function addSubscription(userId, strategyId, token, symbol = 'BTCUSDT', ti
         );
 
     if (error) {
-        // Ignore duplicate key error, treat as success
-        if (error.code === '23505') return { success: true };
-        throw error;
+        console.warn(`[DB] Enhanced subscription failed (${error.code || error.message}). Falling back to legacy mode...`);
+
+        // 2. Fallback (Legacy Mode - ignore symbol/timeframe)
+        // This ensures the site doesn't crash if DB migration hasn't run.
+        const { data: legacyData, error: legacyError } = await client
+            .from('subscriptions')
+            .upsert(
+                { user_id: userId, strategy_id: strategyId },
+                { onConflict: 'user_id, strategy_id', ignoreDuplicates: true }
+            );
+
+        if (legacyError) {
+            // Ignore duplicate key error in legacy mode too
+            if (legacyError.code === '23505') return { success: true };
+            throw legacyError;
+        }
+        return legacyData;
     }
     return data;
 }
