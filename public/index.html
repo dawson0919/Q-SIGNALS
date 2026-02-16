@@ -277,29 +277,33 @@
         strategyList.innerHTML = '';
 
         // Add built-in strategies
-        const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'SPXUSDT'];
-        const symbolNames = { BTCUSDT: 'BTC', ETHUSDT: 'ETH', SOLUSDT: 'SOL', XAUUSDT: 'GOLD', SPXUSDT: 'SPX' };
+        const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'SPXUSDT', 'NASUSDT'];
+        const symbolNames = { BTCUSDT: 'BTC', ETHUSDT: 'ETH', SOLUSDT: 'SOL', XAUUSDT: 'GOLD', SPXUSDT: 'SPX', NASUSDT: 'NAS' };
 
         for (const strat of data.strategies) {
           for (const symbol of symbols) {
             // For Gold, we show both 1h and 4h versions for Turtle and Three-Blade MA
             const isMultiTf = symbol === 'XAUUSDT' && (strat.id === 'turtle_breakout' || strat.id === 'three_blade');
+            const isIndexTf = (symbol === 'SPXUSDT' || symbol === 'NASUSDT') && (strat.id === 'turtle_breakout' || strat.id === 'three_blade');
 
-            if (isMultiTf || (symbol === 'SPXUSDT' && (strat.id === 'turtle_breakout' || strat.id === 'three_blade'))) {
-              const card1h = createStrategyCard(strat, symbol, symbolNames[symbol], '1h');
-              strategyList.appendChild(card1h);
-              runBacktestForCard(strat.id, symbol, card1h, '1h');
+            if (isMultiTf || isIndexTf) {
+              // Timeframe filtering for Indices to avoid noise
+              const show1h = (symbol === 'XAUUSDT') || (symbol === 'SPXUSDT'); // SPX prefers 1H
+              const show4h = (symbol === 'XAUUSDT') || (symbol === 'NASUSDT'); // NAS prefers 4H
 
-              // For SPX Turtle, we ONLY show 1H per user request
-              if (symbol === 'SPXUSDT' && strat.id === 'turtle_breakout') {
-                continue;
+              if (show1h) {
+                const card1h = createStrategyCard(strat, symbol, symbolNames[symbol], '1h');
+                strategyList.appendChild(card1h);
+                runBacktestForCard(strat.id, symbol, card1h, '1h');
               }
 
-              const card4h = createStrategyCard(strat, symbol, symbolNames[symbol], '4h');
-              strategyList.appendChild(card4h);
-              runBacktestForCard(strat.id, symbol, card4h, '4h');
+              if (show4h) {
+                const card4h = createStrategyCard(strat, symbol, symbolNames[symbol], '4h');
+                strategyList.appendChild(card4h);
+                runBacktestForCard(strat.id, symbol, card4h, '4h');
+              }
             } else {
-              // Default 4h version for others
+              // Default 4h version for others (BTC, ETH, SOL)
               const card = createStrategyCard(strat, symbol, symbolNames[symbol], '4h');
               strategyList.appendChild(card);
               runBacktestForCard(strat.id, symbol, card, '4h');
@@ -316,6 +320,9 @@
       const isIndex = (symbol === 'SPXUSDT' || symbol === 'NASUSDT');
       const category = isIndex ? 'Platinum' : (strat.category || 'Basic');
       const isPlatinum = category === 'Platinum';
+      const isPremium = category === 'Premium';
+      const isOptimized = strat.id === 'macd_ma_optimized';
+      const isTurtle = strat.id === 'turtle_breakout';
 
       div.className = `strategy-card bg-card-dark rounded-xl border ${isPlatinum ? 'border-indigo-500/50 platinum-gradient' : (isPremium ? 'border-primary/30 premium-gradient' : 'border-border-dark')} overflow-hidden relative flex flex-col`;
       div.dataset.category = category;
