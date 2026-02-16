@@ -437,11 +437,14 @@
                         const isBuy = signal.type === 'LONG';
                         const timeStr = signal.entryTime || signal.time || new Date().toISOString();
                         const time = new Date(timeStr).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
-                        const price = signal.entryPrice || signal.price || 0;
+
+                        const priceValue = signal.entryPrice || signal.price || 0;
+                        const priceDisplay = typeof priceValue === 'number' ? priceValue.toLocaleString() : priceValue;
+
                         signalHtml = `
                         <div class="flex flex-col items-end">
                             <span class="text-xs font-black italic ${isBuy ? 'text-primary' : 'text-red-500'} mb-0.5">${isBuy ? 'BUY' : 'SELL'}</span>
-                            <span class="text-sm font-bold text-white tracking-tight leading-none">$${signal.entryPrice.toLocaleString()}</span>
+                            <span class="text-sm font-bold text-white tracking-tight leading-none">$${priceDisplay}</span>
                             <span class="text-[9px] text-slate-500 mt-0.5">${time}</span>
                         </div>
                     `;
