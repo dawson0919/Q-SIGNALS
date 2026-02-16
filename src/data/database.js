@@ -239,7 +239,8 @@ async function removeSubscription(userId, strategyId, token, symbol = 'BTCUSDT',
 
 // Update latest_signal for a subscription (Persistent Cache)
 async function updateSubscriptionSignal(userId, strategyId, symbol, timeframe, signalData) {
-    const supabase = getSupabase();
+    // Use Admin Client to bypass RLS restrictions on UPDATE
+    const supabase = getAdminClient();
     if (!userId) return;
 
     try {
