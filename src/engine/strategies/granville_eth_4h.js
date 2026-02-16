@@ -24,7 +24,7 @@ module.exports = {
         } else if (symbol.includes('SOL')) {
             ma_p = 115; sl = 0.04; dev_limit = 999; useShort = true;
         } else if (symbol.includes('XAU') || symbol.includes('GOLD')) {
-            ma_p = 30; sl = 0.01; dev_limit = 999; useShort = false; // XAUT/Gold Optimized
+            ma_p = 172; sl = 0.005; dev_limit = 999; useShort = true; // Gold L/S Optimized (11.46% ROI)
         } else {
             ma_p = 110; sl = 0.04; dev_limit = 999; useShort = true; // ETH
         }
