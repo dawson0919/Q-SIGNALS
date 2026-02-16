@@ -303,11 +303,24 @@ router.get('/subscriptions', requireAuth, async (req, res) => {
                 let timeframe = sub.timeframe || '4h'; // Use DB timeframe or default to 4h
 
                 // OPTIMIZATION: Check backtest cache first to ensure consistency with Detail Page
-                const cacheKey = `${sub.strategy_id}_${symbol}_${timeframe}`;
-                const cachedResult = backtestCache[cacheKey];
+                // Try multiple keys to handle potential case mismatch (4h vs 4H)
+                const keysToTry = [
+                    `${sub.strategy_id}_${symbol}_${timeframe}`,
+                    `${sub.strategy_id}_${symbol}_${timeframe.toLowerCase()}`,
+                    `${sub.strategy_id}_${symbol}_${timeframe.toUpperCase()}`
+                ];
+
+                let cachedResult = null;
+                for (const key of keysToTry) {
+                    if (backtestCache[key]) {
+                        cachedResult = backtestCache[key];
+                        // console.log(`[Subscriptions] Cache hit for ${key}`);
+                        break;
+                    }
+                }
 
                 if (cachedResult && cachedResult.recentTrades && cachedResult.recentTrades.length > 0) {
-                    console.log(`[Subscriptions] Using cached result for ${cacheKey}`);
+                    // console.log(`[Subscriptions] Using cached result for ${cachedResult.strategy.name} (${cachedResult.strategy.symbol}, ${cachedResult.strategy.timeframe})`);
                     const latestSignal = cachedResult.recentTrades[0];
 
                     results.push({
