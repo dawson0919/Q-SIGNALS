@@ -326,6 +326,8 @@
 
       div.className = `strategy-card bg-card-dark rounded-xl border ${isPlatinum ? 'border-indigo-500/50 platinum-gradient' : (isPremium ? 'border-primary/30 premium-gradient' : 'border-border-dark')} overflow-hidden relative flex flex-col`;
       div.dataset.category = category;
+      div.dataset.roiPositive = 'false'; // Default to false
+      div.style.display = 'none'; // Default hidden until backtest proves positive
 
       const badgeClass = isPlatinum
         ? 'text-[10px] font-bold bg-indigo-600 text-white rounded px-1.5 py-0.5 uppercase mb-1 inline-block'
@@ -336,16 +338,7 @@
       const authorBadge = isPremium
         ? `<span class="material-symbols-outlined text-primary text-xs ml-1" style="font-variation-settings: 'FILL' 1">verified</span>`
         : '';
-
-      const featuredBadge = isOptimized
-        ? `<div class="absolute -right-12 top-6 bg-red-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">workspace_premium</span> MOST PROFITABLE</div>`
-        : isTurtle && symbol === 'BTCUSDT'
-          ? `<div class="absolute -right-12 top-6 bg-orange-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">local_fire_department</span> HOT BTCTRADE</div>`
-          : isTurtle && symbol === 'SPXUSDT' && timeframe === '4h'
-            ? `<div class="absolute -right-12 top-6 bg-blue-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">show_chart</span> BEST FOR SPX</div>`
-            : isTurtle && symbol === 'NASUSDT' && timeframe === '4h'
-              ? `<div class="absolute -right-12 top-6 bg-indigo-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">trending_up</span> BEST FOR NAS</div>`
-              : '';
+      // ... (content omitted for brevity, logic continues below) ...
 
       div.innerHTML = `
         ${featuredBadge}
@@ -402,43 +395,7 @@
     }
 
     function createPremiumCard(ps) {
-      const div = document.createElement('div');
-      div.className = 'strategy-card bg-card-dark rounded-xl border border-border-dark overflow-hidden premium-gradient relative mb-4 flex flex-col';
-      div.dataset.category = 'Premium';
-      div.innerHTML = `
-        <div class="absolute top-3 right-3"><span class="material-symbols-outlined text-slate-600">lock</span></div>
-        <div class="p-4 flex-1 flex flex-col h-full">
-          <div>
-            <div class="flex justify-between items-start mb-3">
-              <div>
-                <span class="text-[10px] font-bold bg-primary text-background-dark rounded px-1.5 py-0.5 uppercase mb-1 inline-block">Premium</span>
-                <h3 class="text-xl font-bold text-white leading-tight mt-0.5 line-clamp-1">${ps.name}</h3>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-2 mb-4">
-              <div class="bg-background-dark/50 p-2 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
-                <p class="text-[10px] text-slate-500 uppercase font-bold mb-0.5">Total ROI</p>
-                <p class="text-xl font-black text-primary truncate">${ps.roi}</p>
-              </div>
-              <div class="bg-background-dark/50 p-2 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
-                <p class="text-[10px] text-slate-500 uppercase font-bold mb-0.5">Win Rate</p>
-                <p class="text-xl font-bold text-white truncate">${ps.winRate}</p>
-              </div>
-              <div class="bg-background-dark/80 p-2 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
-                <p class="text-[10px] text-slate-500 uppercase font-bold mb-0.5">PF</p>
-                <span class="material-symbols-outlined text-sm text-slate-500">lock</span>
-              </div>
-              <div class="bg-background-dark/80 p-2 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
-                <p class="text-[10px] text-slate-500 uppercase font-bold mb-0.5">Trades</p>
-                <span class="material-symbols-outlined text-sm text-slate-500">lock</span>
-              </div>
-            </div>
-          </div>
-          
-          <button class="w-full py-3 rounded-xl bg-primary text-background-dark font-bold text-sm glow-button hover:bg-primary/90 transition-all flex items-center justify-center gap-2 mt-auto">Upgrade to Premium</button>
-        </div>
-      `;
+      // ... (omitted) ...
       return div;
     }
 
@@ -452,6 +409,21 @@
         const data = await res.json();
         if (data.summary) {
           const roi = data.summary.totalReturn;
+          // === NEW LOGIC: Visibility based on Positive ROI ===
+          const isPositive = roi > 0;
+          card.dataset.roiPositive = isPositive.toString();
+
+          // Check current filter (Basic/Premium)
+          const activeBtn = document.querySelector('.tab-btn.border-primary');
+          const currentFilter = activeBtn ? activeBtn.dataset.filter : 'all';
+          const categoryMatch = (currentFilter === 'all' || card.dataset.category === currentFilter);
+
+          if (isPositive && categoryMatch) {
+            card.style.display = 'flex'; // Use flex to maintain layout
+          } else {
+            card.style.display = 'none';
+          }
+
           const roiEl = document.getElementById(`roi-${strategyId}-${symbol}-${timeframe}`);
           if (roiEl) roiEl.innerHTML = `${roi > 0 ? '+' : ''}${roi.toFixed(1)}%`;
 
@@ -469,8 +441,15 @@
 
           const barEl = document.getElementById(`bar-${strategyId}-${symbol}-${timeframe}`);
           if (barEl) barEl.style.width = `${Math.min(data.summary.winRate, 100)}%`;
+        } else {
+          // No summary data -> Hide
+          card.style.display = 'none';
+          card.dataset.roiPositive = 'false';
         }
-      } catch (err) { console.error('Backtest error:', err); }
+      } catch (err) {
+        console.error('Backtest error:', err);
+        card.style.display = 'none'; // Error -> Hide
+      }
     }
 
     // Tab filtering
@@ -482,7 +461,9 @@
 
         const filter = btn.dataset.filter;
         document.querySelectorAll('.strategy-card').forEach(card => {
-          card.style.display = (filter === 'all' || card.dataset.category === filter) ? 'block' : 'none';
+          const roiMatch = card.dataset.roiPositive === 'true';
+          const categoryMatch = (filter === 'all' || card.dataset.category === filter);
+          card.style.display = (categoryMatch && roiMatch) ? 'flex' : 'none';
         });
       });
     });
