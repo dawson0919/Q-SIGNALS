@@ -108,6 +108,20 @@ async function getLatestCandleTime(symbol, timeframe) {
     return data[0].open_time;
 }
 
+// Get latest close price for a symbol
+async function getLatestClosePrice(symbol) {
+    // Try 1h timeframe first (more granular), then 4h
+    const { data, error } = await getSupabase()
+        .from('candles')
+        .select('close, open_time')
+        .eq('symbol', symbol)
+        .order('open_time', { ascending: false })
+        .limit(1);
+
+    if (error || !data || data.length === 0) return null;
+    return data[0].close;
+}
+
 // Get candle count
 async function getCandleCount(symbol, timeframe) {
     const { count, error } = await getSupabase()
@@ -312,6 +326,7 @@ module.exports = {
     getCandles,
     getLatestCandleTime,
     getCandleCount,
+    getLatestClosePrice,
     // Membership & Subscriptions
     getProfile,
     updateProfile,

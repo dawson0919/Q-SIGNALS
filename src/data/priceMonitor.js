@@ -1,6 +1,6 @@
 // Real-time Price Monitor via Binance WebSocket
 const WebSocket = require('ws');
-const { insertCandles } = require('./database');
+const { insertCandles, getLatestClosePrice } = require('./database');
 
 const SPOT_SYMBOLS = ['btcusdt', 'ethusdt', 'solusdt'];
 const FUTURES_SYMBOLS = ['xauusdt', 'spxusdt'];
@@ -108,8 +108,26 @@ function startPriceMonitor() {
     connect(spotUrl, false);
     connect(futuresUrl, true);
 
-    // CoinGecko Polling for SPX/NAS Real Price
-    function pollCoinGecko() {
+    // Poll Index Prices (DB first, then CoinGecko fallback)
+    async function pollCoinGecko() {
+        // 1. Fetch from Database (Primary Source for Indices if updated)
+        for (const symbol of ['SPXUSDT', 'NASUSDT']) {
+            try {
+                const dbPrice = await getLatestClosePrice(symbol);
+                if (dbPrice && dbPrice > 100) { // Valid index price check (> $100)
+                    currentPrices[symbol] = {
+                        price: dbPrice,
+                        change24h: 0, // Difficult to calculate live change from just one DB close, assume 0 for ticker stability
+                        timestamp: Date.now(),
+                        source: 'database'
+                    };
+                }
+            } catch (e) {
+                console.error(`[PriceMonitor] DB fetch error for ${symbol}:`, e.message);
+            }
+        }
+
+        // 2. Fetch from CoinGecko (Secondary/Backup)
         const https = require('https');
         const cgIds = {
             'SPXUSDT': 'spdr-s-p-500-etf-ondo-tokenized-etf',
@@ -130,12 +148,17 @@ function startPriceMonitor() {
                     const json = JSON.parse(data);
                     Object.entries(cgIds).forEach(([symbol, id]) => {
                         if (json[id]) {
-                            currentPrices[symbol] = {
-                                price: json[id].usd,
-                                change24h: json[id].usd_24h_change || 0,
-                                timestamp: Date.now(),
-                                source: 'coingecko'
-                            };
+                            const cgPrice = json[id].usd;
+                            // Only overwrite DB price if CoinGecko price looks valid (real index > 100)
+                            // Tokenized ETFs can depeg or error to ~$0.32
+                            if (cgPrice > 100) {
+                                currentPrices[symbol] = {
+                                    price: cgPrice,
+                                    change24h: json[id].usd_24h_change || 0,
+                                    timestamp: Date.now(),
+                                    source: 'coingecko'
+                                };
+                            }
                         }
                     });
 
