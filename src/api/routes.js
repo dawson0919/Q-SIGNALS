@@ -44,6 +44,9 @@ strategies[dualEma.id] = dualEma;
 const macdMa = require('../engine/strategies/macdMa');
 strategies[macdMa.id] = macdMa;
 
+const granvilleEth4h = require('../engine/strategies/granville_eth_4h');
+strategies[granvilleEth4h.id] = granvilleEth4h;
+
 // Debug Cache
 router.get('/debug/cache', (req, res) => {
     res.json({
