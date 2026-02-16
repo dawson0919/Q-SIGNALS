@@ -59,7 +59,7 @@ async function getCandleData(symbol, timeframe = '4h', options = {}) {
                 console.log(`[DataFetcher] Fetched ${freshCandles.length} fresh candles.`);
 
                 // Persist to DB
-                await insertCandles(freshCandles, symbol, timeframe);
+                await insertCandles(symbol, timeframe, freshCandles);
 
                 // Merge with DB candles
                 // Convert fresh candles to DB format for consistency if needed, or just push

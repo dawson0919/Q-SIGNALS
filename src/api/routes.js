@@ -1,7 +1,6 @@
 // API Routes
 const express = require('express');
 const router = express.Router();
-const jwt = require('jsonwebtoken'); // Import JWT
 const Backtester = require('../engine/backtester');
 const { getCandleData } = require('../engine/dataFetcher');
 const { parsePineScript } = require('../engine/pineParser');
@@ -151,6 +150,16 @@ async function requireAdmin(req, res, next) {
     });
 }
 // --- TEMPORARY DEBUG ENDPOINT (REMOVE AFTER TESTING) ---
+router.get('/debug/db-status', async (req, res) => {
+    try {
+        const { testConnection } = require('../data/database');
+        const status = await testConnection();
+        res.json(status);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 router.get('/debug/subscriptions', async (req, res) => {
     try {
         const { data, error } = await getAdminClient().from('subscriptions').select('*');
@@ -528,7 +537,7 @@ router.post('/backtest', async (req, res) => {
         };
 
         // Cache result (include timeframe in key!)
-        const cacheKey = `${strategyId || 'custom'}_${symbol}_${timeframe}`;
+        const cacheKey = `${strategyId || 'custom'}_${symbol}_${timeframe}_${(req.body.code ? 'custom' : '')}`;
         backtestCache[cacheKey] = result;
 
         // PERSIST SIGNAL FOR SUBSCRIBED USER (if logged in)
@@ -538,22 +547,21 @@ router.post('/backtest', async (req, res) => {
         if (authHeader) {
             const token = authHeader.split(' ')[1];
             if (token) {
-                const jwt = require('jsonwebtoken'); // Ensure this is available or use existing import if any
-                // If not imported globally, require it here.
-                // Actually authenticatToken usually puts user in req.user, but we skipped middleware.
                 try {
-                    const user = jwt.verify(token, process.env.JWT_SECRET);
-                    userId = user.id;
+                    // Use Supabase Auth instead of jsonwebtoken (to avoid missing dependency crash)
+                    const { data: { user }, error } = await getSupabase().auth.getUser(token);
+                    if (user && !error) {
+                        userId = user.id;
+                    }
                 } catch (e) { }
             }
         }
 
         if (userId && result.recentTrades && result.recentTrades.length > 0) {
-            // Assuming updateSubscriptionSignal is imported or defined elsewhere
-            // For example: const { updateSubscriptionSignal } = require('../data/database');
+            // Updated implementation using Admin Client inside database.js
             updateSubscriptionSignal(userId, strategyId, symbol, timeframe, result.recentTrades[0]);
         } else if (userId) {
-            // Even if no trades (null signal), update it so profile knows "No Signal" is current state.
+            // Even if no trades, update to null
             updateSubscriptionSignal(userId, strategyId, symbol, timeframe, null);
         }
 

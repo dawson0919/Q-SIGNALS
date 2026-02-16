@@ -20,6 +20,17 @@ function getSupabase() {
     return supabase;
 }
 
+async function testConnection() {
+    try {
+        const { data, error } = await getSupabase().from('candles').select('count', { count: 'exact', head: true });
+        if (error) throw error;
+        return { success: true, message: 'Supabase connected successfully', count: data };
+    } catch (err) {
+        console.error('[DB] Connection test failed:', err.message);
+        return { success: false, message: err.message };
+    }
+}
+
 // Service Role Client - Bypasses ALL RLS policies. Use ONLY for admin operations.
 function getAdminClient() {
     if (!supabaseAdmin) {
@@ -143,13 +154,6 @@ async function getProfile(userId, token) {
         .single();
     if (error) return null;
 
-    // Hardcode Super Admin Override (Removed - now handled by DB update in requireAdmin)
-    /*
-    if (data && (data.email === 'nbamoment@gmail.com' || data.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd')) {
-        data.role = 'admin';
-    }
-    */
-
     return data;
 }
 
@@ -184,7 +188,7 @@ async function addSubscription(userId, strategyId, token, symbol = 'BTCUSDT', ti
         .from('subscriptions')
         .upsert(
             { user_id: userId, strategy_id: strategyId, symbol, timeframe },
-            { onConflict: 'user_id, strategy_id, symbol, timeframe' } // Removed ignoreDuplicates to force error on conflict
+            { onConflict: 'user_id, strategy_id, symbol, timeframe' } // Removed ignore duplicates to force error on conflict
         )
         .select();
 
@@ -370,6 +374,7 @@ module.exports = {
     getSupabase,
     getAdminClient,
     getAuthenticatedClient,
+    testConnection,
     insertCandles,
     getCandles,
     getLatestCandleTime,

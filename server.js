@@ -57,10 +57,28 @@ async function start() {
         const supabase = initSupabase();
         console.log('✅ Supabase connected');
 
-        // 2. Backfill historical data
-        console.log('📊 Starting historical data backfill...');
+        // 5. Start HTTP server
+        server.listen(PORT, () => {
+            console.log(`\n🟢 QuantSignal running at http://localhost:${PORT}`);
+            console.log(`   WebSocket: ws://localhost:${PORT}/ws/prices`);
+            console.log(`   Admin: http://localhost:${PORT}/admin.html`);
+
+            // Trigger backfill in background after server is listening
+            startBackgroundTasks();
+        });
+
+    } catch (err) {
+        console.error('❌ Startup error:', err);
+        process.exit(1);
+    }
+}
+
+async function startBackgroundTasks() {
+    try {
+        // 2. Backfill historical data (now in background)
+        console.log('📊 Starting background historical data backfill...');
         await backfillAllSymbols();
-        console.log('✅ Historical data backfill complete');
+        console.log('✅ Background historical data backfill complete');
 
         // 3. Start real-time price monitor
         startPriceMonitor();
@@ -69,16 +87,8 @@ async function start() {
         // 4. Start scheduled sync (every 4 hours)
         startScheduledSync();
         console.log('✅ Scheduled sync started (every 4h)');
-
-        // 5. Start HTTP server
-        server.listen(PORT, () => {
-            console.log(`\n🟢 QuantSignal running at http://localhost:${PORT}`);
-            console.log(`   WebSocket: ws://localhost:${PORT}/ws/prices`);
-            console.log(`   Admin: http://localhost:${PORT}/admin.html`);
-        });
     } catch (err) {
-        console.error('❌ Startup error:', err);
-        process.exit(1);
+        console.error('❌ Background task error:', err);
     }
 }
 
