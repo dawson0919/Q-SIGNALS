@@ -1,20 +1,22 @@
 /**
- * Granville Pro (Ultimate Master Version) - REFACTORED FOR STEPPER INTERFACE
- * Optimized for ETH (55%), BTC (52%), and SOL (46%)
+ * Granville Pro (Ultimate Master Version) 
+ * ROI: ETH ~55%, BTC ~52%, SOL ~46%
+ * Fixed: Added internal state tracking for Stop Loss support in Stepper Engine.
  */
+
+let lastEntryPrice = 0;
+let currentPos = 0;
+
 module.exports = {
     id: 'granville_eth_4h',
     name: 'Granville Pro (ETH/BTC/SOL)',
     description: '葛蘭碧法則終極版。針對 BTC/ETH/SOL 自動適配多空、乖離抄底與止損參數，實現極限獲利。',
     category: 'Premium',
     author: 'QuantSignal Pro',
-    params: {
-        ma_p: 60,
-        sl: 0.06
-    },
-    // Backtester expects: execute(candles, indicatorData, i, indicators)
+    params: { ma_p: 60, sl: 0.06 },
+
     execute: (candles, indicatorData, i, indicators) => {
-        if (i < 100) return null; // Wait for enough data
+        if (i < 100) return null;
 
         const symbol = (candles[0] && candles[0].symbol || 'ETHUSDT').toUpperCase();
 
@@ -29,42 +31,58 @@ module.exports = {
         } else if (symbol.includes('SOL')) {
             ma_p = 60; sl = 0.05; dev_limit = 0.10; useShort = false;
         } else {
-            ma_p = 60; sl = 0.06; useShort = true; // Default ETH
+            ma_p = 60; sl = 0.06; useShort = true;
         }
 
-        // 2. Data Fetching
         const close = indicatorData.close;
         const emaArr = indicatorData.ema[ma_p] || indicators.ema(close, ma_p);
 
         const ma = emaArr[i];
         const maPrev = emaArr[i - 1];
-        const currentClose = close[i];
-        const prevClose = close[i - 1];
-        const deviation = (currentClose - ma) / ma;
+        const curPrice = close[i];
+        const prevPrice = close[i - 1];
+        const deviation = (curPrice - ma) / ma;
 
-        const crossAbove = currentClose > ma && prevClose <= maPrev;
-        const crossBelow = currentClose < ma && prevClose >= maPrev;
+        // Reset state on first candle of backtest
+        if (i === 100) { lastEntryPrice = 0; currentPos = 0; }
 
-        // Note: The Backtester manages the actual position state. 
-        // We just return what we WANT to do at this candle.
-
-        // --- ENTRY LOGIC ---
-        // Rule 1 (Cross Above) or Rule 4 (Extreme Deviation Reversion for BTC/SOL)
-        if (crossAbove || (deviation < -dev_limit)) {
-            return 'BUY'; // This will close short and open long
+        // --- 2. EXIT / STOP LOSS LOGIC ---
+        if (currentPos > 0) {
+            // Trend Exit (Cross Below MA)
+            if (curPrice < ma && prevPrice >= maPrev) {
+                currentPos = 0; return 'CLOSE_LONG';
+            }
+            // Stop Loss
+            if (curPrice <= lastEntryPrice * (1 - sl)) {
+                currentPos = 0; return 'CLOSE_LONG';
+            }
+        } else if (currentPos < 0) {
+            // Trend Exit (Cross Above MA)
+            if (curPrice > ma && prevPrice <= maPrev) {
+                currentPos = 0; return 'CLOSE_SHORT';
+            }
+            // Stop Loss
+            if (curPrice >= lastEntryPrice * (1 + sl)) {
+                currentPos = 0; return 'CLOSE_SHORT';
+            }
         }
 
-        // Rule 5 (Cross Below)
-        if (crossBelow) {
-            if (useShort) return 'SELL'; // This will close long and open short
-            return 'CLOSE_LONG'; // If not using short, just flatten
+        // --- 3. ENTRY LOGIC ---
+        if (currentPos === 0) {
+            // S1 (Cross Above) or S4 (Deep Negative Deviation)
+            if ((curPrice > ma && prevPrice <= maPrev) || (deviation < -dev_limit)) {
+                lastEntryPrice = curPrice;
+                currentPos = 1;
+                return 'BUY'; // Signal to open LONG
+            }
+            // S5 (Death Cross)
+            if (useShort && curPrice < ma && prevPrice >= maPrev) {
+                lastEntryPrice = curPrice;
+                currentPos = -1;
+                return 'SELL'; // Signal to open SHORT
+            }
         }
 
-        // --- DYNAMIC STOP LOSS ---
-        // (Note: Backtester doesn't pass current position details to the strategyFn, 
-        // so we can only exit based on price action unless we store state elsewhere.
-        // However, standard Granville exits on cross-under which we handled above.)
-
-        return null; // Stay in position or stay flat
+        return null;
     }
 };
