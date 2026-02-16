@@ -243,31 +243,40 @@ async function removeSubscription(userId, strategyId, token, symbol = 'BTCUSDT',
 
 // Update latest_signal for a subscription (Persistent Cache)
 async function updateSubscriptionSignal(userId, strategyId, symbol, timeframe, signalData) {
-    // Use Admin Client to bypass RLS restrictions on UPDATE
     const supabase = getAdminClient();
     if (!userId) return;
 
+    // Standardize for matching
+    const cleanTf = (timeframe || '4h').toLowerCase();
+    const cleanSym = (symbol || 'BTCUSDT').toUpperCase();
+
     try {
-        const { error } = await supabase
+        // Attempt precise match update
+        const { error, count } = await supabase
             .from('subscriptions')
             .update({
                 latest_signal: signalData,
-                // last_signal_at: new Date() // Optional if column exists
+                updated_at: new Date().toISOString()
             })
             .match({
                 user_id: userId,
                 strategy_id: strategyId,
-                symbol: symbol,
-                timeframe: timeframe
+                symbol: cleanSym,
+                timeframe: cleanTf
             });
 
         if (error) {
-            console.error('[DB] Failed to persist signal:', error.message);
+            console.error(`[DB] Signal PERSIST ERROR for ${cleanSym} ${cleanTf}:`, error.message);
         } else {
-            // console.log(`[DB] Persisted signal for ${symbol} ${timeframe}`);
+            // If precise match didn't update anything, try matching just Strategy ID (fallback for legacy records)
+            const { data: check } = await supabase.from('subscriptions').select('id').match({ user_id: userId, strategy_id: strategyId }).limit(1);
+            if (check && check.length > 0) {
+                // Secondary update attempt
+                await supabase.from('subscriptions').update({ latest_signal: signalData }).eq('user_id', userId).eq('strategy_id', strategyId);
+            }
         }
     } catch (e) {
-        console.error('[DB] Exception saving signal:', e.message);
+        console.error('[DB] Signal Persistence Exception:', e.message);
     }
 }
 

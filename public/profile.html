@@ -412,6 +412,10 @@
                 if (!res.ok) throw new Error('Failed to fetch subscriptions');
 
                 const subs = await res.json();
+                console.log('--- 🚀 SIGNAL DEBUG DATA START ---');
+                console.log('Latest Subscriptions Data:', subs);
+                console.log('--- 🚀 SIGNAL DEBUG DATA END ---');
+
                 const list = document.getElementById('signalList');
                 list.innerHTML = '';
 
@@ -421,12 +425,19 @@
                 }
 
                 subs.forEach(sub => {
-                    const signal = sub.latestSignal;
+                    let signal = sub.latest_signal;
+                    // Handle case where signal might be a JSON string from DB
+                    if (typeof signal === 'string') {
+                        try { signal = JSON.parse(signal); } catch (e) { }
+                    }
+
                     let signalHtml = '<div class="text-[10px] font-bold bg-slate-800 text-slate-400 px-2 py-1 rounded uppercase tracking-tighter">No Active Signal</div>';
 
-                    if (signal) {
+                    if (signal && signal.type) {
                         const isBuy = signal.type === 'LONG';
-                        const time = new Date(signal.entryTime).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+                        const timeStr = signal.entryTime || signal.time || new Date().toISOString();
+                        const time = new Date(timeStr).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+                        const price = signal.entryPrice || signal.price || 0;
                         signalHtml = `
                         <div class="flex flex-col items-end">
                             <span class="text-xs font-black italic ${isBuy ? 'text-primary' : 'text-red-500'} mb-0.5">${isBuy ? 'BUY' : 'SELL'}</span>
@@ -436,9 +447,7 @@
                     `;
                     }
 
-                    const stratName = sub.strategyName || sub.strategy_id;
-                    // Simple mapping for display if needed, or rely on strategyName
-                    const displayStratName = stratName.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                    const displayStratName = sub.strategy_name || sub.strategy_id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
                     list.innerHTML += `
                     <div class="bg-surface-dark border border-border-dark p-3 rounded-xl flex items-center justify-between hover:border-primary/20 transition-all cursor-pointer" onclick="window.location.href='strategy-detail.html?strategy=${sub.strategy_id}&symbol=${sub.symbol}&timeframe=${sub.timeframe}'">

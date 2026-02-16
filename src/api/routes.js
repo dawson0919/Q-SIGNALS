@@ -330,14 +330,8 @@ router.get('/subscriptions', requireAuth, async (req, res) => {
 
                 // 1. DB Persistence
                 if (sub.latest_signal) {
-                    // console.log(`[Subscriptions] Using DB Persisted signal for ${sub.strategy_id}`);
+                    console.log(`[Subscriptions] User ${req.user.id} - FOUND DB Signal for ${sub.strategy_id}`);
                     latestSignal = sub.latest_signal;
-                    // Note: performance might not be stored in latest_signal? 
-                    // latest_signal is just the trade signal. 
-                    // Performance is usually calculated from full backtest. 
-                    // However, for the 'Signal' badge, we only need the trade.
-                    // If we want performance stats on profile card, we might need to store them too?
-                    // But Profile card only shows signal status (BUY/SELL).
                 }
 
                 // 2. Memory Cache Fallback (if DB is empty)
@@ -557,12 +551,11 @@ router.post('/backtest', async (req, res) => {
             }
         }
 
-        if (userId && result.recentTrades && result.recentTrades.length > 0) {
-            // Updated implementation using Admin Client inside database.js
-            updateSubscriptionSignal(userId, strategyId, symbol, timeframe, result.recentTrades[0]);
-        } else if (userId) {
-            // Even if no trades, update to null
-            updateSubscriptionSignal(userId, strategyId, symbol, timeframe, null);
+        if (userId) {
+            const latestSignal = (result.recentTrades && result.recentTrades.length > 0) ? result.recentTrades[0] : null;
+            console.log(`[Backtest] Attempting to persist signal for user ${userId} on ${symbol} ${timeframe}`);
+            // MUST await to ensure DB write completes before response
+            await updateSubscriptionSignal(userId, strategyId, symbol, timeframe, latestSignal);
         }
 
         res.json(result);

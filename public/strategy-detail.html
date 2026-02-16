@@ -545,9 +545,9 @@
                 const timeStr = entryDate.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
                 document.getElementById('signalTime').querySelector('span:last-child').textContent = `Signal Time: ${timeStr}`;
 
-                // Apply blur for non-premium users ONLY on Premium strategies
-                const isPremiumStrategy = strategyCategory === 'Premium';
-                const isPremiumUser = userRole === 'advanced' || userRole === 'admin';
+                // Apply blur for non-premium users ONLY on Premium/Platinum strategies
+                const isPremiumStrategy = strategyCategory === 'Premium' || strategyCategory === 'Platinum';
+                const isPremiumUser = userRole === 'advanced' || userRole === 'admin' || userRole === 'platinum';
 
                 if (isPremiumStrategy && !isPremiumUser) {
                     document.getElementById('signalContent').classList.add('premium-blur');
@@ -627,8 +627,9 @@
             if (!trades) return;
 
             // For non-premium users on Premium strategies, skip the first 2 trades
-            const isPremiumUser = userRole === 'advanced' || userRole === 'admin';
-            const isPremiumStrategy = strategyCategory === 'Premium';
+            // For non-premium users on Premium/Platinum strategies, skip the first 2 trades
+            const isPremiumUser = userRole === 'advanced' || userRole === 'admin' || userRole === 'platinum';
+            const isPremiumStrategy = strategyCategory === 'Premium' || strategyCategory === 'Platinum';
             const shouldHideTrades = isPremiumStrategy && !isPremiumUser;
             const tradesToShow = shouldHideTrades ? trades.slice(2, 8) : trades.slice(0, 8);
 
