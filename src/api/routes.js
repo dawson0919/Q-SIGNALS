@@ -257,9 +257,10 @@ router.post('/subscribe', requireAuth, async (req, res) => {
 
         // Index Restrictions (SPX/NAS)
         const isIndex = (symbol === 'SPXUSDT' || symbol === 'NASUSDT');
-        if (isIndex && !['admin', 'platinum'].includes(role)) {
-            console.log(`[Subscribe] DENIED: ${symbol} requiring Platinum.`);
-            return res.status(403).json({ error: 'Platinum Membership required for Index (SPY/QQQ) signals.' });
+        // RELAXED: Allow Advanced users to subscribe for now
+        if (isIndex && !['admin', 'platinum', 'advanced'].includes(role)) {
+            console.log(`[Subscribe] DENIED: ${symbol} requiring Advanced+.`);
+            return res.status(403).json({ error: 'Advanced/Platinum Membership required for Index (SPY/QQQ) signals.' });
         }
 
         if (s.category === 'Premium' && !['admin', 'advanced', 'platinum'].includes(role)) {
