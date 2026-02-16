@@ -312,47 +312,26 @@
         const res = await fetch('/api/strategies');
         const data = await res.json();
 
-        // Also run backtest for each strategy to get metrics
         const strategyList = document.getElementById('strategyList');
         strategyList.innerHTML = '';
 
-        // Add built-in strategies
-        const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'SPXUSDT', 'NASUSDT'];
-        const symbolNames = { BTCUSDT: 'BTC', ETHUSDT: 'ETH', SOLUSDT: 'SOL', XAUUSDT: 'GOLD', SPXUSDT: 'SPX', NASUSDT: 'NAS' };
+        // CURATED SELECTION: Display high-performance cards specifically
+        const curated = [
+          { id: 'granville_eth_4h', symbol: 'BTCUSDT', name: 'BTC', tf: '4h' },
+          { id: 'granville_eth_4h', symbol: 'ETHUSDT', name: 'ETH', tf: '4h' },
+          { id: 'granville_eth_4h', symbol: 'SOLUSDT', name: 'SOL', tf: '4h' },
+          { id: 'macd_ma_optimized', symbol: 'SOLUSDT', name: 'SOL', tf: '4h' },
+          { id: 'three_blade', symbol: 'XAUUSDT', name: 'GOLD', tf: '1h' },
+          { id: 'turtle_breakout', symbol: 'NASUSDT', name: 'NAS', tf: '4h' }
+        ];
 
-        for (const strat of data.strategies) {
-          for (const symbol of symbols) {
-            // RULE: SPX (SPY) and NAS (QQQ) only appear in Turtle Strategy
-            if ((symbol === 'SPXUSDT' || symbol === 'NASUSDT') && strat.id !== 'turtle_breakout') continue;
+        for (const item of curated) {
+          const strat = data.strategies.find(s => s.id === item.id);
+          if (!strat) continue;
 
-            // For Gold, we show both 1h and 4h versions for Turtle and Three-Blade MA
-            const isMultiTf = symbol === 'XAUUSDT' && (strat.id === 'turtle_breakout' || strat.id === 'three_blade');
-            // Since we already filtered above, any remaining SPX/NAS is valid for special handling
-            const isIndexTf = (symbol === 'SPXUSDT' || symbol === 'NASUSDT');
-
-            if (isMultiTf || isIndexTf) {
-              // Timeframe filtering for Indices to avoid noise
-              const show1h = (symbol === 'XAUUSDT') || (symbol === 'SPXUSDT'); // SPX prefers 1H
-              const show4h = (symbol === 'XAUUSDT') || (symbol === 'NASUSDT'); // NAS prefers 4H
-
-              if (show1h) {
-                const card1h = createStrategyCard(strat, symbol, symbolNames[symbol], '1h');
-                strategyList.appendChild(card1h);
-                runBacktestForCard(strat.id, symbol, card1h, '1h');
-              }
-
-              if (show4h) {
-                const card4h = createStrategyCard(strat, symbol, symbolNames[symbol], '4h');
-                strategyList.appendChild(card4h);
-                runBacktestForCard(strat.id, symbol, card4h, '4h');
-              }
-            } else {
-              // Default 4h version for others (BTC, ETH, SOL)
-              const card = createStrategyCard(strat, symbol, symbolNames[symbol], '4h');
-              strategyList.appendChild(card);
-              runBacktestForCard(strat.id, symbol, card, '4h');
-            }
-          }
+          const card = createStrategyCard(strat, item.symbol, item.name, item.tf);
+          strategyList.appendChild(card);
+          runBacktestForCard(strat.id, item.symbol, card, item.tf);
         }
       } catch (err) {
         console.error('Failed to load strategies:', err);
