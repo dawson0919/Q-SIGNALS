@@ -1,14 +1,18 @@
 // Historical Data Backfill from Binance REST API
 const { insertCandles, getLatestCandleTime, getCandleCount } = require('./database');
 
-const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'SPXUSDT'];
+const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'SPXUSDT', 'NASUSDT'];
+const CG_ID_MAP = {
+    'SPXUSDT': 'spdr-s-p-500-etf-ondo-tokenized-etf',
+    'NASUSDT': 'invesco-qqq-etf-ondo-tokenized-etf'
+};
 const TIMEFRAMES = ['1h', '4h'];
 const BACKFILL_DAYS = parseInt(process.env.BACKFILL_DAYS || '365');
 const BINANCE_SPOT_API = 'https://api.binance.com/api/v3/klines';
 const BINANCE_FUTURES_API = 'https://fapi.binance.com/fapi/v1/klines';
 
 async function fetchKlines(symbol, interval, startTime, endTime, limit = 1000) {
-    const isFutures = symbol === 'XAUUSDT' || symbol === 'SPXUSDT';
+    const isFutures = symbol === 'XAUUSDT' || !!CG_ID_MAP[symbol];
     const baseUrl = isFutures ? BINANCE_FUTURES_API : BINANCE_SPOT_API;
 
     const params = new URLSearchParams({
@@ -44,7 +48,9 @@ async function fetchKlines(symbol, interval, startTime, endTime, limit = 1000) {
 }
 
 async function fetchKlinesFromCG(symbol, interval, days) {
-    const cgId = 'spdr-s-p-500-etf-ondo-tokenized-etf';
+    const cgId = CG_ID_MAP[symbol];
+    if (!cgId) return [];
+
     const baseUrl = `https://api.coingecko.com/api/v3/coins/${cgId}/market_chart?vs_currency=usd&days=${days}`;
 
     console.log(`[Backfill] Fetching ${symbol} from CoinGecko (${days} days)...`);
@@ -63,6 +69,9 @@ async function fetchKlinesFromCG(symbol, interval, days) {
         // Group points by interval
         const groups = {};
         for (const [ts, price] of data.prices) {
+            // Data Sanitization: Ignore zero or invalid prices (common in some CG token feeds)
+            if (!price || price < 1) continue;
+
             const bucket = Math.floor(ts / intervalMs) * intervalMs;
             if (!groups[bucket]) groups[bucket] = [];
             groups[bucket].push(price);
@@ -93,7 +102,7 @@ async function fetchKlinesFromCG(symbol, interval, days) {
 
 // Backfill a single symbol with pagination
 async function backfillSymbol(symbol, timeframe) {
-    const isCG = symbol === 'SPXUSDT';
+    const isCG = !!CG_ID_MAP[symbol];
     const latestTime = await getLatestCandleTime(symbol, timeframe);
     const now = Date.now();
     let startTime;

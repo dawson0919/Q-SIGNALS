@@ -435,8 +435,9 @@ router.post('/backtest', async (req, res) => {
             const s = strategies[strategyId];
             let params = { ...s.defaultParams };
 
-            // Override for SPX optimized parameters
-            if (symbol === 'SPXUSDT' && strategyId === 'turtle_breakout') {
+            // Override for SPX/NAS optimized parameters
+            const isIndex = (symbol === 'SPXUSDT' || symbol === 'NASUSDT');
+            if (isIndex && strategyId === 'turtle_breakout') {
                 if (timeframe === '4h') {
                     params = { leftBars: 6, rightBars: 5, minHoldBars: 15 };
                 } else if (timeframe === '1h') {
@@ -456,7 +457,7 @@ router.post('/backtest', async (req, res) => {
         }
 
         // Get candle data
-        const daysBack = symbol === 'SPXUSDT' ? 90 : (timeframe === '1h' ? 45 : 180);
+        const daysBack = isIndex ? 90 : (timeframe === '1h' ? 45 : 180);
         const candles = await getCandleData(symbol, timeframe, { startTime, endTime, daysBack });
         if (candles.length < 50) {
             return res.status(400).json({ error: `Insufficient data: only ${candles.length} candles available` });

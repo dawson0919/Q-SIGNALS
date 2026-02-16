@@ -420,12 +420,13 @@
             document.getElementById('periodLabel').textContent = `${s.period.startDate} → ${s.period.endDate}`;
 
             // Set ROI Period Label based on timeframe
-            const roiDays = timeframe === '1h' ? 45 : 180;
+            const isSPX = (symbol === 'SPXUSDT' || symbol === 'SPYUSDT');
+            const roiDays = isSPX ? 90 : (timeframe === '1h' ? 45 : 180);
             const returnPeriodLabel = document.getElementById('returnPeriodLabel');
-            if (returnPeriodLabel) returnPeriodLabel.textContent = `最近 ${roiDays} 天績效`;
+            if (returnPeriodLabel) returnPeriodLabel.textContent = isSPX ? '回測涵蓋最近 90 天績效' : `最近 ${roiDays} 天績效`;
 
             const roiTitlePeriod = document.getElementById('roiTitlePeriod');
-            if (roiTitlePeriod) roiTitlePeriod.textContent = `${roiDays}d`;
+            if (roiTitlePeriod) roiTitlePeriod.textContent = isSPX ? '90D' : `${roiDays}d`;
 
             // Show latest signal from recent trades
             if (data.recentTrades && data.recentTrades.length > 0) {
