@@ -382,15 +382,17 @@
         : '';
 
       // RESTORED MISSING DEFINITION
-      const featuredBadge = isOptimized
-        ? `<div class="absolute -right-12 top-6 bg-red-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">workspace_premium</span> MOST PROFITABLE</div>`
-        : isTurtle && symbol === 'BTCUSDT'
-          ? `<div class="absolute -right-12 top-6 bg-orange-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">local_fire_department</span> HOT BTCTRADE</div>`
-          : isTurtle && symbol === 'SPXUSDT' && timeframe === '4h'
-            ? `<div class="absolute -right-12 top-6 bg-blue-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">show_chart</span> BEST FOR SPX</div>`
-            : isTurtle && symbol === 'NASUSDT' && timeframe === '4h'
-              ? `<div class="absolute -right-12 top-6 bg-indigo-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">trending_up</span> BEST FOR NAS</div>`
-              : '';
+      const featuredBadge = (strat.id === 'granville_eth_4h' && (symbol === 'ETHUSDT' || symbol === 'BTCUSDT'))
+        ? `<div class="absolute -right-12 top-6 bg-gradient-to-r from-yellow-600 to-amber-400 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">workspace_premium</span> GRANVILLE MASTER</div>`
+        : isOptimized
+          ? `<div class="absolute -right-12 top-6 bg-red-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">military_tech</span> TOP PERFORMANCE</div>`
+          : isTurtle && symbol === 'BTCUSDT'
+            ? `<div class="absolute -right-12 top-6 bg-orange-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">local_fire_department</span> TREND KING</div>`
+            : isTurtle && symbol === 'SPXUSDT' && timeframe === '4h'
+              ? `<div class="absolute -right-12 top-6 bg-blue-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">show_chart</span> BEST FOR SPX</div>`
+              : isTurtle && symbol === 'NASUSDT' && timeframe === '4h'
+                ? `<div class="absolute -right-12 top-6 bg-indigo-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">trending_up</span> BEST FOR NAS</div>`
+                : '';
 
       div.innerHTML = `
         ${featuredBadge}
@@ -407,15 +409,15 @@
 
             <!-- Custom Descriptions for Gold -->
             <!-- Custom Descriptions for Gold -->
-            ${symbol === 'XAUUSDT' && timeframe === '1h' && strat.id === 'three_blade' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：短線爆發型。使用優化版三刀流 (8/15/30 EMA)，專為捕捉黃金日內劇烈波動而設計，反應極快。</p>` : ''}
-            ${symbol === 'XAUUSDT' && timeframe === '4h' && strat.id === 'three_blade' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：穩健型。這組參數專注於過濾雜訊，捕捉黃金的長期均線趨勢，適合長線波段佈局。</p>` : ''}
-            ${symbol === 'XAUUSDT' && timeframe === '1h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：短線突破型。使用優化版海龜參數 (8K/2K)，專為捕捉黃金短線突破行情設計。</p>` : ''}
-            ${symbol === 'XAUUSDT' && timeframe === '4h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：波段趨勢型。使用寬鬆參數 (15K/2K)，捕捉黃金較大級別的趨勢突破，避免過度頻繁交易。</p>` : ''}
+            ${symbol === 'BTCUSDT' && strat.id === 'granville_eth_4h' ? `<p class="text-[11px] text-amber-500/90 leading-tight mb-4 font-medium border-l-2 border-amber-500 pl-2">特性：針對 BTC 優化的葛蘭碧法則。加入 8% 乖離反饋抄底邏輯，在 4H 週期下捕捉極限回彈，ROI 高達 52%。</p>` : ''}
+            ${symbol === 'ETHUSDT' && strat.id === 'granville_eth_4h' ? `<p class="text-[11px] text-primary/90 leading-tight mb-4 font-medium border-l-2 border-primary pl-2">特性：旗艦多空雙向版。融合 EMA 60 週期的葛蘭碧經典濾鏡，牛市做多、熊市放空，實測 ROI 達 55% 巔峰。</p>` : ''}
+            ${symbol === 'SOLUSDT' && strat.id === 'granville_eth_4h' ? `<p class="text-[11px] text-purple-400/90 leading-tight mb-4 font-medium border-l-2 border-purple-400 pl-2">特性：高波動捕手。針對 SOL 快速輪動設計的 60 EMA 葛蘭碧法則，具備 10% 乖離防護，ROI 46% 表現穩健。</p>` : ''}
             
-            ${symbol === 'SPXUSDT' && timeframe === '1h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-blue-400/80 leading-tight mb-4 font-medium italic">特性：穩健型。參數 (20/2/40) 專為過濾標普 500 日內雜訊設計，專注於捕捉中長線真實動量。</p>` : ''}
-            ${symbol === 'SPXUSDT' && timeframe === '4h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-blue-400/80 leading-tight mb-4 font-medium italic">特性：波段捕手。採用參數 (6/5/15) 針對近年標普 500 的階梯式漲勢進行優化。</p>` : ''}
+            ${symbol === 'XAUUSDT' && timeframe === '1h' && strat.id === 'three_blade' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：短線爆發型。使用優化版三刀流 (8/15/30 EMA)，反應極快。</p>` : ''}
+            ${symbol === 'XAUUSDT' && timeframe === '4h' && strat.id === 'three_blade' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：穩健波段型。專注於捕捉黃金長期趨勢，適合長線佈局。</p>` : ''}
             
-            ${symbol === 'NASUSDT' && timeframe === '4h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-indigo-400/80 leading-tight mb-4 font-medium italic">特性：高增長趨勢。優化參數 (4/5/20) 專為納斯達克 100 強勢波段設計，靈敏捕捉科技股升浪。</p>` : ''}
+            ${symbol === 'SPXUSDT' && timeframe === '4h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-blue-400/80 leading-tight mb-4 font-medium italic">特性：波段捕手。針對標普 500 階梯式漲勢優化。</p>` : ''}
+            ${symbol === 'NASUSDT' && timeframe === '4h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-indigo-400/80 leading-tight mb-4 font-medium italic">特性：高增長趨勢。專為科技股強勢波段設計。</p>` : ''}
             
             <div class="grid grid-cols-2 gap-2 mb-4">
               <div class="bg-background-dark/50 p-2 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
