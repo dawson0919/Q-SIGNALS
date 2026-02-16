@@ -387,8 +387,16 @@ router.get('/subscriptions', requireAuth, async (req, res) => {
 // --- Admin Panel Routes ---
 router.get('/admin/users', requireAdmin, async (req, res) => {
     try {
-        const users = await getAllUsers(req.token);
-        console.log(`[Admin] Fetched ${users.length} users for admin ${req.user.email}`);
+        let users = await getAllUsers(req.token);
+
+        // Inject online status
+        const onlineIds = (typeof global.getOnlineUsers === 'function') ? global.getOnlineUsers() : [];
+        users = users.map(u => ({
+            ...u,
+            isOnline: onlineIds.includes(u.id)
+        }));
+
+        console.log(`[Admin] Fetched ${users.length} users with online status`);
         res.json(users);
     } catch (e) {
         console.error('Admin users fetch error:', e);

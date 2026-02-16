@@ -23,17 +23,35 @@ app.use(express.static(path.join(__dirname, 'public')));
 // API Routes
 app.use('/api', apiRoutes);
 
-// WebSocket for live price streaming
+// WebSocket for live price streaming and online status
 const wss = new WebSocketServer({ server, path: '/ws/prices' });
+const onlineUsers = new Map(); // Store userId -> socket
 
-wss.on('connection', (ws) => {
-    console.log('[WS] Client connected');
+wss.on('connection', (ws, req) => {
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const userId = url.searchParams.get('userId');
+
+    if (userId && userId !== 'null' && userId !== 'undefined') {
+        onlineUsers.set(userId, ws);
+        console.log(`[WS] User ${userId} is online. Total: ${onlineUsers.size}`);
+    } else {
+        console.log('[WS] Anonymous client connected');
+    }
+
     // Send current prices immediately
     const prices = getCurrentPrices();
     if (Object.keys(prices).length > 0) {
         ws.send(JSON.stringify({ type: 'prices', data: prices }));
     }
-    ws.on('close', () => console.log('[WS] Client disconnected'));
+
+    ws.on('close', () => {
+        if (userId) {
+            onlineUsers.delete(userId);
+            console.log(`[WS] User ${userId} went offline. Total: ${onlineUsers.size}`);
+        } else {
+            console.log('[WS] Anonymous client disconnected');
+        }
+    });
 });
 
 // Broadcast price updates to all connected clients
@@ -45,7 +63,8 @@ function broadcastPrices(data) {
     });
 }
 
-// Export for priceMonitor to use
+// Global accessor for routes to check online status
+global.getOnlineUsers = () => Array.from(onlineUsers.keys());
 global.broadcastPrices = broadcastPrices;
 
 // Start server

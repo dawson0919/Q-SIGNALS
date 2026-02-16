@@ -503,9 +503,12 @@
     });
 
     // Live price WebSocket
-    function connectPriceWS() {
+    async function connectPriceWS() {
       const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const ws = new WebSocket(`${wsProtocol}//${location.host}/ws/prices`);
+      const { user } = await getUser();
+      const userId = user ? user.id : 'null';
+
+      const ws = new WebSocket(`${wsProtocol}//${location.host}/ws/prices?userId=${userId}`);
       ws.onmessage = (e) => {
         const msg = JSON.parse(e.data);
         if (msg.type === 'prices') updatePriceTicker(msg.data);

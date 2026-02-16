@@ -130,27 +130,35 @@
             const premium = allMembers.filter(m => m.role === 'advanced' || m.role === 'admin').length;
             const platinum = allMembers.filter(m => m.role === 'platinum').length;
 
+            const onlineCount = allMembers.filter(m => m.isOnline).length;
+
             const statsHtml = `
-            <div class="grid grid-cols-5 gap-1.5 mb-6">
-                <div class="bg-surface-dark border border-border-dark p-2 rounded-xl text-center">
-                    <p class="text-primary text-lg font-bold">${total}</p>
-                    <p class="text-[8px] text-slate-400 uppercase mt-0.5">Total</p>
+            <div class="grid grid-cols-3 gap-2 mb-3">
+                <div class="bg-surface-dark border border-border-dark p-3 rounded-xl text-center">
+                    <p class="text-white text-xl font-bold">${total}</p>
+                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Total Members</p>
                 </div>
-                <div class="bg-surface-dark border border-border-dark p-2 rounded-xl text-center">
-                    <p class="text-yellow-500 text-lg font-bold">${pending}</p>
-                    <p class="text-[8px] text-slate-400 uppercase mt-0.5">Pending</p>
+                <div class="bg-primary/5 border border-primary/20 p-3 rounded-xl text-center">
+                    <p class="text-primary text-xl font-bold">${onlineCount}</p>
+                    <p class="text-[10px] text-primary/60 uppercase font-bold tracking-wider">Online Now</p>
                 </div>
-                <div class="bg-surface-dark border border-border-dark p-2 rounded-xl text-center">
-                    <p class="text-lg font-bold text-white">${basic}</p>
-                    <p class="text-[8px] text-slate-400 uppercase mt-0.5">Basic</p>
+                <div class="bg-surface-dark border border-border-dark p-3 rounded-xl text-center">
+                    <p class="text-yellow-500 text-xl font-bold">${pending}</p>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Pending Apps</p>
                 </div>
-                <div class="bg-surface-dark border border-primary/20 p-2 rounded-xl text-center">
-                    <p class="text-lg font-bold text-primary">${premium}</p>
-                    <p class="text-[8px] text-primary/60 uppercase mt-0.5">Adv/Adm</p>
+            </div>
+            <div class="grid grid-cols-3 gap-2 mb-6 text-center">
+                <div class="bg-surface-dark/50 border border-border-dark py-1.5 rounded-lg">
+                    <p class="text-xs font-bold text-white">${basic}</p>
+                    <p class="text-[8px] text-slate-500 uppercase">Basic</p>
                 </div>
-                <div class="bg-surface-dark border border-purple-500/20 p-2 rounded-xl text-center">
-                    <p class="text-lg font-bold text-purple-400">${platinum}</p>
-                    <p class="text-[8px] text-purple-400/60 uppercase mt-0.5">Plat</p>
+                <div class="bg-surface-dark/50 border border-border-dark py-1.5 rounded-lg">
+                    <p class="text-xs font-bold text-primary">${premium}</p>
+                    <p class="text-[8px] text-slate-500 uppercase">Advanced</p>
+                </div>
+                <div class="bg-surface-dark/50 border border-border-dark py-1.5 rounded-lg">
+                    <p class="text-xs font-bold text-purple-400">${platinum}</p>
+                    <p class="text-[8px] text-slate-500 uppercase">Platinum</p>
                 </div>
             </div>`;
             document.getElementById('statsSection').innerHTML = statsHtml;
@@ -211,11 +219,12 @@
                 const role = m.role || 'standard';
 
                 return `
-                <div class="bg-surface-dark border border-border-dark rounded-xl p-4 mb-2">
+                <div class="bg-surface-dark border ${m.isOnline ? 'border-primary/30 shadow-[0_0_10px_rgba(0,255,0,0.05)]' : 'border-border-dark'} rounded-xl p-4 mb-2">
                     <div class="flex items-start justify-between">
                         <div class="flex items-center gap-3">
-                             <div class="size-10 rounded-full ${isPremium ? 'bg-primary/20 border border-primary/30' : 'bg-slate-800 border border-border-dark'} flex items-center justify-center shrink-0">
+                             <div class="relative size-10 rounded-full ${isPremium ? 'bg-primary/20 border border-primary/30' : 'bg-slate-800 border border-border-dark'} flex items-center justify-center shrink-0">
                                 <span class="material-symbols-outlined ${isPremium ? 'text-primary' : 'text-slate-400'} text-lg">person</span>
+                                ${m.isOnline ? '<span class="absolute -top-0.5 -right-0.5 size-3 bg-primary border-2 border-surface-dark rounded-full animate-pulse"></span>' : ''}
                             </div>
                             <div class="min-w-0">
                                 <p class="font-semibold text-sm flex items-center gap-1.5 text-white truncate">
