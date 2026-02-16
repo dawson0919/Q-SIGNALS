@@ -86,4 +86,4 @@ start();
 
 // Force restart to clear backtest cache and ensure consistency
 
-// Force restart 3: Revert XAU to Binance (Final)
+// Force restart 4: CoinGecko Fallback for XAU (90d limit)

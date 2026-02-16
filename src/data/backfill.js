@@ -3,8 +3,9 @@ const { insertCandles, getLatestCandleTime, getCandleCount } = require('./databa
 
 const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'SPXUSDT', 'NASUSDT'];
 const CG_ID_MAP = {
-    'SPXUSDT': 'spdr-s-p-500-etf-ondo-tokenized-etf', // or standard SPX if available
-    'NASUSDT': 'invesco-qqq-etf-ondo-tokenized-etf'
+    'SPXUSDT': 'spdr-s-p-500-etf-ondo-tokenized-etf',
+    'NASUSDT': 'invesco-qqq-etf-ondo-tokenized-etf',
+    'XAUUSDT': 'tether-gold' // Fallback to CoinGecko
 };
 const TIMEFRAMES = ['1h', '4h'];
 const BACKFILL_DAYS = parseInt(process.env.BACKFILL_DAYS || '365');
@@ -12,14 +13,12 @@ const BINANCE_SPOT_API = 'https://api.binance.com/api/v3/klines';
 const BINANCE_FUTURES_API = 'https://fapi.binance.com/fapi/v1/klines';
 
 async function fetchKlines(symbol, interval, startTime, endTime, limit = 1000) {
-    // Route to CoinGecko for SPX/NAS
+    // Route to CoinGecko for SPX/NAS/XAU
     if (CG_ID_MAP[symbol]) {
-        // Calculate days from start/end or default back (e.g. 90)
+        // CoinGecko Hourly data is only available for < 90 days.
+        // Force max 90 days to ensure we get granularity (4H/1H) instead of Daily.
         let days = 90;
-        if (startTime) {
-            const diff = Date.now() - startTime;
-            days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-        }
+
         return fetchKlinesFromCG(symbol, interval, days);
     }
 
