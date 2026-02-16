@@ -266,6 +266,14 @@ async function getAllUsers(token) {
     return data;
 }
 
+async function adminUpdateUserRole(userId, role) {
+    const { error } = await getAdminClient()
+        .from('profiles')
+        .update({ role })
+        .eq('id', userId);
+    if (error) throw error;
+}
+
 async function deleteUser(userId, token) {
     // Use admin client to delete profile (bypasses RLS)
     const { error } = await getAdminClient()
@@ -294,5 +302,6 @@ module.exports = {
     getApplications,
     updateApplicationStatus,
     getAllUsers,
+    adminUpdateUserRole,
     deleteUser
 };

@@ -365,8 +365,21 @@ router.get('/admin/applications', requireAdmin, async (req, res) => {
 router.post('/admin/approve-application', requireAdmin, async (req, res) => {
     const { id, userId, status } = req.body; // status: 'approved' or 'rejected'
     try {
+        const { updateApplicationStatus } = require('../data/database');
         await updateApplicationStatus(id, userId, status, req.token);
         res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.post('/admin/update-user-role', requireAdmin, async (req, res) => {
+    try {
+        const { userId, role } = req.body;
+        if (!userId || !role) return res.status(400).json({ error: 'Missing userId or role' });
+        const { adminUpdateUserRole } = require('../data/database');
+        await adminUpdateUserRole(userId, role);
+        res.json({ success: true, role });
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
@@ -381,21 +394,8 @@ router.delete('/admin/users/:id', requireAdmin, async (req, res) => {
     }
 });
 
-// Get strategy details
-router.get('/strategies/:id', (req, res) => {
-    const strategy = strategies[req.params.id];
-    if (!strategy) return res.status(404).json({ error: 'Strategy not found' });
+// Strategy registry functions moved up...
 
-    res.json({
-        id: strategy.id,
-        name: strategy.name,
-        description: strategy.description,
-        category: strategy.category,
-        author: strategy.author,
-        defaultParams: strategy.defaultParams,
-        backtestResult: backtestCache[`${strategy.id}_BTCUSDT`] || null
-    });
-});
 
 // Add new strategy via PineScript
 router.post('/strategies', (req, res) => {
@@ -433,9 +433,20 @@ router.post('/backtest', async (req, res) => {
 
         if (strategyId && strategies[strategyId]) {
             const s = strategies[strategyId];
-            // Use factory if available, otherwise fallback to execute
-            strategyFn = s.createStrategy ? s.createStrategy({ ...s.defaultParams, symbol, timeframe }) : s.execute;
+            let params = { ...s.defaultParams };
+
+            // Override for SPX optimized parameters
+            if (symbol === 'SPXUSDT' && strategyId === 'turtle_breakout') {
+                if (timeframe === '4h') {
+                    params = { leftBars: 6, rightBars: 5, minHoldBars: 15 };
+                } else if (timeframe === '1h') {
+                    params = { leftBars: 20, rightBars: 2, minHoldBars: 40 };
+                }
+            }
+
+            strategyFn = s.createStrategy ? s.createStrategy(params) : s.execute;
             strategyName = s.name;
+            console.log(`[Backtest] ${strategyName} using params:`, params);
         } else if (req.body.code) {
             const parsed = parsePineScript(req.body.code);
             strategyFn = parsed.execute;
@@ -445,7 +456,7 @@ router.post('/backtest', async (req, res) => {
         }
 
         // Get candle data
-        const daysBack = timeframe === '1h' ? 45 : 180;
+        const daysBack = symbol === 'SPXUSDT' ? 90 : (timeframe === '1h' ? 45 : 180);
         const candles = await getCandleData(symbol, timeframe, { startTime, endTime, daysBack });
         if (candles.length < 50) {
             return res.status(400).json({ error: `Insufficient data: only ${candles.length} candles available` });
@@ -472,8 +483,8 @@ router.post('/backtest', async (req, res) => {
             timeframe
         };
 
-        // Cache result
-        const cacheKey = `${strategyId || 'custom'}_${symbol}`;
+        // Cache result (include timeframe in key!)
+        const cacheKey = `${strategyId || 'custom'}_${symbol}_${timeframe}`;
         backtestCache[cacheKey] = result;
 
         res.json(result);

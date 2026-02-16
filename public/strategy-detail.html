@@ -239,10 +239,15 @@
         const timeframe = params.get('timeframe') || '4h';
 
         // Update Title dynamically
-        const days = timeframe === '1h' ? 45 : 180;
+        const days = (symbol === 'SPXUSDT' || symbol === 'SPYUSDT') ? 90 : (timeframe === '1h' ? 45 : 180);
         const tfLabel = timeframe.toUpperCase();
+        const isSPX = (symbol === 'SPXUSDT' || symbol === 'SPYUSDT');
+
         const titleEl = document.getElementById('equityTitle');
-        if (titleEl) titleEl.textContent = `Equity Curve（回測）${tfLabel} K線 • 最近 ${days} 天`;
+        if (titleEl) titleEl.textContent = `Equity Curve ${tfLabel} K線 • ${isSPX ? '90天回測' : '最近 ' + days + ' 天'}`;
+
+        const roiLabelEl = document.getElementById('roiTitlePeriod');
+        if (roiLabelEl) roiLabelEl.textContent = isSPX ? '90天回測' : `${days}d`;
 
         let userRole = 'standard'; // Track user role
         let strategyCategory = 'Basic'; // Track strategy category
@@ -297,6 +302,19 @@
                     document.getElementById('signalSection').style.display = 'block';
                     document.getElementById('signalPremiumOverlay').style.display = 'none';
                 }
+            }
+
+            // CoinGecko Data Notice
+            if (isSPX) {
+                const infoMsg = document.createElement('div');
+                infoMsg.className = 'mx-4 mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-start gap-2';
+                infoMsg.innerHTML = `
+                    <span class="material-symbols-outlined text-blue-400 text-sm mt-0.5">info</span>
+                    <div class="text-[11px] text-blue-400/90 leading-tight">
+                        說明：標普 500 (SPY) 數據源自 CoinGecko。受限於精度上限，回測涵蓋最近 <b>90 天</b> 真實股價數據。
+                    </div>
+                `;
+                document.querySelector('main').insertBefore(infoMsg, document.getElementById('perfGrid').parentNode.nextSibling);
             }
 
             // Load strategy info

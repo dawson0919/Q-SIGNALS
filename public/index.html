@@ -64,7 +64,7 @@
     .price-ticker {
       display: inline-flex;
       white-space: nowrap;
-      animation: ticker 60s linear infinite;
+      animation: ticker 30s linear infinite;
     }
 
     @keyframes ticker {
@@ -287,6 +287,11 @@
               strategyList.appendChild(card1h);
               runBacktestForCard(strat.id, symbol, card1h, '1h');
 
+              // For SPX Turtle, we ONLY show 1H per user request
+              if (symbol === 'SPXUSDT' && strat.id === 'turtle_breakout') {
+                continue;
+              }
+
               const card4h = createStrategyCard(strat, symbol, symbolNames[symbol], '4h');
               strategyList.appendChild(card4h);
               runBacktestForCard(strat.id, symbol, card4h, '4h');
@@ -348,12 +353,12 @@
             ${symbol === 'XAUUSDT' && timeframe === '1h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：短線突破型。使用優化版海龜參數 (8K/2K)，專為捕捉黃金短線突破行情設計。</p>` : ''}
             ${symbol === 'XAUUSDT' && timeframe === '4h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：波段趨勢型。使用寬鬆參數 (15K/2K)，捕捉黃金較大級別的趨勢突破，避免過度頻繁交易。</p>` : ''}
             
-            ${symbol === 'SPXUSDT' && timeframe === '1h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-blue-400/80 leading-tight mb-4 font-medium italic">特性：極低延遲捕捉。參數 (6/2/2) 專為捕捉標普 500 短線劇烈波動設計，靈敏度極高。</p>` : ''}
-            ${symbol === 'SPXUSDT' && timeframe === '4h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-blue-400/80 leading-tight mb-4 font-medium italic">特性：最佳化收益。參數 (20/5/10) 捕捉標普 500 長線波段趨勢，回測總收益高達 +68.9%。</p>` : ''}
+            ${symbol === 'SPXUSDT' && timeframe === '1h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-blue-400/80 leading-tight mb-4 font-medium italic">特性：穩健型。參數 (20/2/40) 專為過濾標普 500 日內雜訊設計，專注於捕捉中長線真實動量。</p>` : ''}
+            ${symbol === 'SPXUSDT' && timeframe === '4h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-blue-400/80 leading-tight mb-4 font-medium italic">特性：波段捕手。採用參數 (6/5/15) 針對近年標普 500 的階梯式漲勢進行優化，回測收益回歸真實股價表現。</p>` : ''}
             
             <div class="grid grid-cols-2 gap-2 mb-4">
               <div class="bg-background-dark/50 p-2 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
-                <p class="text-[10px] text-slate-500 uppercase font-bold mb-0.5" id="roi-label-${strat.id}-${symbol}-${timeframe}">Total ROI (${timeframe === '1h' ? '45d' : '180d'})</p>
+                <p class="text-[10px] text-slate-500 uppercase font-bold mb-0.5" id="roi-label-${strat.id}-${symbol}-${timeframe}">Total ROI (${symbol === 'SPXUSDT' ? '90d' : (timeframe === '1h' ? '45d' : '180d')})</p>
                 <p class="text-xl font-black text-primary truncate" id="roi-${strat.id}-${symbol}-${timeframe}">--</p>
               </div>
               <div class="bg-background-dark/50 p-2 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
@@ -477,8 +482,9 @@
       ws.onclose = () => setTimeout(connectPriceWS, 3000);
     }
 
+    let lastTickerUpdate = 0;
     function updatePriceTicker(prices) {
-      // Update Main Gold Highlight
+      // Update Main Gold Highlight (Immediate)
       const gold = prices['XAUUSDT'];
       if (gold) {
         const goldPriceEl = document.getElementById('goldPriceMain');
@@ -490,6 +496,11 @@
           goldChangeEl.className = `text-xs font-bold ${color}`;
         }
       }
+
+      // Throttle Ticker HTML Update to prevent animation reset (Stop)
+      const now = Date.now();
+      if (now - lastTickerUpdate < 30000) return; // Flow for at least 30s
+      lastTickerUpdate = now;
 
       const container = document.getElementById('priceItems');
       const symbols = {
@@ -514,7 +525,7 @@
       }
 
       if (itemHtml) {
-        // Double it for seamless scrolling
+        // Double/Triple it for seamless scrolling
         container.innerHTML = `<div class="flex price-ticker">${itemHtml}${itemHtml}${itemHtml}</div>`;
       }
     }

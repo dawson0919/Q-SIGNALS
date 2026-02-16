@@ -97,8 +97,8 @@
             try {
                 console.log('Using Debug API for Members...');
 
-                // FORCE DEBUG API: Directly fetch from debug endpoint to ensure visibility
-                let usersRes = await fetch('/api/debug/users');
+                // Use production Admin API
+                let usersRes = await fetch('/api/admin/users', { headers: { 'Authorization': `Bearer ${token}` } });
                 const appsRes = await fetch('/api/admin/applications', { headers: { 'Authorization': `Bearer ${token}` } });
 
                 if (!usersRes.ok) throw new Error('Failed to fetch users');
@@ -128,24 +128,29 @@
             const pending = allApplications.filter(a => a.status === 'pending').length;
             const basic = allMembers.filter(m => !m.role || m.role === 'standard').length;
             const premium = allMembers.filter(m => m.role === 'advanced' || m.role === 'admin').length;
+            const platinum = allMembers.filter(m => m.role === 'platinum').length;
 
             const statsHtml = `
-            <div class="grid grid-cols-4 gap-2 mb-6">
-                <div class="bg-surface-dark border border-border-dark p-3 rounded-xl text-center">
-                    <p class="text-primary text-xl font-bold">${total}</p>
-                    <p class="text-[9px] text-slate-400 uppercase mt-0.5">Total</p>
+            <div class="grid grid-cols-5 gap-1.5 mb-6">
+                <div class="bg-surface-dark border border-border-dark p-2 rounded-xl text-center">
+                    <p class="text-primary text-lg font-bold">${total}</p>
+                    <p class="text-[8px] text-slate-400 uppercase mt-0.5">Total</p>
                 </div>
-                <div class="bg-surface-dark border border-border-dark p-3 rounded-xl text-center">
-                    <p class="text-yellow-500 text-xl font-bold">${pending}</p>
-                    <p class="text-[9px] text-slate-400 uppercase mt-0.5">Pending</p>
+                <div class="bg-surface-dark border border-border-dark p-2 rounded-xl text-center">
+                    <p class="text-yellow-500 text-lg font-bold">${pending}</p>
+                    <p class="text-[8px] text-slate-400 uppercase mt-0.5">Pending</p>
                 </div>
-                <div class="bg-surface-dark border border-border-dark p-3 rounded-xl text-center">
-                    <p class="text-xl font-bold text-white">${basic}</p>
-                    <p class="text-[9px] text-slate-400 uppercase mt-0.5">Basic</p>
+                <div class="bg-surface-dark border border-border-dark p-2 rounded-xl text-center">
+                    <p class="text-lg font-bold text-white">${basic}</p>
+                    <p class="text-[8px] text-slate-400 uppercase mt-0.5">Basic</p>
                 </div>
-                <div class="bg-surface-dark border border-primary/20 p-3 rounded-xl text-center">
-                    <p class="text-xl font-bold text-primary">${premium}</p>
-                    <p class="text-[9px] text-primary/60 uppercase mt-0.5">Premium</p>
+                <div class="bg-surface-dark border border-primary/20 p-2 rounded-xl text-center">
+                    <p class="text-lg font-bold text-primary">${premium}</p>
+                    <p class="text-[8px] text-primary/60 uppercase mt-0.5">Adv/Adm</p>
+                </div>
+                <div class="bg-surface-dark border border-purple-500/20 p-2 rounded-xl text-center">
+                    <p class="text-lg font-bold text-purple-400">${platinum}</p>
+                    <p class="text-[8px] text-purple-400/60 uppercase mt-0.5">Plat</p>
                 </div>
             </div>`;
             document.getElementById('statsSection').innerHTML = statsHtml;
@@ -154,7 +159,8 @@
         function renderFilters() {
             const filters = [
                 { id: 'all', label: 'All' },
-                { id: 'premium', label: 'Premium' },
+                { id: 'platinum', label: 'Platinum' },
+                { id: 'premium', label: 'Advanced' },
                 { id: 'basic', label: 'Basic' },
                 { id: 'pending', label: 'Pending' }
             ];
@@ -183,11 +189,12 @@
                 const matchedSearch = email.includes(search);
                 if (!matchedSearch) return false;
 
-                const isPremium = m.role === 'advanced' || m.role === 'admin';
+                const role = m.role || 'standard';
                 const hasPendingApp = allApplications.some(a => a.user_id === m.id && a.status === 'pending');
 
-                if (currentFilter === 'premium') return isPremium;
-                if (currentFilter === 'basic') return !isPremium;
+                if (currentFilter === 'platinum') return role === 'platinum';
+                if (currentFilter === 'premium') return role === 'advanced' || role === 'admin';
+                if (currentFilter === 'basic') return role === 'standard';
                 if (currentFilter === 'pending') return hasPendingApp;
                 return true;
             });
@@ -198,26 +205,37 @@
             }
 
             list.innerHTML = filtered.map(m => {
-                const isPremium = m.role === 'advanced' || m.role === 'admin';
+                const isPremium = m.role === 'advanced' || m.role === 'platinum' || m.role === 'admin';
                 const app = allApplications.find(a => a.user_id === m.id && a.status === 'pending');
                 const displayName = m.email ? m.email.split('@')[0] : 'User';
+                const role = m.role || 'standard';
 
                 return `
                 <div class="bg-surface-dark border border-border-dark rounded-xl p-4 mb-2">
-                    <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-start justify-between">
                         <div class="flex items-center gap-3">
-                             <div class="size-10 rounded-full ${isPremium ? 'bg-primary/20 border border-primary/30' : 'bg-slate-800 border border-border-dark'} flex items-center justify-center">
+                             <div class="size-10 rounded-full ${isPremium ? 'bg-primary/20 border border-primary/30' : 'bg-slate-800 border border-border-dark'} flex items-center justify-center shrink-0">
                                 <span class="material-symbols-outlined ${isPremium ? 'text-primary' : 'text-slate-400'} text-lg">person</span>
                             </div>
-                            <div>
-                                <p class="font-semibold text-sm flex items-center gap-1.5 text-white">
+                            <div class="min-w-0">
+                                <p class="font-semibold text-sm flex items-center gap-1.5 text-white truncate">
                                     ${displayName}
                                     ${isPremium ? '<span class="material-symbols-outlined text-primary text-xs" style="font-variation-settings:\'FILL\' 1">verified</span>' : ''}
                                 </p>
-                                <p class="text-[11px] text-slate-500">${m.email || 'No Email'}</p>
+                                <p class="text-[11px] text-slate-500 truncate">${m.email || 'No Email'}</p>
+                                <div class="mt-2 flex items-center gap-2">
+                                    <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Role:</span>
+                                    <select onchange="updateUserRole('${m.id}', this.value)" 
+                                        class="bg-background-dark border border-border-dark rounded px-2 py-0.5 text-[10px] text-slate-300 outline-none focus:border-primary">
+                                        <option value="standard" ${role === 'standard' ? 'selected' : ''}>Standard</option>
+                                        <option value="advanced" ${role === 'advanced' ? 'selected' : ''}>Advanced</option>
+                                        <option value="platinum" ${role === 'platinum' ? 'selected' : ''}>Platinum</option>
+                                        <option value="admin" ${role === 'admin' ? 'selected' : ''}>Admin</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
-                         <button onclick="deleteMember('${m.id}')" class="text-red-500 hover:bg-red-500/10 p-2 rounded-lg">
+                        <button onclick="deleteMember('${m.id}')" class="text-slate-600 hover:text-red-500 p-2 transition-colors shrink-0">
                             <span class="material-symbols-outlined text-lg">delete</span>
                         </button>
                     </div>
@@ -243,6 +261,25 @@
         document.getElementById('searchInput').addEventListener('input', renderMembers);
 
         // Actions
+        window.updateUserRole = async (userId, newRole) => {
+            const { token } = await getUser();
+            try {
+                const res = await fetch('/api/admin/update-user-role', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ userId, role: newRole })
+                });
+                if (res.ok) {
+                    // Update local data and re-render stats
+                    const user = allMembers.find(m => m.id === userId);
+                    if (user) user.role = newRole;
+                    renderStats();
+                    renderMembers();
+                } else {
+                    alert('Update failed');
+                }
+            } catch (e) { alert(e.message); }
+        };
         window.processApp = async (appId, userId, status) => {
             const { token } = await getUser();
             if (!confirm(`Are you sure you want to ${status} this application?`)) return;
