@@ -280,52 +280,6 @@
             const isAdvanced = userRole === 'advanced';
             const isSPX = symbol === 'SPXUSDT';
 
-            // Base Visibility Logic
-            const isIndex = (symbol === 'SPXUSDT' || symbol === 'NASUSDT');
-            if (isIndex) {
-                // Indices are restricted to Admin or Platinum
-                if (isAdmin || isPlatinum) {
-                    document.getElementById('signalSection').style.display = 'block';
-                    document.getElementById('signalPremiumOverlay').style.display = 'none';
-                } else {
-                    // Show chart but hide/blur signal for Indices
-                    document.getElementById('signalSection').style.display = 'block';
-                    document.getElementById('signalPremiumOverlay').style.display = 'flex';
-                    const link = document.querySelector('#signalPremiumOverlay a');
-                    if (link) link.textContent = 'UPGRADE TO PLATINUM';
-                }
-            } else {
-                // Original logic for other assets (GOLD, BTC, etc.)
-                if (strategyCategory === 'Premium') {
-                    if (isAdmin || isAdvanced || isPlatinum) {
-                        document.getElementById('signalSection').style.display = 'block';
-                        document.getElementById('signalPremiumOverlay').style.display = 'none';
-                    } else {
-                        document.getElementById('signalSection').style.display = 'block';
-                        document.getElementById('signalPremiumOverlay').style.display = 'flex';
-                    }
-                } else {
-                    // Basic strategy
-                    document.getElementById('signalSection').style.display = 'block';
-                    document.getElementById('signalPremiumOverlay').style.display = 'none';
-                }
-            }
-
-            // CoinGecko Data Notice
-            const isNasdaq = symbol === 'NASUSDT';
-            if (isSPX || isNasdaq) {
-                const infoMsg = document.createElement('div');
-                infoMsg.className = 'mx-4 mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-start gap-2';
-                const assetName = isNasdaq ? '納斯達克 100 (QQQ)' : '標普 500 (SPY)';
-                infoMsg.innerHTML = `
-                    <span class="material-symbols-outlined text-blue-400 text-sm mt-0.5">info</span>
-                    <div class="text-[11px] text-blue-400/90 leading-tight">
-                        說明：${assetName} 數據源自 CoinGecko。受限於精度上限，回測涵蓋最近 <b>90 天</b> 真實股價數據。
-                    </div>
-                `;
-                document.querySelector('main').insertBefore(infoMsg, document.getElementById('perfGrid').parentNode.nextSibling);
-            }
-
             // Load strategy info
             try {
                 const sHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -355,14 +309,7 @@
                 // Show admin notes (Admin Only UI check + API check)
                 if (isAdmin && strat.adminNotes) {
                     let notes = strat.adminNotes;
-
-                    // Smart Filter: Filter by symbol to prevent "misplacement" confusion
-                    const mapping = {
-                        'XAUUSDT': '[XAU / GOLD]',
-                        'SPXUSDT': '[SPX / SPY]',
-                        'SPYUSDT': '[SPX / SPY]',
-                        'NASUSDT': '[NAS / QQQ]'
-                    };
+                    const mapping = { 'XAUUSDT': '[XAU / GOLD]', 'SPXUSDT': '[SPX / SPY]', 'SPYUSDT': '[SPX / SPY]', 'NASUSDT': '[NAS / QQQ]' };
                     const header = mapping[symbol];
                     if (header && notes.includes(header)) {
                         const globalHeader = notes.split('[')[0];
@@ -371,11 +318,53 @@
                         if (end === -1) end = notes.length;
                         notes = (globalHeader + notes.substring(start, end)).trim();
                     }
-
                     document.getElementById('adminNotesSection').classList.remove('hidden');
                     document.getElementById('adminNotesContent').innerText = notes;
                 }
             } catch (e) { }
+
+            // Visibility Logic
+            const isIndex = (symbol === 'SPXUSDT' || symbol === 'NASUSDT');
+            if (isIndex) {
+                if (isAdmin || isPlatinum) {
+                    document.getElementById('signalSection').style.display = 'block';
+                    document.getElementById('signalPremiumOverlay').style.display = 'none';
+                } else {
+                    document.getElementById('signalSection').style.display = 'block';
+                    document.getElementById('signalPremiumOverlay').style.display = 'flex';
+                    const link = document.querySelector('#signalPremiumOverlay a');
+                    if (link) link.textContent = 'UPGRADE TO PLATINUM';
+                }
+            } else {
+                if (strategyCategory === 'Premium') {
+                    if (isAdmin || isAdvanced || isPlatinum) {
+                        document.getElementById('signalSection').style.display = 'block';
+                        document.getElementById('signalPremiumOverlay').style.display = 'none';
+                    } else {
+                        document.getElementById('signalSection').style.display = 'block';
+                        document.getElementById('signalPremiumOverlay').style.display = 'flex';
+                    }
+                } else {
+                    document.getElementById('signalSection').style.display = 'block';
+                    document.getElementById('signalPremiumOverlay').style.display = 'none';
+                }
+            }
+
+            // CoinGecko Data Notice
+            const isNasdaq = symbol === 'NASUSDT';
+            if (isSPX || isNasdaq) {
+                const infoMsg = document.createElement('div');
+                infoMsg.className = 'mx-4 mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-start gap-2';
+                const assetName = isNasdaq ? '納斯達克 100 (QQQ)' : '標普 500 (SPY)';
+                infoMsg.innerHTML = `
+                    <span class="material-symbols-outlined text-blue-400 text-sm mt-0.5">info</span>
+                    <div class="text-[11px] text-blue-400/90 leading-tight">
+                        說明：${assetName} 數據源自 CoinGecko。受限於精度上限，回測涵蓋最近 <b>90 天</b> 真實股價數據。
+                    </div>
+                `;
+                document.querySelector('main').insertBefore(infoMsg, document.getElementById('perfGrid').parentNode.nextSibling);
+            }
+
 
             // Check subscription status
             if (user && token) {
