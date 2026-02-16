@@ -438,7 +438,9 @@ router.post('/backtest', async (req, res) => {
             // Override for SPX/NAS optimized parameters
             const isIndex = (symbol === 'SPXUSDT' || symbol === 'NASUSDT');
             if (isIndex && strategyId === 'turtle_breakout') {
-                if (timeframe === '4h') {
+                if (symbol === 'NASUSDT' && timeframe === '4h') {
+                    params = { leftBars: 4, rightBars: 5, minHoldBars: 20 };
+                } else if (timeframe === '4h') {
                     params = { leftBars: 6, rightBars: 5, minHoldBars: 15 };
                 } else if (timeframe === '1h') {
                     params = { leftBars: 20, rightBars: 2, minHoldBars: 40 };

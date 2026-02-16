@@ -358,7 +358,11 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const subs = await res.json();
-                const isSubscribed = subs.some(s => s.strategy_id === strategyId);
+                const isSubscribed = subs.some(s =>
+                    s.strategy_id === strategyId &&
+                    (s.symbol === symbol || (!s.symbol && symbol === 'BTCUSDT')) &&
+                    (s.timeframe === timeframe || (!s.timeframe && timeframe === '4h'))
+                );
                 const btn = document.getElementById('subBtn');
                 if (isSubscribed) {
                     btn.textContent = 'Unsubscribe';
