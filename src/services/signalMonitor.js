@@ -19,9 +19,12 @@ function getStrategies() {
         require('../engine/strategies/turtleBreakout'),
         require('../engine/strategies/macdMa'),
         require('../engine/strategies/granville_eth_4h'),
+        require('../engine/strategies/dualSuperTrend'),
     ];
     const map = {};
-    strategyModules.forEach(s => { map[s.id] = s; });
+    strategyModules.forEach(s => {
+        if (s && s.id) map[s.id] = s;
+    });
     return map;
 }
 
@@ -33,20 +36,23 @@ const MONITOR_COMBOS = [
     { symbol: 'BTCUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
     { symbol: 'BTCUSDT', strategyId: 'macd_ma_optimized', timeframe: '4h' },
     { symbol: 'BTCUSDT', strategyId: 'granville_eth_4h', timeframe: '4h' },
+    { symbol: 'BTCUSDT', strategyId: 'dual_st_breakout', timeframe: '4h' },
     // ETH
     { symbol: 'ETHUSDT', strategyId: 'ma60', timeframe: '4h' },
     { symbol: 'ETHUSDT', strategyId: 'dual_ema', timeframe: '4h' },
     { symbol: 'ETHUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
     { symbol: 'ETHUSDT', strategyId: 'macd_ma_optimized', timeframe: '4h' },
     { symbol: 'ETHUSDT', strategyId: 'granville_eth_4h', timeframe: '4h' },
+    { symbol: 'ETHUSDT', strategyId: 'dual_st_breakout', timeframe: '4h' },
     // SOL
     { symbol: 'SOLUSDT', strategyId: 'ma60', timeframe: '4h' },
     { symbol: 'SOLUSDT', strategyId: 'dual_ema', timeframe: '4h' },
     { symbol: 'SOLUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
     { symbol: 'SOLUSDT', strategyId: 'macd_ma_optimized', timeframe: '4h' },
-    { symbol: 'SOLUSDT', strategyId: 'granville_eth_4h', timeframe: '4h' },
-    // XAU
+    { symbol: 'SOLUSDT', strategyId: 'dual_st_breakout', timeframe: '4h' },
+    // XAU (Gold)
     { symbol: 'XAUUSDT', strategyId: 'three_blade', timeframe: '1h' },
+    { symbol: 'XAUUSDT', strategyId: 'dual_ema', timeframe: '4h' },
     { symbol: 'XAUUSDT', strategyId: 'granville_eth_4h', timeframe: '4h' },
     // Indices
     { symbol: 'SPXUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
@@ -56,21 +62,22 @@ const MONITOR_COMBOS = [
 /**
  * Run a single backtest and check for new signals
  */
-async function checkSignal(combo, strategies) {
+async function checkSignal(combo, strategiesMap) {
     const { symbol, strategyId, timeframe } = combo;
-    const strategy = strategies[strategyId];
-    if (!strategy) return null;
+    const s = strategiesMap[strategyId];
+    if (!s) return null;
 
     try {
-        const candles = await getCandleData(symbol, timeframe, {});
+        const candles = await getCandleData(symbol, timeframe, { daysBack: 30 });
         if (!candles || candles.length < 50) return null;
 
-        const bt = new Backtester(candles, strategy, symbol);
-        const result = bt.run();
+        const bt = new Backtester({ initialCapital: 10000 });
+        const params = { ...s.defaultParams, symbol, timeframe };
+        const strategyFn = s.createStrategy ? s.createStrategy(params) : s.execute;
 
+        const result = bt.run(strategyFn, candles);
         if (!result.recentTrades || result.recentTrades.length === 0) return null;
 
-        // The latest trade is the current signal
         const latest = result.recentTrades[0];
         const signalKey = `${strategyId}_${symbol}_${timeframe}`;
         const oldSignal = lastSignals[signalKey];
@@ -91,7 +98,7 @@ async function checkSignal(combo, strategies) {
         if (isNew) {
             return {
                 strategyId,
-                strategyName: strategy.name,
+                strategyName: s.name,
                 symbol,
                 timeframe,
                 type: latest.type,
@@ -101,7 +108,7 @@ async function checkSignal(combo, strategies) {
             };
         }
 
-        return null; // No new signal
+        return null;
     } catch (err) {
         console.error(`[SignalMonitor] Error checking ${strategyId}/${symbol}:`, err.message);
         return null;
