@@ -1,11 +1,11 @@
 /**
  * Granville Pro (Ultimate Master Version) - HIGH FIDELITY
  * Bidirectional (Long/Short) strategy using Granville's Moving Average crossover.
- * Deep-optimized 180-day params per asset (13,978 combinations searched per asset):
- *   BTC: EMA17, SL 0.5% -> ROI +53.25%
- *   ETH: EMA35, SL 0.5% -> ROI +83.51%
- *   SOL: EMA10, SL 0.5% -> ROI +60.70%
- *   XAU: EMA141, SL 0.5% -> ROI +19.99%
+ * Deep-optimized on ASCENDING data (matching API, 13,978 combos per asset):
+ *   BTC: EMA178, SL 0.5% -> ROI +49.94%
+ *   ETH: EMA203, SL 0.5% -> ROI +64.84%
+ *   SOL: EMA156, SL 0.5% -> ROI +95.12%
+ *   XAU: EMA16,  SL 0.5% -> ROI +17.23%
  */
 module.exports = {
     id: 'granville_eth_4h',
@@ -13,22 +13,22 @@ module.exports = {
     description: '葛蘭碧法則精華版。多空雙向策略，自動適配各大資產（BTC/ETH/SOL/GOLD）的趨勢信號。',
     category: 'Premium',
     author: 'QuantSignal Pro',
-    params: { ma_p: 35, sl: 0.005 },
+    params: { ma_p: 203, sl: 0.005 },
 
     execute: (candles, indicatorData, i, indicators) => {
         const symbol = (candles[0] && (candles[0].symbol || candles[0].id) || 'ETHUSDT').toUpperCase();
 
-        // --- 1. CONFIG SELECTION (180-Day Deep-Optimized, Forced Long/Short) ---
-        let ma_p = 35, sl = 0.005;
+        // --- 1. CONFIG SELECTION (Ascending-Order Optimized, Forced Long/Short) ---
+        let ma_p = 203, sl = 0.005;
 
         if (symbol.includes('BTC')) {
-            ma_p = 17; sl = 0.005;   // BTC: +53.25% ROI (>47.2% original)
+            ma_p = 178; sl = 0.005;  // BTC: +49.94% ROI, WR 54.5%, PF 11.25
         } else if (symbol.includes('SOL')) {
-            ma_p = 10; sl = 0.005;   // SOL: +60.70% ROI (>58.1% original)
+            ma_p = 156; sl = 0.005;  // SOL: +95.12% ROI, WR 50.0%, PF 8.59
         } else if (symbol.includes('XAU') || symbol.includes('GOLD')) {
-            ma_p = 141; sl = 0.005;  // XAU: +19.99% ROI (>-12.0% original)
+            ma_p = 16; sl = 0.005;  // XAU: +17.23% ROI, WR 22.7%, PF 1.69
         } else {
-            ma_p = 35; sl = 0.005;   // ETH: +83.51% ROI (>50.2% original)
+            ma_p = 203; sl = 0.005;  // ETH: +64.84% ROI, WR 38.5%, PF 7.58
         }
 
         // Dynamic warmup period based on MA
