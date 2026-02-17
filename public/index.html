@@ -158,8 +158,22 @@
       </div>
     </div>
 
-    <!-- Strategy Type Tabs -->
+    <!-- Search Bar -->
     <div class="px-4 pt-4">
+      <div class="relative">
+        <span
+          class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg">search</span>
+        <input id="strategySearch" type="text" placeholder="搜尋商品或策略 Search BTC, Gold, Granville..."
+          class="w-full bg-card-dark border border-border-dark rounded-xl pl-10 pr-10 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-all font-medium" />
+        <button id="searchClear"
+          class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-300 transition-colors hidden">
+          <span class="material-symbols-outlined text-lg">close</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Strategy Type Tabs -->
+    <div class="px-4 pt-3">
       <div class="flex border-b border-border-dark overflow-x-auto">
         <button
           class="tab-btn px-4 py-2 text-sm font-semibold border-b-2 border-primary text-primary whitespace-nowrap flex flex-col items-center"
@@ -244,6 +258,11 @@
       </div>
       <div id="strategyList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <!-- Strategies loaded dynamically -->
+      </div>
+      <div id="noSearchResults" class="hidden flex-col items-center justify-center py-12 gap-3">
+        <span class="material-symbols-outlined text-slate-700 text-5xl">search_off</span>
+        <p class="text-slate-500 font-bold text-sm">找不到符合的策略</p>
+        <p class="text-slate-600 text-xs">No strategies found. Try a different keyword.</p>
       </div>
     </div>
 
@@ -353,6 +372,12 @@
       div.className = `strategy-card bg-card-dark rounded-xl border ${isPlatinum ? 'border-indigo-500/50 platinum-gradient' : (isPremium ? 'border-primary/30 premium-gradient' : 'border-border-dark')} overflow-hidden relative flex flex-col`;
       div.dataset.category = category;
       div.dataset.roiPositive = 'true'; // Default to true (optimistic)
+      div.dataset.symbol = symbol;
+      div.dataset.symbolShort = symbolShort;
+      div.dataset.stratName = (strat.name || '').toLowerCase();
+      div.dataset.stratId = strat.id;
+      div.dataset.timeframe = timeframe;
+      div.dataset.searchText = `${strat.name} ${symbolShort} ${symbol} ${category} ${timeframe} ${strat.id}`.toLowerCase();
 
       const badgeClass = isPlatinum
         ? 'text-[10px] font-bold bg-indigo-600 text-white rounded px-1.5 py-0.5 uppercase mb-1 inline-block'
@@ -482,19 +507,70 @@
       }
     }
 
+    // ── Combined Search + Tab Filter ──────────────────
+    let activeTabFilter = 'all';
+    let searchQuery = '';
+
+    // Alias map for search (Chinese/English synonyms)
+    const searchAliases = {
+      '比特幣': 'btc', '以太坊': 'eth', '黃金': 'gold xau',
+      '索拉納': 'sol', 'solana': 'sol', 'bitcoin': 'btc', 'ethereum': 'eth',
+      '標普': 'spx', '納斯達克': 'nas', '海龜': 'turtle', '葛蘭碧': 'granville',
+      '三刀流': 'three_blade', 'macd': 'macd'
+    };
+
+    function applyFilters() {
+      const noResultEl = document.getElementById('noSearchResults');
+      let visibleCount = 0;
+
+      // Expand search query with aliases
+      let expandedQuery = searchQuery;
+      for (const [alias, target] of Object.entries(searchAliases)) {
+        if (searchQuery.includes(alias)) expandedQuery += ' ' + target;
+      }
+
+      document.querySelectorAll('.strategy-card').forEach(card => {
+        const categoryMatch = (activeTabFilter === 'all' || card.dataset.category === activeTabFilter);
+        const searchText = card.dataset.searchText || '';
+        const searchMatch = !expandedQuery || expandedQuery.split(/\s+/).every(term => searchText.includes(term));
+        const show = categoryMatch && searchMatch;
+        card.style.display = show ? 'flex' : 'none';
+        if (show) visibleCount++;
+      });
+
+      // No results message
+      if (noResultEl) {
+        noResultEl.style.display = visibleCount === 0 ? 'flex' : 'none';
+      }
+    }
+
     // Tab filtering
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('border-primary', 'text-primary'); b.classList.add('border-transparent', 'text-slate-400'); });
         btn.classList.add('border-primary', 'text-primary');
         btn.classList.remove('border-transparent', 'text-slate-400');
-
-        const filter = btn.dataset.filter;
-        document.querySelectorAll('.strategy-card').forEach(card => {
-          const categoryMatch = (filter === 'all' || card.dataset.category === filter);
-          card.style.display = categoryMatch ? 'flex' : 'none';
-        });
+        activeTabFilter = btn.dataset.filter;
+        applyFilters();
       });
+    });
+
+    // Search input
+    const searchInput = document.getElementById('strategySearch');
+    const searchClear = document.getElementById('searchClear');
+
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value.trim().toLowerCase();
+      searchClear.classList.toggle('hidden', !searchQuery);
+      applyFilters();
+    });
+
+    searchClear.addEventListener('click', () => {
+      searchInput.value = '';
+      searchQuery = '';
+      searchClear.classList.add('hidden');
+      applyFilters();
+      searchInput.focus();
     });
 
     // Live price WebSocket
