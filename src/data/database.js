@@ -36,12 +36,15 @@ function getAdminClient() {
     if (!supabaseAdmin) {
         if (!SUPABASE_SERVICE_ROLE_KEY) {
             console.error('[DB] WARNING: SUPABASE_SERVICE_ROLE_KEY not set! Admin queries will fail.');
-            return getSupabase(); // Fallback (will still be blocked by RLS)
+            return getSupabase();
         }
         supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-            auth: { autoRefreshToken: false, persistSession: false }
+            auth: { autoRefreshToken: false, persistSession: false },
+            global: {
+                headers: { 'x-client-info': 'quant-signal-admin' }
+            }
         });
-        console.log('[DB] Admin client initialized (Service Role - bypasses RLS)');
+        console.log('[DB] Admin client initialized (Bypasses RLS)');
     }
     return supabaseAdmin;
 }
