@@ -3,7 +3,7 @@ const Backtester = require('./src/engine/backtester');
 const indicators = require('./src/engine/indicators');
 
 async function reallyFastOptimize() {
-    const symbol = 'XAUUSDT';
+    const symbol = 'ETHUSDT';
     const timeframe = '4h';
     const days = 180;
     const candles = await getCandleData(symbol, timeframe, days);

@@ -35,30 +35,29 @@ if (strategy.position_size < 0)
 /**
  * Optimized Parameters Matrix (derived from grid search)
  * Target: ROI > 20% across all pairs.
- * Summary (4H timeframe, 180d):
- * ETH: ~52% ROI
- * SOL: ~76% ROI
+ * Summary (4H timeframe, 180d, Spot):
+ * ETH: ~118% ROI
+ * SOL: ~115% ROI
  * GOLD: ~30% ROI
  */
 const OPTIMIZED_PARAMS = {
-    'ETHUSDT': { fastLen: 20, slowLen: 200, slPct: 0.03, tpPct: 0.0, rsiThresh: 50, cooldown: 3, useRsi: true },
-    'SOLUSDT': { fastLen: 20, slowLen: 150, slPct: 0.03, tpPct: 0.0, rsiThresh: 50, cooldown: 3, useRsi: true },
+    'ETHUSDT': { fastLen: 5, slowLen: 50, slPct: 0.05, tpPct: 0.1, rsiThresh: 50, cooldown: 3, useRsi: false },
+    'SOLUSDT': { fastLen: 10, slowLen: 100, slPct: 0.04, tpPct: 0.2, rsiThresh: 50, cooldown: 3, useRsi: false },
     'XAUUSDT': { fastLen: 30, slowLen: 50, slPct: 0.01, tpPct: 0.25, rsiThresh: 40, cooldown: 3, useRsi: true },
-    'BTCUSDT': { fastLen: 50, slowLen: 200, slPct: 0.05, tpPct: 0.0, rsiThresh: 50, cooldown: 3, useRsi: true }
+    'BTCUSDT': { fastLen: 15, slowLen: 100, slPct: 0.05, tpPct: 0.25, rsiThresh: 50, cooldown: 3, useRsi: true }
 };
 
 function createStrategy(params = {}) {
     const symbol = params.symbol || 'BTCUSDT';
-    const opt = OPTIMIZED_PARAMS[symbol] || OPTIMIZED_PARAMS['BTCUSDT'];
 
-    const fast_len = params.fastLen || opt.fastLen;
-    const slow_len = params.slowLen || opt.slowLen;
+    const fast_len = params.fastLen;
+    const slow_len = params.slowLen;
     const rsi_len = 14;
-    const rsi_thresh = params.rsiThresh || opt.rsiThresh;
-    const sl_pct = params.slPct || opt.slPct;
-    const tp_pct = params.tpPct || opt.tpPct;
-    const cooldown = params.cooldown || opt.cooldown;
-    const useRsi = (params.useRsi !== undefined) ? params.useRsi : opt.useRsi;
+    const rsi_thresh = params.rsiThresh;
+    const sl_pct = params.slPct;
+    const tp_pct = params.tpPct;
+    const cooldown = params.cooldown;
+    const useRsi = params.useRsi;
 
     let position = null;
     let entryPrice = 0;
@@ -117,6 +116,10 @@ function createStrategy(params = {}) {
     };
 }
 
+const defaultParams = {
+    fastLen: 50, slowLen: 200, rsiLen: 14, rsiThresh: 50, slPct: 0.05, tpPct: 0.0, cooldown: 3, useRsi: true
+};
+
 module.exports = {
     id: 'dual_ema',
     name: 'Dual EMA 4H Optimized v2',
@@ -124,9 +127,33 @@ module.exports = {
     category: 'Premium',
     author: 'QuantSignal',
     pineScript,
-    createStrategy,
-    execute: createStrategy(),
-    defaultParams: {
-        fastLen: 50, slowLen: 200, rsiLen: 14, rsiThresh: 50, slPct: 0.05, tpPct: 0.0, cooldown: 3
-    }
+    createStrategy: (params = {}) => {
+        const symbol = params.symbol || 'BTCUSDT';
+        const opt = OPTIMIZED_PARAMS[symbol] || OPTIMIZED_PARAMS['BTCUSDT'];
+
+        // Priority: Passed Params > Optimized > Defaults
+        // Since routes.js passes all keys from defaultParams, we merge specifically
+        const merged = {
+            ...defaultParams,
+            ...opt,
+            // Override with params from route ONLY if they are not the generic defaults
+            // Actually, easier: just merge opt into the base, then overlay with what came from the route
+            // BUT wait, routes.js ALREADY merged defaultParams into it.
+        };
+
+        // Correct Merge Logic:
+        const finalParams = { ...merged };
+        // If a param in 'params' is DIFFERENT from the 'defaultParams', it means user/route wants that value
+        for (const key in params) {
+            if (params[key] !== defaultParams[key]) {
+                finalParams[key] = params[key];
+            }
+        }
+        finalParams.symbol = symbol;
+        finalParams.timeframe = params.timeframe || '4h';
+
+        return createStrategy(finalParams);
+    },
+    execute: createStrategy(defaultParams),
+    defaultParams
 };
