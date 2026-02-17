@@ -1,5 +1,6 @@
 // API Routes
 const express = require('express');
+const path = require('path');
 const router = express.Router();
 const Backtester = require('../engine/backtester');
 const { getCandleData } = require('../engine/dataFetcher');
@@ -612,6 +613,29 @@ router.get('/stats', async (req, res) => {
         stats[s] = await getCandleCount(s, '4h');
     }
     res.json({ candleCounts: stats, strategies: Object.keys(strategies).length });
+});
+
+// Visitor Counter
+const fs = require('fs');
+const STATS_FILE = path.join(__dirname, '../../../visitor_stats.json');
+
+router.get('/visitor-count', (req, res) => {
+    let count = 0;
+    try {
+        if (fs.existsSync(STATS_FILE)) {
+            const data = fs.readFileSync(STATS_FILE, 'utf8');
+            count = JSON.parse(data).count || 0;
+        }
+    } catch (e) { }
+
+    // Increment
+    count++;
+
+    try {
+        fs.writeFileSync(STATS_FILE, JSON.stringify({ count }), 'utf8');
+    } catch (e) { }
+
+    res.json({ count });
 });
 
 // ── Telegram Bot Routes ────────────────────────

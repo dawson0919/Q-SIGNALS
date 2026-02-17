@@ -729,6 +729,33 @@
       }
     })();
   </script>
+  <!-- Footer / Counter -->
+  <footer class="mt-auto py-8 border-t border-border-dark/30 bg-card-dark/20">
+    <div class="max-w-7xl mx-auto px-4 text-center">
+      <div class="inline-flex items-center gap-2 px-4 py-2 bg-primary/5 rounded-full border border-primary/10">
+        <span class="material-symbols-outlined text-sm text-primary">group</span>
+        <span class="text-xs text-slate-400">累計瀏覽人數：</span>
+        <span id="visitorCount" class="text-xs font-bold text-white tracking-widest">---</span>
+      </div>
+      <p class="mt-4 text-[10px] text-slate-600 uppercase tracking-tighter">© 2026 QuantSignal — All Rights Reserved</p>
+    </div>
+  </footer>
+
+  <script src="/js/auth.js"></script>
+  <script>
+    // Visitor Counter Fetch
+    async function updateVisitorCount() {
+      try {
+        const res = await fetch('/api/visitor-count');
+        const data = await res.json();
+        const el = document.getElementById('visitorCount');
+        if (el) el.textContent = data.count.toLocaleString();
+      } catch (e) {
+        console.error('Failed to update visitor count');
+      }
+    }
+    updateVisitorCount();
+  </script>
 </body>
 
 </html>
