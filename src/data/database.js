@@ -271,10 +271,15 @@ async function updateSubscriptionSignal(userId, strategyId, symbol, timeframe, s
 }
 
 // --- Premium Applications ---
-async function applyPremium(userId, email, account, token) {
+async function applyPremium(userId, email, account, token, proofUrls = []) {
     const { data, error } = await getAuthenticatedClient(token)
         .from('premium_applications')
-        .insert({ user_id: userId, email, trading_account: account });
+        .insert({
+            user_id: userId,
+            email,
+            trading_account: account,
+            proof_urls: proofUrls
+        });
     if (error) throw error;
     return data;
 }

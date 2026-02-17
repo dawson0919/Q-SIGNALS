@@ -266,15 +266,29 @@
                     
                     ${app ? `
                     <div class="mt-3 bg-primary/5 border border-primary/20 rounded-lg p-3">
-                        <div class="flex justify-between items-start">
-                             <div>
-                                <p class="text-[10px] font-bold text-primary uppercase tracking-wider mb-1">Application Pending</p>
-                                <p class="text-xs text-slate-300">Account: <span class="font-mono text-white">${app.trading_account}</span></p>
+                        <div class="flex flex-col gap-3">
+                             <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-[10px] font-bold text-primary uppercase tracking-wider mb-1">Application Pending</p>
+                                    <p class="text-xs text-slate-300">Account: <span class="font-mono text-white">${app.trading_account}</span></p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="processApp('${app.id}', '${m.id}', 'rejected')" class="px-2 py-1 text-[10px] bg-slate-800 text-slate-400 font-bold rounded hover:bg-slate-700">REJECT</button>
+                                    <button onclick="processApp('${app.id}', '${m.id}', 'approved')" class="px-2 py-1 text-[10px] bg-primary text-black font-bold rounded hover:bg-green-400">APPROVE</button>
+                                </div>
                             </div>
-                             <div class="flex gap-2">
-                                <button onclick="processApp('${app.id}', '${m.id}', 'rejected')" class="px-2 py-1 text-[10px] bg-slate-800 text-slate-400 font-bold rounded hover:bg-slate-700">REJECT</button>
-                                <button onclick="processApp('${app.id}', '${m.id}', 'approved')" class="px-2 py-1 text-[10px] bg-primary text-black font-bold rounded hover:bg-green-400">APPROVE</button>
+                            ${app.proof_urls && app.proof_urls.length > 0 ? `
+                            <div class="flex gap-2 mt-1">
+                                ${app.proof_urls.map(url => `
+                                    <div class="relative group size-20 rounded border border-border-dark overflow-hidden bg-black cursor-zoom-in" onclick="window.open('${url}', '_blank')">
+                                        <img src="${url}" class="w-full h-full object-cover">
+                                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                            <span class="material-symbols-outlined text-white text-sm">visibility</span>
+                                        </div>
+                                    </div>
+                                `).join('')}
                             </div>
+                            ` : ''}
                         </div>
                     </div>
                     ` : ''}

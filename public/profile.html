@@ -181,10 +181,51 @@
                             <input id="tradingAccount" type="text" placeholder="e.g. 12345678"
                                 class="w-full bg-surface-dark border border-border-dark rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all outline-none">
                         </div>
-                        <a href="https://lin.ee/WuRqowF" target="_blank"
-                            class="block w-full py-3 bg-primary text-background-dark text-center font-extrabold rounded-xl shadow-[0_0_15px_rgba(0,255,0,0.2)] hover:scale-[1.02] active:scale-[0.98] transition-all">
-                            聯絡官方 LINE@ 申請
-                        </a>
+
+                        <!-- Proof Upload Area -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-2">
+                                <label class="block text-[9px] font-bold text-slate-500 uppercase">Screenshot 1 (截圖
+                                    1)</label>
+                                <div class="relative group">
+                                    <input type="file" id="proof1" accept="image/*" class="hidden"
+                                        onchange="previewImage(this, 'preview1')">
+                                    <label for="proof1"
+                                        class="block w-full h-24 bg-surface-dark border-2 border-dashed border-border-dark rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-all overflow-hidden">
+                                        <div id="preview1"
+                                            class="w-full h-full flex flex-col items-center justify-center p-1">
+                                            <span
+                                                class="material-symbols-outlined text-slate-500 text-xl">add_a_photo</span>
+                                            <span class="text-[7px] text-slate-600 font-bold uppercase mt-1">Upload
+                                                Proof</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-[9px] font-bold text-slate-500 uppercase">Screenshot 2 (截圖
+                                    2)</label>
+                                <div class="relative group">
+                                    <input type="file" id="proof2" accept="image/*" class="hidden"
+                                        onchange="previewImage(this, 'preview2')">
+                                    <label for="proof2"
+                                        class="block w-full h-24 bg-surface-dark border-2 border-dashed border-border-dark rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-all overflow-hidden">
+                                        <div id="preview2"
+                                            class="w-full h-full flex flex-col items-center justify-center p-1">
+                                            <span
+                                                class="material-symbols-outlined text-slate-500 text-xl">add_a_photo</span>
+                                            <span class="text-[7px] text-slate-600 font-bold uppercase mt-1">Upload
+                                                Proof</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button id="submitApplyBtn" onclick="uploadAndApply()"
+                            class="block w-full py-4 bg-primary text-background-dark text-center font-extrabold rounded-xl shadow-[0_0_15px_rgba(0,255,0,0.2)] hover:scale-[1.02] active:scale-[0.98] transition-all uppercase text-sm">
+                            Submit for Review 提交審核
+                        </button>
                     </div>
                     <div id="applyPending" class="hidden">
                         <div
@@ -547,22 +588,66 @@
         }
 
         async function submitApplication() {
-            const { token } = await getUser();
+            // Replaced by uploadAndApply
+        }
+
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    preview.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        async function uploadAndApply() {
+            const { user, token } = await getUser();
             const account = document.getElementById('tradingAccount').value;
             if (!account) return alert('Please enter your account number');
 
+            const file1 = document.getElementById('proof1').files[0];
+            const file2 = document.getElementById('proof2').files[0];
+
+            if (!file1 && !file2) return alert('Please upload at least one proof screenshot');
+
+            const btn = document.getElementById('submitApplyBtn');
+            btn.disabled = true;
+            const originalText = btn.textContent;
+            btn.textContent = 'Uploading Proofs...';
+
             try {
+                const proofUrls = [];
+                const files = [
+                    { file: file1, id: '1' },
+                    { file: file2, id: '2' }
+                ].filter(item => !!item.file);
+
+                for (let i = 0; i < files.length; i++) {
+                    const { file, id } = files[i];
+                    const ext = file.name.split('.').pop();
+                    const fileName = `${user.id}/${Date.now()}_${id}.${ext}`;
+
+                    const { data, error } = await _supabase.storage.from('proofs').upload(fileName, file);
+                    if (error) throw error;
+
+                    const { data: { publicUrl } } = _supabase.storage.from('proofs').getPublicUrl(fileName);
+                    proofUrls.push(publicUrl);
+                }
+
+                btn.textContent = 'Submitting Application...';
                 const res = await fetch('/api/apply-premium', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ account })
+                    body: JSON.stringify({ account, proofUrls })
                 });
+
                 if (res.ok) {
-                    alert('Application submitted successfully! 申請已成功提交！');
-                    // Update UI without reloading to avoid infinite recursion
+                    alert('Application submitted! 申請已成功提交！');
                     document.getElementById('applyForm').classList.add('hidden');
                     document.getElementById('applyPending').classList.remove('hidden');
                 } else {
@@ -570,8 +655,11 @@
                     alert('Error: ' + err.error);
                 }
             } catch (e) {
-                console.error('Application error:', e);
-                alert('Request failed: ' + e.message);
+                console.error('Upload/Apply error:', e);
+                alert('Failed: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
             }
         }
 
