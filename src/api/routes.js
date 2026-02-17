@@ -48,6 +48,9 @@ strategies[macdMa.id] = macdMa;
 const granvilleEth4h = require('../engine/strategies/granville_eth_4h');
 strategies[granvilleEth4h.id] = granvilleEth4h;
 
+const dualStBreakout = require('../engine/strategies/dualSuperTrend');
+strategies[dualStBreakout.id] = dualStBreakout;
+
 // Debug Cache
 router.get('/debug/cache', (req, res) => {
     res.json({

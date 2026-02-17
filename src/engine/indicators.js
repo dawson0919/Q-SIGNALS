@@ -142,7 +142,9 @@ module.exports = {
     crossover,
     crossunder,
     bollingerBands,
-    atr
+    atr,
+    donchian,
+    superTrend
 };
 
 /**
@@ -198,4 +200,87 @@ function atr(high, low, close, period = 14) {
     }
 
     return result;
+}
+
+/**
+ * Donchian Channel
+ */
+function donchian(high, low, period = 20) {
+    const upper = new Array(high.length).fill(null);
+    const lower = new Array(low.length).fill(null);
+    const middle = new Array(high.length).fill(null);
+
+    for (let i = period - 1; i < high.length; i++) {
+        let max = -Infinity;
+        let min = Infinity;
+        for (let j = 0; j < period; j++) {
+            if (high[i - j] > max) max = high[i - j];
+            if (low[i - j] < min) min = low[i - j];
+        }
+        upper[i] = max;
+        lower[i] = min;
+        middle[i] = (max + min) / 2;
+    }
+    return { upper, lower, middle };
+}
+
+/**
+ * SuperTrend
+ */
+function superTrend(high, low, close, period = 10, multiplier = 3) {
+    const atrVal = atr(high, low, close, period);
+    const superTrendPath = new Array(high.length).fill(null);
+    const directions = new Array(high.length).fill(1); // 1: Up, -1: Down
+
+    let finalUpperBand = 0;
+    let finalLowerBand = 0;
+
+    for (let i = period; i < high.length; i++) {
+        if (atrVal[i] === null) continue;
+
+        const basicUpperBand = (high[i] + low[i]) / 2 + multiplier * atrVal[i];
+        const basicLowerBand = (high[i] + low[i]) / 2 - multiplier * atrVal[i];
+
+        if (i === period) {
+            finalUpperBand = basicUpperBand;
+            finalLowerBand = basicLowerBand;
+        } else {
+            if (basicUpperBand < finalUpperBand || close[i - 1] > finalUpperBand) {
+                finalUpperBand = basicUpperBand;
+            } else {
+                // Keep previous (do nothing, effectively finalUpperBand stays same)
+                // Actually logic is: if not (basic < final or close > final) -> keep previous
+                // But wait, the standard ST logic is:
+                // IF (BusinessUpper < FinalUpper[1]) OR (Close[1] > FinalUpper[1]) THEN BasicUpper ELSE FinalUpper[1]
+                // My logic:
+                // if (basic < final) update
+                // if (close[1] > final) update
+                // else keep final. 
+                // Matches.
+            }
+
+            if (basicLowerBand > finalLowerBand || close[i - 1] < finalLowerBand) {
+                finalLowerBand = basicLowerBand;
+            } else {
+                // Keep previous
+            }
+        }
+
+        let direction = (i === period) ? 1 : directions[i - 1];
+
+        if (direction === 1) {
+            if (close[i] < finalLowerBand) {
+                direction = -1;
+            }
+        } else {
+            if (close[i] > finalUpperBand) {
+                direction = 1;
+            }
+        }
+
+        directions[i] = direction;
+        superTrendPath[i] = direction === 1 ? finalLowerBand : finalUpperBand;
+    }
+
+    return { value: superTrendPath, direction: directions };
 }

@@ -342,6 +342,9 @@
             // For Index strategies, only show Turtle Breakout
             if ((symbol === 'SPXUSDT' || symbol === 'NASUSDT') && strat.id !== 'turtle_breakout') continue;
 
+            // Dual ST Breakout: only show for crypto (BTC, ETH, SOL), 4h timeframe
+            if (strat.id === 'dual_st_breakout' && (symbol === 'XAUUSDT' || symbol === 'SPXUSDT' || symbol === 'NASUSDT')) continue;
+
             // For Gold, show both 1h and 4h
             if (symbol === 'XAUUSDT' && (strat.id === 'three_blade' || strat.id === 'granville_eth_4h')) {
               const tf = (strat.id === 'three_blade') ? '1h' : '4h';
@@ -368,6 +371,7 @@
       const isPremium = category === 'Premium';
       const isOptimized = strat.id === 'macd_ma_optimized';
       const isTurtle = strat.id === 'turtle_breakout';
+      const isDualST = strat.id === 'dual_st_breakout';
 
       div.className = `strategy-card bg-card-dark rounded-xl border ${isPlatinum ? 'border-indigo-500/50 platinum-gradient' : (isPremium ? 'border-primary/30 premium-gradient' : 'border-border-dark')} overflow-hidden relative flex flex-col`;
       div.dataset.category = category;
@@ -400,7 +404,9 @@
               ? `<div class="absolute -right-12 top-6 bg-blue-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">show_chart</span> BEST FOR SPX</div>`
               : isTurtle && symbol === 'NASUSDT' && timeframe === '4h'
                 ? `<div class="absolute -right-12 top-6 bg-indigo-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">trending_up</span> BEST FOR NAS</div>`
-                : '';
+                : isDualST
+                  ? `<div class="absolute -right-12 top-6 bg-gradient-to-r from-cyan-600 to-teal-500 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">bolt</span> DUAL ST</div>`
+                  : '';
 
       div.innerHTML = `
         ${featuredBadge}
@@ -427,6 +433,10 @@
             
             ${symbol === 'SPXUSDT' && timeframe === '4h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-blue-400/80 leading-tight mb-4 font-medium italic">特性：波段捕手。針對標普 500 階梯式漲勢優化。</p>` : ''}
             ${symbol === 'NASUSDT' && timeframe === '4h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-indigo-400/80 leading-tight mb-4 font-medium italic">特性：高增長趨勢。專為科技股強勢波段設計。</p>` : ''}
+            
+            ${symbol === 'BTCUSDT' && strat.id === 'dual_st_breakout' ? `<p class="text-[11px] text-cyan-400/90 leading-tight mb-4 font-medium border-l-2 border-cyan-400 pl-2">特性：雙重 SuperTrend 共振確認趨勢方向，唐奇安通道突破精準進場。針對 BTC 穩健波段優化。</p>` : ''}
+            ${symbol === 'ETHUSDT' && strat.id === 'dual_st_breakout' ? `<p class="text-[11px] text-teal-400/90 leading-tight mb-4 font-medium border-l-2 border-teal-400 pl-2">特性：雙 SuperTrend 趨勢共振搭配唐奇安突破。針對 ETH 高 ROI 參數優化，盈虧比極佳。</p>` : ''}
+            ${symbol === 'SOLUSDT' && strat.id === 'dual_st_breakout' ? `<p class="text-[11px] text-emerald-400/90 leading-tight mb-4 font-medium border-l-2 border-emerald-400 pl-2">特性：雙 SuperTrend 共振突破策略。針對 SOL 高波動特性優化，動態追蹤止損。</p>` : ''}
             
             <div class="grid grid-cols-2 gap-2 mb-4">
               <div class="bg-background-dark/50 p-2 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
@@ -516,7 +526,8 @@
       '比特幣': 'btc', '以太坊': 'eth', '黃金': 'gold xau',
       '索拉納': 'sol', 'solana': 'sol', 'bitcoin': 'btc', 'ethereum': 'eth',
       '標普': 'spx', '納斯達克': 'nas', '海龜': 'turtle', '葛蘭碧': 'granville',
-      '三刀流': 'three_blade', 'macd': 'macd'
+      '三刀流': 'three_blade', 'macd': 'macd',
+      '雙st': 'dual_st', 'supertrend': 'dual_st', '超級趨勢': 'dual_st', '唐奇安': 'dual_st donchian'
     };
 
     function applyFilters() {
