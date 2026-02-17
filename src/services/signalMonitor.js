@@ -156,9 +156,42 @@ async function notifySubscribers(signal, supabaseAdmin) {
 }
 
 /**
+ * Sync in-memory cache with database to prevent redundant notifications on restart
+ */
+async function syncLastSignals(supabaseAdmin) {
+    if (Object.keys(lastSignals).length > 0) return; // Already hydrated
+
+    try {
+        const { data, error } = await supabaseAdmin
+            .from('subscriptions')
+            .select('strategy_id, symbol, timeframe, latest_signal')
+            .not('latest_signal', 'is', null);
+
+        if (error || !data) return;
+
+        for (const sub of data) {
+            const key = `${sub.strategy_id}_${sub.symbol}_${sub.timeframe}`;
+            if (!lastSignals[key] && sub.latest_signal) {
+                lastSignals[key] = {
+                    entryTime: sub.latest_signal.time,
+                    type: sub.latest_signal.type,
+                    entryPrice: sub.latest_signal.price,
+                    rule: sub.latest_signal.rule
+                };
+            }
+        }
+        console.log(`[SignalMonitor] Hydrated cache with ${Object.keys(lastSignals).length} existing signals from DB`);
+    } catch (err) {
+        console.error('[SignalMonitor] Sync error:', err.message);
+    }
+}
+
+/**
  * Run the full signal check cycle
  */
 async function runSignalCheck(supabaseAdmin) {
+    await syncLastSignals(supabaseAdmin);
+
     const strategies = getStrategies();
     const startTime = Date.now();
     let newSignals = 0;
