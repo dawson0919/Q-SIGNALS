@@ -128,24 +128,13 @@ module.exports = {
     author: 'QuantSignal',
     pineScript,
     createStrategy: (params = {}) => {
-        const symbol = params.symbol || 'BTCUSDT';
+        const symbol = (params.symbol || 'BTCUSDT').toUpperCase().replace(/[^A-Z0-9]/g, '');
         const opt = OPTIMIZED_PARAMS[symbol] || OPTIMIZED_PARAMS['BTCUSDT'];
 
-        // Priority: Passed Params > Optimized > Defaults
-        // Since routes.js passes all keys from defaultParams, we merge specifically
-        const merged = {
-            ...defaultParams,
-            ...opt,
-            // Override with params from route ONLY if they are not the generic defaults
-            // Actually, easier: just merge opt into the base, then overlay with what came from the route
-            // BUT wait, routes.js ALREADY merged defaultParams into it.
-        };
+        const finalParams = { ...defaultParams, ...opt };
 
-        // Correct Merge Logic:
-        const finalParams = { ...merged };
-        // If a param in 'params' is DIFFERENT from the 'defaultParams', it means user/route wants that value
         for (const key in params) {
-            if (params[key] !== defaultParams[key]) {
+            if (params[key] !== undefined && params[key] !== defaultParams[key]) {
                 finalParams[key] = params[key];
             }
         }

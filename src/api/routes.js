@@ -485,7 +485,10 @@ router.post('/strategies', (req, res) => {
 // Run backtest
 router.post('/backtest', async (req, res) => {
     try {
-        const { strategyId, symbol = 'BTCUSDT', timeframe = '4h', startTime, endTime } = req.body;
+        let { strategyId, symbol = 'BTCUSDT', timeframe = '4h', startTime, endTime } = req.body;
+
+        // Clean symbol (remove /, -, etc.)
+        symbol = symbol.toUpperCase().replace(/[^A-Z0-9]/g, '');
 
         // Get or parse strategy
         let strategyFn;
