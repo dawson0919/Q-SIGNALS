@@ -82,7 +82,7 @@ async function sendSignalNotification(chatId, signal) {
         `💰 ${symbolClean} • ${timeframe}`,
         `💲 Price: <b>$${Number(price).toLocaleString('en-US', { minimumFractionDigits: precision, maximumFractionDigits: precision })}</b>`,
         rule ? `📐 ${ruleMap[rule] || rule}` : '',
-        `⏰ ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}`,
+        `⏰ ${new Date(signal.entryTime || Date.now()).toLocaleString('en-US', { timeZone: 'Asia/Taipei', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}`,
         ``,
         `🔗 <a href="${SITE_URL}/strategy-detail.html?strategy=${signal.strategyId}&symbol=${symbol}&timeframe=${timeframe}">View Details</a>`
     ].filter(Boolean).join('\n');
