@@ -5,6 +5,7 @@ const Backtester = require('../engine/backtester');
 const { getCandleData } = require('../engine/dataFetcher');
 const { parsePineScript } = require('../engine/pineParser');
 const { getCurrentPrices } = require('../data/priceMonitor');
+const { createLinkCode, processUpdate } = require('../services/telegramBot');
 const {
     getCandles,
     getCandleCount,
@@ -608,6 +609,57 @@ router.get('/stats', async (req, res) => {
         stats[s] = await getCandleCount(s, '4h');
     }
     res.json({ candleCounts: stats, strategies: Object.keys(strategies).length });
+});
+
+// ── Telegram Bot Routes ────────────────────────
+
+// Webhook endpoint (receives bot updates from Telegram)
+router.post('/telegram/webhook', async (req, res) => {
+    try {
+        await processUpdate(req.body, { getSupabaseAdmin: getAdminClient });
+        res.json({ ok: true });
+    } catch (err) {
+        console.error('[Telegram Webhook] Error:', err);
+        res.json({ ok: true }); // Always return 200 to Telegram
+    }
+});
+
+// Generate a link code (user must be authenticated)
+router.post('/telegram/link-code', requireAuth, async (req, res) => {
+    try {
+        const code = createLinkCode(req.user.id);
+        res.json({ code, expiresIn: '10 minutes' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to generate link code' });
+    }
+});
+
+// Check Telegram link status
+router.get('/telegram/status', requireAuth, async (req, res) => {
+    try {
+        const profile = await getProfile(req.user.id, req.token);
+        res.json({
+            linked: !!profile?.telegram_chat_id,
+            username: profile?.telegram_username || null,
+            linkedAt: profile?.telegram_linked_at || null
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to check status' });
+    }
+});
+
+// Unlink Telegram
+router.post('/telegram/unlink', requireAuth, async (req, res) => {
+    try {
+        const admin = getAdminClient();
+        await admin
+            .from('profiles')
+            .update({ telegram_chat_id: null, telegram_username: null, telegram_linked_at: null })
+            .eq('id', req.user.id);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to unlink' });
+    }
 });
 
 module.exports = router;

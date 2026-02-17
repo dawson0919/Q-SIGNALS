@@ -6,9 +6,11 @@ const path = require('path');
 const { WebSocketServer } = require('ws');
 const http = require('http');
 
-const { initSupabase } = require('./src/data/database');
+const { initSupabase, getAdminClient } = require('./src/data/database');
 const { backfillAllSymbols, startScheduledSync } = require('./src/data/backfill');
 const { startPriceMonitor, getCurrentPrices } = require('./src/data/priceMonitor');
+const { startPolling: startTelegramBot } = require('./src/services/telegramBot');
+const { startSignalMonitor } = require('./src/services/signalMonitor');
 const apiRoutes = require('./src/api/routes');
 
 const app = express();
@@ -106,6 +108,16 @@ async function startBackgroundTasks() {
         // 4. Start scheduled sync (every 4 hours)
         startScheduledSync();
         console.log('✅ Scheduled sync started (every 4h)');
+
+        // 5. Start Telegram Bot (polling mode)
+        const db = { getSupabaseAdmin: getAdminClient };
+        startTelegramBot(db);
+        console.log('✅ Telegram Bot started');
+
+        // 6. Start Signal Monitor
+        const adminClient = getAdminClient();
+        startSignalMonitor(adminClient);
+        console.log('✅ Signal Monitor started');
     } catch (err) {
         console.error('❌ Background task error:', err);
     }
