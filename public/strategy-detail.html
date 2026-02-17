@@ -658,7 +658,7 @@
             const isPremiumUser = userRole === 'advanced' || userRole === 'admin' || userRole === 'platinum';
             const isPremiumStrategy = strategyCategory === 'Premium' || strategyCategory === 'Platinum';
             const shouldHideTrades = isPremiumStrategy && !isPremiumUser;
-            const tradesToShow = shouldHideTrades ? trades.slice(2, 8) : trades.slice(0, 8);
+            const tradesToShow = shouldHideTrades ? trades.slice(2, 15) : trades.slice(0, 15);
 
             // Show premium notice for hidden trades
             if (shouldHideTrades && trades.length > 0) {
