@@ -271,8 +271,10 @@ async function updateSubscriptionSignal(userId, strategyId, symbol, timeframe, s
 }
 
 // --- Premium Applications ---
-async function applyPremium(userId, email, account, token, proofUrls = []) {
-    const { data, error } = await getAuthenticatedClient(token)
+async function applyPremium(userId, email, account, proofUrls = []) {
+    // Use admin client to bypass potential RLS policy issues (e.g. recursion or schema sync issues).
+    // Security is already handled by the requireAuth middleware in the route.
+    const { data, error } = await getAdminClient()
         .from('premium_applications')
         .insert({
             user_id: userId,

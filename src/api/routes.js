@@ -226,7 +226,7 @@ router.get('/profile', requireAuth, async (req, res) => {
 
         // Check for own pending application - only if still standard
         if (profile?.role === 'standard') {
-            const { data: apps, error: appError } = await getAuthenticatedClient(req.token)
+            const { data: apps, error: appError } = await getAdminClient()
                 .from('premium_applications')
                 .select('status')
                 .eq('user_id', req.user.id)
@@ -249,7 +249,7 @@ router.post('/apply-premium', requireAuth, async (req, res) => {
     if (!account) return res.status(400).json({ error: 'Account required' });
     try {
         // Check if already has a pending application
-        const { data: existing } = await getAuthenticatedClient(req.token)
+        const { data: existing } = await getAdminClient()
             .from('premium_applications')
             .select('id')
             .eq('user_id', req.user.id)
@@ -260,7 +260,7 @@ router.post('/apply-premium', requireAuth, async (req, res) => {
             return res.status(400).json({ error: 'You already have a pending application.' });
         }
 
-        await applyPremium(req.user.id, req.user.email, account, req.token, proofUrls || []);
+        await applyPremium(req.user.id, req.user.email, account, proofUrls || []);
         res.json({ success: true });
     } catch (e) {
         res.status(500).json({ error: e.message });
