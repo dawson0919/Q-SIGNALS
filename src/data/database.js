@@ -97,7 +97,7 @@ async function getCandles(symbol, timeframe, startTime, endTime) {
     if (startTime) query = query.gte('open_time', startTime);
     if (endTime) query = query.lte('open_time', endTime);
 
-    const { data, error } = await query.limit(1000);
+    const { data, error } = await query.limit(2000);
     if (error) {
         console.error('[DB] Query error:', error.message);
         return [];

@@ -46,6 +46,13 @@ function createStrategy(params = {}) {
         }
     }
 
+    // Apply Optimized Parameters for NAS (Nasdaq 100 / QQQ)
+    if (params.symbol === 'NASUSDT') {
+        if (params.timeframe === '4h') {
+            LEFT = 4; RIGHT = 5; MIN_HOLD_BARS = 20;
+        }
+    }
+
     // Persistent state inside closure
     let hprice = 0;
     let lprice = 0;
