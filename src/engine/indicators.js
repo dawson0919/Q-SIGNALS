@@ -140,5 +140,62 @@ module.exports = {
     rsi,
     macd,
     crossover,
-    crossunder
+    crossunder,
+    bollingerBands,
+    atr
 };
+
+/**
+ * Bollinger Bands
+ */
+function bollingerBands(data, period = 20, stdDev = 2) {
+    const smaLine = sma(data, period);
+    const upper = new Array(data.length).fill(null);
+    const lower = new Array(data.length).fill(null);
+
+    for (let i = period - 1; i < data.length; i++) {
+        let sumSq = 0;
+        for (let j = 0; j < period; j++) {
+            sumSq += Math.pow(data[i - j] - smaLine[i], 2);
+        }
+        const std = Math.sqrt(sumSq / period);
+        upper[i] = smaLine[i] + std * stdDev;
+        lower[i] = smaLine[i] - std * stdDev;
+    }
+
+    return { upper, middle: smaLine, lower };
+}
+
+/**
+ * Average True Range (ATR)
+ */
+function atr(high, low, close, period = 14) {
+    const tr = new Array(high.length).fill(0);
+    const result = new Array(high.length).fill(null);
+
+    // Calculate TR
+    for (let i = 0; i < high.length; i++) {
+        if (i === 0) {
+            tr[i] = high[i] - low[i];
+        } else {
+            const hl = high[i] - low[i];
+            const hc = Math.abs(high[i] - close[i - 1]);
+            const lc = Math.abs(low[i] - close[i - 1]);
+            tr[i] = Math.max(hl, hc, lc);
+        }
+    }
+
+    // First ATR is SMA of TR
+    let sum = 0;
+    for (let i = 0; i < period; i++) {
+        sum += tr[i];
+    }
+    result[period - 1] = sum / period;
+
+    // Subsequent ATR: (Previous ATR * (n-1) + Current TR) / n
+    for (let i = period; i < high.length; i++) {
+        result[i] = (result[i - 1] * (period - 1) + tr[i]) / period;
+    }
+
+    return result;
+}
