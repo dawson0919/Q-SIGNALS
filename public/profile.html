@@ -629,10 +629,29 @@
                     const ext = file.name.split('.').pop();
                     const fileName = `${user.id}/${Date.now()}_${id}.${ext}`;
 
-                    const { data, error } = await _supabase.storage.from('proofs').upload(fileName, file);
-                    if (error) throw error;
+                    // Convert to base64 for server-side upload
+                    const fileData = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    });
 
-                    const { data: { publicUrl } } = _supabase.storage.from('proofs').getPublicUrl(fileName);
+                    const uploadRes = await fetch('/api/upload-proof', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ fileName, fileData })
+                    });
+
+                    if (!uploadRes.ok) {
+                        const err = await uploadRes.json();
+                        throw new Error(err.error || 'Server upload failed');
+                    }
+
+                    const { publicUrl } = await uploadRes.json();
                     proofUrls.push(publicUrl);
                 }
 

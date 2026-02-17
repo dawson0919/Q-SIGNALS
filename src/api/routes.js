@@ -244,6 +244,34 @@ router.get('/profile', requireAuth, async (req, res) => {
     }
 });
 
+// Upload Proof Screenshot (Server-side to bypass RLS)
+router.post('/upload-proof', requireAuth, async (req, res) => {
+    const { fileName, fileData } = req.body;
+    if (!fileName || !fileData) return res.status(400).json({ error: 'Missing file data' });
+
+    try {
+        const admin = getAdminClient();
+        // fileData is base64 stripped or full? Let's assume full data-url or just base64
+        const base64Data = fileData.replace(/^data:image\/\w+;base64,/, "");
+        const buffer = Buffer.from(base64Data, 'base64');
+
+        const ext = fileName.split('.').pop().toLowerCase();
+        const contentType = ext === 'png' ? 'image/png' : 'image/jpeg';
+
+        const { data, error } = await admin.storage
+            .from('proofs')
+            .upload(fileName, buffer, { contentType, upsert: true });
+
+        if (error) throw error;
+
+        const { data: { publicUrl } } = admin.storage.from('proofs').getPublicUrl(fileName);
+        res.json({ publicUrl });
+    } catch (e) {
+        console.error('[UploadProof] Error:', e.message);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 router.post('/apply-premium', requireAuth, async (req, res) => {
     const { account, proofUrls } = req.body;
     if (!account) return res.status(400).json({ error: 'Account required' });
