@@ -490,6 +490,13 @@ if short
         function renderSignalsList() {
             const activeList = document.getElementById('activeSignalsList');
             const historyList = document.getElementById('historyList');
+            if (!activeList || !historyList) return;
+
+            if (!Array.isArray(allSignals)) {
+                console.error('Signals data is not an array:', allSignals);
+                activeList.innerHTML = '<div class="col-span-full text-center py-20 border-2 border-dashed border-red-500/20 rounded-3xl text-red-500 font-bold uppercase text-[10px]">資料載入出錯 (DATA ERROR)</div>';
+                return;
+            }
 
             const filtered = currentSymbolFilter === 'ALL'
                 ? allSignals

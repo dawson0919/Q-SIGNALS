@@ -380,7 +380,7 @@ async function deleteUser(userId, token) {
 
 // Manual Signals
 async function getManualSignals(symbol = null, limit = 50) {
-    let query = getSupabase()
+    let query = getAdminClient()
         .from('manual_signals')
         .select('*')
         .order('entry_time', { ascending: false });
