@@ -147,8 +147,15 @@
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div class="flex flex-col gap-2">
                         <label class="text-[10px] font-black text-slate-500 uppercase ml-1">交易對 Pair</label>
-                        <input id="sigSymbol" type="text" placeholder="e.g. BTCUSDT"
-                            class="bg-background-dark border border-border-dark rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 outline-none transition-all placeholder:text-slate-700">
+                        <select id="sigSymbol"
+                            class="bg-background-dark border border-border-dark rounded-xl px-4 py-3 text-sm focus:border-indigo-500 outline-none transition-all">
+                            <option value="BTCUSDT">BTCUSDT</option>
+                            <option value="ETHUSDT">ETHUSDT</option>
+                            <option value="SOLUSDT">SOLUSDT</option>
+                            <option value="XAUUSDT">XAUUSDT (GOLD)</option>
+                            <option value="SPXUSDT">SPXUSDT (S&P 500)</option>
+                            <option value="NASUSDT">NASUSDT (NASDAQ)</option>
+                        </select>
                     </div>
                     <div class="flex flex-col gap-2">
                         <label class="text-[10px] font-black text-slate-500 uppercase ml-1">交易方向 Type</label>
