@@ -65,11 +65,35 @@ async function fetchKlinesFromCG(symbol, interval, days) {
 
     console.log(`[Backfill] Fetching ${symbol} from CoinGecko (${days} days)...`);
 
-    try {
-        const res = await fetch(baseUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-        if (!res.ok) throw new Error(`CG API error: ${res.status}`);
-        const data = await res.json();
+    const MAX_RETRIES = 4;
+    let attempt = 0;
+    let data;
 
+    while (attempt < MAX_RETRIES) {
+        try {
+            const res = await fetch(baseUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+            if (res.status === 429) {
+                const delay = Math.pow(2, attempt + 1) * 5000; // 10s, 20s, 40s, 80s
+                console.warn(`[Backfill] CoinGecko rate limited for ${symbol}, retrying in ${delay / 1000}s (attempt ${attempt + 1}/${MAX_RETRIES})...`);
+                await new Promise(r => setTimeout(r, delay));
+                attempt++;
+                continue;
+            }
+            if (!res.ok) throw new Error(`CG API error: ${res.status}`);
+            data = await res.json();
+            break;
+        } catch (err) {
+            if (attempt === MAX_RETRIES - 1) {
+                console.error(`[Backfill] CG Failed for ${symbol}:`, err.message);
+                return [];
+            }
+            attempt++;
+        }
+    }
+
+    if (!data) return [];
+
+    try {
         if (!data.prices || data.prices.length === 0) return [];
 
         // CG returns [ts, price]. We need to convert/group into candles.
@@ -127,6 +151,8 @@ async function backfillSymbol(symbol, timeframe) {
             const count = await insertCandles(symbol, timeframe, candles);
             console.log(`[Backfill] ${symbol} (${timeframe}): Inserted ${count} candles from CoinGecko`);
         }
+        // Respect CoinGecko free tier rate limit (30 req/min) by spacing calls out
+        await new Promise(r => setTimeout(r, 3000));
         return;
     }
 
