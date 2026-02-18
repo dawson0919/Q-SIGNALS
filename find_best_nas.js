@@ -3,7 +3,7 @@ const Backtester = require('./src/engine/backtester');
 const { getCandleData } = require('./src/engine/dataFetcher');
 const strategies = {
     ma60: require('./src/engine/strategies/ma60'),
-    threeBlade: require('./src/engine/strategies/threeBlade'),
+    threeBlade: require('./src/engine/strategies/threeStyle'),
     turtleBreakout: require('./src/engine/strategies/turtleBreakout'),
     dualEma: require('./src/engine/strategies/dualEma'),
     macdMa: require('./src/engine/strategies/macdMa')

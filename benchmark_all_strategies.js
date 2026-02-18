@@ -5,7 +5,7 @@ const Backtester = require('./src/engine/backtester');
 // Load Strategies
 const macdMa = require('./src/engine/strategies/macdMa');
 const turtle = require('./src/engine/strategies/turtleBreakout');
-const threeBlade = require('./src/engine/strategies/threeBlade');
+const threeBlade = require('./src/engine/strategies/threeStyle');
 // const dualEma = require('./src/engine/strategies/dualEma');
 const ma60 = require('./src/engine/strategies/ma60');
 
