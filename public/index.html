@@ -384,12 +384,17 @@
             }
           }
         }
+
+        // Add Manual Signal Card (Platinum)
+        const manualCard = createManualSignalCard();
+        strategyList.prepend(manualCard);
+        updateManualROIOnCard();
+
         updateTabCounts();
       } catch (err) {
         console.error('Failed to load strategies:', err);
       }
     }
-
     function updateTabCounts() {
       const cards = document.querySelectorAll('.strategy-card');
       const counts = { all: 0, Basic: 0, Premium: 0, Platinum: 0 };
@@ -404,6 +409,61 @@
         const el = document.getElementById(`count-${key}`);
         if (el) el.textContent = counts[key];
       });
+    }
+    function createManualSignalCard() {
+      const div = document.createElement('div');
+      div.className = `strategy-card bg-card-dark rounded-xl border border-indigo-500/50 platinum-gradient overflow-hidden relative flex flex-col shadow-2xl shadow-indigo-500/10`;
+      div.dataset.category = 'Platinum';
+      div.dataset.searchText = `human alpha q-signal manual platinum 人工智能 智慧 人工`.toLowerCase();
+
+      div.innerHTML = `
+        <div class="absolute -right-12 top-6 bg-indigo-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10">
+          <span class="material-symbols-outlined text-[10px]">psychology</span> HUMAN INTEL
+        </div>
+        <div class="p-4 relative z-0 flex flex-col h-full">
+          <div class="mb-4">
+            <span class="text-[10px] font-bold bg-indigo-600 text-white rounded px-1.5 py-0.5 uppercase mb-1 inline-block">Platinum</span>
+            <h3 class="text-xl font-black text-white leading-tight mt-0.5">Q-Signal Human AI <span class="material-symbols-outlined text-indigo-400 text-xs ml-1" style="font-variation-settings: 'FILL' 1">stars</span></h3>
+            <p class="text-[10px] text-indigo-400/60 mt-0.5">by QuantSignal Master</p>
+          </div>
+          
+          <p class="text-[11px] text-indigo-300/90 leading-tight mb-4 font-medium border-l-2 border-indigo-500 pl-2">
+            特性：由管理員手動輸入的市場信號。分析市場情緒與趨勢，驗證人工直覺是否能勝過自動化回測。
+          </p>
+
+          <div class="bg-indigo-900/20 border border-indigo-500/20 rounded-xl p-4 mb-4 flex flex-col items-center justify-center text-center">
+             <p class="text-[10px] text-indigo-400 uppercase font-black mb-1">Live Cumulative ROI</p>
+             <p class="text-3xl font-black text-primary" id="manual-total-roi">0.0%</p>
+          </div>
+
+          <a href="manual-signals.html" class="w-full py-3 rounded-xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-500 transition-all flex items-center justify-center gap-2 cursor-pointer mt-auto glow-indigo">
+            🚀 Access Alpha Signals <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </a>
+        </div>
+      `;
+      return div;
+    }
+
+    async function updateManualROIOnCard() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const res = await fetch('/api/manual-signals', {
+          headers: { 'Authorization': `Bearer ${session.access_token}` }
+        });
+        if (!res.ok) return;
+
+        const signals = await res.json();
+        let total = 0;
+        signals.forEach(s => { if (s.status === 'closed') total += parseFloat(s.roi || 0); });
+
+        const el = document.getElementById('manual-total-roi');
+        if (el) {
+          el.textContent = `${total > 0 ? '+' : ''}${total.toFixed(1)}%`;
+          el.className = `text-3xl font-black ${total >= 0 ? 'text-primary' : 'text-red-500'}`;
+        }
+      } catch (err) { }
     }
 
     function createStrategyCard(strat, symbol, symbolShort, timeframe = '4h') {
@@ -570,7 +630,8 @@
       '索拉納': 'sol', 'solana': 'sol', 'bitcoin': 'btc', 'ethereum': 'eth',
       '標普': 'spx', '納斯達克': 'nas', '海龜': 'turtle', '葛蘭碧': 'granville',
       '三刀流': 'three_style', 'macd': 'macd',
-      '雙st': 'dual_st', 'supertrend': 'dual_st', '超級趨勢': 'dual_st', '唐奇安': 'dual_st donchian'
+      '雙st': 'dual_st', 'supertrend': 'dual_st', '超級趨勢': 'dual_st', '唐奇安': 'dual_st donchian',
+      '人工': 'human manual', '智慧': 'human manual'
     };
 
     function applyFilters() {

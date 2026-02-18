@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Manual Signal Management - QuantSignal Admin</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: { "primary": "#00ff00", "background-dark": "#0a0a0a", "surface-dark": "#161b16", "border-dark": "#273a27" },
+                    fontFamily: { "display": ["Inter", "sans-serif"], "mono": ["JetBrains Mono", "monospace"] },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-background-dark text-slate-100 min-h-screen pb-24 font-display">
+    <header
+        class="sticky top-0 z-50 bg-background-dark/80 backdrop-blur-md border-b border-border-dark px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <a href="admin.html"><span class="material-symbols-outlined text-slate-400">arrow_back</span></a>
+            <div class="flex flex-col">
+                <h1 class="font-bold text-lg leading-none">Signal Central</h1>
+                <span class="text-[9px] text-indigo-400 font-bold uppercase mt-0.5">手動交易信號管理</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-400 text-[10px] font-bold">ADMIN ALPHA</span>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto p-4">
+        <!-- New Signal Form -->
+        <section class="bg-surface-dark border border-border-dark rounded-2xl p-6 mb-8">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-indigo-400">add_circle</span> 發布新信號
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase">交易對 Symbol</label>
+                    <input id="sigSymbol" type="text" placeholder="e.g. BTCUSDT"
+                        class="bg-background-dark border border-border-dark rounded-lg px-3 py-2 text-sm focus:border-indigo-500 outline-none">
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase">交易方向 Type</label>
+                    <select id="sigType"
+                        class="bg-background-dark border border-border-dark rounded-lg px-3 py-2 text-sm focus:border-indigo-500 outline-none">
+                        <option value="BUY">BUY</option>
+                        <option value="SELL">SELL</option>
+                    </select>
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase">進場價格 Entry</label>
+                    <input id="sigEntry" type="number" step="any" placeholder="Current Price"
+                        class="bg-background-dark border border-border-dark rounded-lg px-3 py-2 text-sm focus:border-indigo-500 outline-none">
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase">備註 Comment</label>
+                    <input id="sigComment" type="text" placeholder="Strategy logic..."
+                        class="bg-background-dark border border-border-dark rounded-lg px-3 py-2 text-sm focus:border-indigo-500 outline-none">
+                </div>
+            </div>
+            <button onclick="publishSignal()" id="publishBtn"
+                class="w-full mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined">send</span> 打入市場信號
+            </button>
+        </section>
+
+        <!-- Active Signals -->
+        <section class="mb-8">
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+                <span class="material-symbols-outlined text-green-400">sync</span> 持倉中信號
+            </h2>
+            <div class="space-y-4" id="activeSignalsList">
+                <div class="text-center py-8 text-slate-500 italic">獲取信號中...</div>
+            </div>
+        </section>
+
+        <!-- History -->
+        <section>
+            <h2 class="text-xl font-bold mb-4 flex items-center gap-2 text-slate-400">
+                <span class="material-symbols-outlined">history</span> 交易歷史
+            </h2>
+            <div class="bg-surface-dark border border-border-dark rounded-2xl overflow-hidden">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-background-dark border-b border-border-dark">
+                        <tr>
+                            <th class="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase">交易對</th>
+                            <th class="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase">方向</th>
+                            <th class="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase">ROI</th>
+                            <th class="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase">時間</th>
+                            <th class="px-4 py-3 text-[10px] font-bold text-slate-500 uppercase text-right">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyList">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Auth check
+        requireAdmin().then(u => {
+            if (u) loadSignals();
+        });
+
+        async function loadSignals() {
+            try {
+                const { session } = await getSession();
+                const res = await fetch('/api/admin/manual-signals', {
+                    headers: { 'Authorization': `Bearer ${session.access_token}` }
+                });
+                const signals = await res.json();
+
+                renderSignals(signals);
+            } catch (err) {
+                console.error('Failed to load signals:', err);
+            }
+        }
+
+        function renderSignals(signals) {
+            const activeList = document.getElementById('activeSignalsList');
+            const historyList = document.getElementById('historyList');
+
+            activeList.innerHTML = '';
+            historyList.innerHTML = '';
+
+            const active = signals.filter(s => s.status === 'active');
+            const history = signals.filter(s => s.status === 'closed');
+
+            if (active.length === 0) {
+                activeList.innerHTML = '<div class="text-center py-8 bg-surface-dark rounded-2xl border border-dashed border-border-dark text-slate-600 uppercase font-bold text-xs">當前無活躍持倉</div>';
+            } else {
+                active.forEach(s => {
+                    activeList.innerHTML += `
+                        <div class="bg-surface-dark border border-border-dark rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                                <div class="size-12 rounded-full bg-indigo-500/10 flex items-center justify-center">
+                                    <span class="text-indigo-400 font-bold">${s.symbol.substring(0, 3)}</span>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-white">${s.symbol}</p>
+                                    <p class="text-[10px] text-slate-500 uppercase">${new Date(s.entry_time).toLocaleString()}</p>
+                                </div>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-black ${s.type === 'BUY' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}">${s.type}</span>
+                            </div>
+                            <div class="flex items-center gap-6">
+                                <div class="text-right">
+                                    <p class="text-[10px] text-slate-500 uppercase font-bold">進場價</p>
+                                    <p class="font-mono text-white">${parseFloat(s.entry_price).toFixed(2)}</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <input id="exit-price-${s.id}" type="number" step="any" placeholder="平倉價格" class="bg-background-dark border border-border-dark rounded-lg px-3 py-2 text-sm outline-none w-24 focus:border-primary">
+                                    <button onclick="closeSignal('${s.id}')" class="bg-primary text-black font-bold px-4 py-2 rounded-lg text-xs hover:bg-white transition-all">CLOSE</button>
+                                </div>
+                                <button onclick="deleteSignal('${s.id}')" class="text-red-500/50 hover:text-red-500"><span class="material-symbols-outlined text-sm">delete</span></button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            history.forEach(s => {
+                const roi = parseFloat(s.roi || 0);
+                historyList.innerHTML += `
+                    <tr class="border-b border-border-dark/50 hover:bg-white/5 transition-colors">
+                        <td class="px-4 py-3 font-bold text-slate-300">${s.symbol}</td>
+                        <td class="px-4 py-3">
+                            <span class="text-[10px] font-black ${s.type === 'BUY' ? 'text-green-500' : 'text-red-500'}">${s.type}</span>
+                        </td>
+                        <td class="px-4 py-3 font-mono ${roi >= 0 ? 'text-primary' : 'text-red-500'}">${roi > 0 ? '+' : ''}${roi.toFixed(1)}%</td>
+                        <td class="px-4 py-3 text-[10px] text-slate-500">${new Date(s.entry_time).toLocaleDateString()}</td>
+                        <td class="px-4 py-3 text-right">
+                            <button onclick="deleteSignal('${s.id}')" class="text-slate-600 hover:text-red-500"><span class="material-symbols-outlined text-sm">delete</span></button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        async function publishSignal() {
+            const btn = document.getElementById('publishBtn');
+            const symbol = document.getElementById('sigSymbol').value.toUpperCase();
+            const type = document.getElementById('sigType').value;
+            const entry_price = document.getElementById('sigEntry').value;
+            const comment = document.getElementById('sigComment').value;
+
+            if (!symbol || !entry_price) return alert('Symbol and Entry Price required');
+
+            btn.disabled = true;
+            btn.innerHTML = 'PUBLISHING...';
+
+            try {
+                const { session } = await getSession();
+                const res = await fetch('/api/admin/manual-signals', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify({ symbol, type, entry_price, comment })
+                });
+
+                if (res.ok) {
+                    document.getElementById('sigSymbol').value = '';
+                    document.getElementById('sigEntry').value = '';
+                    document.getElementById('sigComment').value = '';
+                    loadSignals();
+                } else {
+                    const err = await res.json();
+                    alert('Error: ' + err.error);
+                }
+            } catch (err) {
+                alert('Connection error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined">send</span> 打入市場信號';
+            }
+        }
+
+        async function closeSignal(id) {
+            const exit_price = document.getElementById(`exit-price-${id}`).value;
+            if (!exit_price) return alert('Please enter exit price');
+
+            try {
+                const { session } = await getSession();
+                const res = await fetch(`/api/admin/manual-signals/${id}/close`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session.access_token}`
+                    },
+                    body: JSON.stringify({ exit_price })
+                });
+
+                if (res.ok) loadSignals();
+                else alert('Failed to close signal');
+            } catch (err) { console.error(err); }
+        }
+
+        async function deleteSignal(id) {
+            if (!confirm('Are you sure you want to delete this signal?')) return;
+            try {
+                const { session } = await getSession();
+                const res = await fetch(`/api/admin/manual-signals/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${session.access_token}` }
+                });
+                if (res.ok) loadSignals();
+            } catch (err) { console.error(err); }
+        }
+    </script>
+</body>
+
+</html>

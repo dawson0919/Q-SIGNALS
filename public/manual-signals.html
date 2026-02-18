@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Human Intelligence Alpha - QuantSignal</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono&display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/js/auth.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: { "primary": "#00ff00", "background-dark": "#0a0c0a", "surface-dark": "#161b16", "border-dark": "#2a362a" },
+                    fontFamily: { "display": ["Inter", "sans-serif"], "mono": ["JetBrains Mono", "monospace"] },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .platinum-gradient {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+        }
+
+        .glow-indigo {
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+        }
+
+        .premium-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 12, 10, 0.9);
+            backdrop-filter: blur(8px);
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body class="bg-background-dark text-slate-100 min-h-screen pb-24 font-display">
+    <!-- Header -->
+    <header
+        class="sticky top-0 z-50 bg-background-dark/80 backdrop-blur-md border-b border-border-dark px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <a href="index.html"><span
+                    class="material-symbols-outlined cursor-pointer text-slate-400">arrow_back</span></a>
+            <div class="flex flex-col">
+                <h1 class="font-bold text-lg tracking-tight leading-none">Human Intel Alpha</h1>
+                <span class="text-[9px] text-indigo-400 font-bold uppercase mt-0.5">人工智能策略 (HI)</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-indigo-500 fill-1 text-xl">stars</span>
+            <span class="text-[10px] font-black text-white bg-indigo-600 px-2 py-0.5 rounded uppercase">Platinum
+                Only</span>
+        </div>
+    </header>
+
+    <main class="max-w-xl mx-auto p-4">
+        <!-- Exclusive Notice for Non-Platinum -->
+        <div id="premiumLock" class="hidden premium-overlay rounded-3xl mt-20 mx-4 h-80 relative overflow-hidden">
+            <span class="material-symbols-outlined text-indigo-500 text-6xl mb-4">lock</span>
+            <h3 class="text-xl font-black text-white">Platinum Exclusive</h3>
+            <p class="text-slate-400 text-sm mt-2 text-center px-8">This human-input strategy is only available to
+                Platinum members and Admins.</p>
+            <a href="profile.html"
+                class="mt-6 bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-500 transition-all">Upgrade
+                Now</a>
+        </div>
+
+        <div id="mainContent">
+            <!-- Strategy Identity -->
+            <section class="mb-8 pt-4">
+                <div class="flex items-center gap-5 mb-6">
+                    <div
+                        class="w-20 h-20 rounded-2xl platinum-gradient flex items-center justify-center border border-indigo-500/30 glow-indigo">
+                        <span class="material-symbols-outlined text-white text-4xl"
+                            style="font-variation-settings: 'FILL' 1">psychology</span>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-black text-white leading-none">Q-Signal Human AI</h2>
+                        <p class="text-sm text-slate-400 mt-2 leading-relaxed">
+                            人工市場分析策略。測試「人類直覺與分析」是否能擊敗純自動化量化策略。由管理員手動輸入進出場點位。</p>
+                    </div>
+                </div>
+
+                <!-- Total Performance Card -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-surface-dark border border-border-dark p-5 rounded-2xl text-center">
+                        <p class="text-[10px] text-slate-500 font-black uppercase mb-1 tracking-widest">Cumulative ROI
+                        </p>
+                        <p class="text-3xl font-black text-primary" id="totalROI">0.0%</p>
+                        <p class="text-[9px] text-slate-600 font-bold mt-1 uppercase">累計收益率</p>
+                    </div>
+                    <div class="bg-surface-dark border border-border-dark p-5 rounded-2xl text-center">
+                        <p class="text-[10px] text-slate-500 font-black uppercase mb-1 tracking-widest">Total Trades</p>
+                        <p class="text-3xl font-black text-white" id="totalTrades">0</p>
+                        <p class="text-[9px] text-slate-600 font-bold mt-1 uppercase">總計交易次數</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Active Signals -->
+            <section class="mb-10">
+                <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <span class="size-2 rounded-full bg-primary animate-pulse"></span>
+                    Active Signals (正在持倉)
+                </h3>
+                <div id="activeSignals" class="space-y-4">
+                    <!-- Loaded via JS -->
+                    <div class="text-slate-600 text-center py-10 italic text-sm">No active signals at the moment...
+                    </div>
+                </div>
+            </section>
+
+            <!-- Trade History -->
+            <section>
+                <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-slate-500 text-base">history</span>
+                    Historical Records (歷史戰績)
+                </h3>
+                <div id="historySignals" class="space-y-3">
+                    <!-- Loaded via JS -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        async function loadData() {
+            const { session } = await getSession();
+            if (!session) {
+                document.getElementById('mainContent').style.display = 'none';
+                document.getElementById('premiumLock').classList.remove('hidden');
+                return;
+            }
+
+            // 1. Check permissions & Get Signals in one go if possible, or sequentially
+            const res = await fetch('/api/manual-signals', {
+                headers: { 'Authorization': `Bearer ${session.access_token}` }
+            });
+
+            if (res.status === 403) {
+                document.getElementById('mainContent').style.display = 'none';
+                document.getElementById('premiumLock').classList.remove('hidden');
+                return;
+            }
+
+            const signals = await res.json();
+            renderSignals(signals);
+        }
+
+        function renderSignals(signals) {
+            const activeContainer = document.getElementById('activeSignals');
+            const historyContainer = document.getElementById('historySignals');
+            const totalROIEl = document.getElementById('totalROI');
+            const totalTradesEl = document.getElementById('totalTrades');
+
+            activeContainer.innerHTML = '';
+            historyContainer.innerHTML = '';
+
+            let activeCount = 0;
+            let totalROI = 0;
+            let closedCount = 0;
+
+            signals.forEach(s => {
+                if (s.status === 'active') {
+                    activeCount++;
+                    const card = document.createElement('div');
+                    card.className = "bg-surface-dark border-l-4 border-primary p-5 rounded-xl shadow-lg relative overflow-hidden";
+                    card.innerHTML = `
+            <div class="absolute right-0 top-0 bg-primary/10 text-primary text-[8px] font-black px-3 py-1 uppercase rounded-bl-lg">LIVE</div>
+            <div class="flex justify-between items-start">
+                <div>
+                    <h4 class="text-lg font-black text-white">${s.symbol}</h4>
+                    <p class="text-[10px] font-bold text-slate-500 mt-0.5">${new Date(s.entry_time).toLocaleString()}</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-[10px] font-black uppercase text-slate-400 block mb-1">Entry Price</span>
+                    <span class="text-lg font-mono font-bold text-white">$${s.entry_price}</span>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center justify-between">
+                <span class="px-3 py-1 rounded-full text-[10px] font-black ${s.type === 'BUY' ? 'bg-primary text-background-dark' : 'bg-red-500 text-white'}">${s.type} POSITION</span>
+                <span class="text-xs text-slate-400 italic">${s.comment || 'Human entry based on technical analysis'}</span>
+            </div>
+          `;
+                    activeContainer.appendChild(card);
+                } else {
+                    closedCount++;
+                    totalROI += parseFloat(s.roi || 0);
+                    const card = document.createElement('div');
+                    card.className = "bg-background-dark border border-border-dark p-4 rounded-xl flex items-center justify-between opacity-80 hover:opacity-100 transition-all";
+                    card.innerHTML = `
+            <div class="flex items-center gap-4">
+                <div class="size-10 rounded-lg ${s.roi >= 0 ? 'bg-primary/10 text-primary' : 'bg-red-500/10 text-red-500'} flex items-center justify-center">
+                    <span class="material-symbols-outlined">${s.roi >= 0 ? 'trending_up' : 'trending_down'}</span>
+                </div>
+                <div>
+                    <p class="font-bold text-sm text-white">${s.symbol} <span class="text-[10px] text-slate-500 font-normal uppercase ml-1">${s.type}</span></p>
+                    <p class="text-[10px] text-slate-600 font-bold">${new Date(s.closed_at).toLocaleDateString()}</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <span class="block text-sm font-black ${s.roi >= 0 ? 'text-primary' : 'text-red-500'}">${s.roi > 0 ? '+' : ''}${s.roi}%</span>
+                <span class="text-[8px] text-slate-700 uppercase font-black uppercase tracking-tighter">$${s.entry_price} → $${s.exit_price}</span>
+            </div>
+          `;
+                    historyContainer.appendChild(card);
+                }
+            });
+
+            if (activeCount === 0) {
+                activeContainer.innerHTML = `<div class="text-slate-600 text-center py-10 italic text-sm">No active signals at the moment...</div>`;
+            }
+
+            totalROIEl.textContent = `${totalROI > 0 ? '+' : ''}${totalROI.toFixed(1)}%`;
+            totalROIEl.className = `text-3xl font-black ${totalROI >= 0 ? 'text-primary' : 'text-red-500'}`;
+            totalTradesEl.textContent = signals.length;
+        }
+
+        loadData();
+    </script>
+</body>
+
+</html>

@@ -378,6 +378,77 @@ async function deleteUser(userId, token) {
     if (error) throw error;
 }
 
+// Manual Signals
+async function getManualSignals(symbol = null, limit = 50) {
+    let query = getSupabase()
+        .from('manual_signals')
+        .select('*')
+        .order('entry_time', { ascending: false });
+
+    if (symbol) query = query.eq('symbol', symbol);
+    if (limit) query = query.limit(limit);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+}
+
+async function addManualSignal(signal) {
+    const { data, error } = await getAdminClient()
+        .from('manual_signals')
+        .insert([{
+            symbol: signal.symbol,
+            type: signal.type,
+            entry_price: parseFloat(signal.entry_price),
+            status: 'active',
+            entry_time: new Date(),
+            comment: signal.comment
+        }])
+        .select();
+    if (error) throw error;
+    return data[0];
+}
+
+async function closeManualSignal(id, exitPrice) {
+    // Fetch entry price first to calculate ROI
+    const { data: signal, error: fetchError } = await getAdminClient()
+        .from('manual_signals')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (fetchError) throw fetchError;
+
+    let roi = 0;
+    if (signal.type === 'BUY') {
+        roi = ((exitPrice - signal.entry_price) / signal.entry_price) * 100;
+    } else {
+        roi = ((signal.entry_price - exitPrice) / signal.entry_price) * 100;
+    }
+
+    const { data, error } = await getAdminClient()
+        .from('manual_signals')
+        .update({
+            exit_price: parseFloat(exitPrice),
+            status: 'closed',
+            closed_at: new Date(),
+            roi: parseFloat(roi.toFixed(2))
+        })
+        .eq('id', id)
+        .select();
+
+    if (error) throw error;
+    return data[0];
+}
+
+async function deleteManualSignal(id) {
+    const { error } = await getAdminClient()
+        .from('manual_signals')
+        .delete()
+        .eq('id', id);
+    if (error) throw error;
+}
+
 module.exports = {
     initSupabase,
     getSupabase,
@@ -401,5 +472,10 @@ module.exports = {
     updateApplicationStatus,
     getAllUsers,
     adminUpdateUserRole,
-    deleteUser
+    deleteUser,
+    // Manual Signals
+    getManualSignals,
+    addManualSignal,
+    closeManualSignal,
+    deleteManualSignal
 };

@@ -22,7 +22,11 @@ const {
     deleteUser,
     getSupabase,
     getAdminClient,
-    getAuthenticatedClient
+    getAuthenticatedClient,
+    getManualSignals,
+    addManualSignal,
+    closeManualSignal,
+    deleteManualSignal
 } = require('../data/database');
 const indicators = require('../engine/indicators');
 
@@ -427,6 +431,71 @@ router.get('/subscriptions', requireAuth, async (req, res) => {
 
 
 // --- Admin Panel Routes ---
+// --- Manual Signals API (Platinum & Admin Only) ---
+router.get('/manual-signals', requireAuth, async (req, res) => {
+    try {
+        const profile = await getProfile(req.user.id, req.token);
+        // Only Platinum members, Ultra and Admins can see manual signals
+        const hasAccess = profile.role === 'platinum' || profile.role === 'admin' || profile.role === 'ultra';
+        if (!hasAccess) {
+            return res.status(403).json({ error: 'Platinum membership required' });
+        }
+
+        const symbol = req.query.symbol;
+        const limit = parseInt(req.query.limit) || 50;
+        const signals = await getManualSignals(symbol, limit);
+        res.json(signals);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Admin Manual Signals Management
+router.post('/admin/manual-signals', requireAdmin, async (req, res) => {
+    try {
+        const { symbol, type, entry_price, comment } = req.body;
+        if (!symbol || !type || !entry_price) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+        const signal = await addManualSignal({ symbol, type, entry_price, comment });
+        res.json({ success: true, signal });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.post('/admin/manual-signals/:id/close', requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { exit_price } = req.body;
+        if (!exit_price) return res.status(400).json({ error: 'Exit price required' });
+        const signal = await closeManualSignal(id, exit_price);
+        res.json({ success: true, signal });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.delete('/admin/manual-signals/:id', requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        await deleteManualSignal(id);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Admin Dashboard - List all signals for management
+router.get('/admin/manual-signals', requireAdmin, async (req, res) => {
+    try {
+        const signals = await getManualSignals(null, 200);
+        res.json(signals);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 router.get('/admin/users', requireAdmin, async (req, res) => {
     try {
         let users = await getAllUsers(req.token);

@@ -4,19 +4,28 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Strategy Builder - QuantSignal Admin</title>
+    <title>Q-Signal Admin - Center of Operations</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap"
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono&display=swap"
         rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&display=swap"
         rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="/js/auth.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
-                    colors: { "primary": "#00ff00", "background-dark": "#0a0a0a", "surface-dark": "#161b16", "border-dark": "#273a27" },
+                    colors: {
+                        "primary": "#00ff00",
+                        "background-dark": "#0a0a0a",
+                        "surface-dark": "#161b16",
+                        "card-dark": "#1a1f1a",
+                        "border-dark": "#273a27"
+                    },
                     fontFamily: { "display": ["Inter", "sans-serif"], "mono": ["JetBrains Mono", "monospace"] },
                 },
             },
@@ -53,464 +62,738 @@
         .animate-spin-slow {
             animation: spin-slow 2s linear infinite;
         }
+
+        .tab-btn.active {
+            color: #00ff00;
+            border-bottom: 2px solid #00ff00;
+            background: rgba(0, 255, 0, 0.05);
+        }
+
+        .symbol-tab.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
     </style>
 </head>
 
-<body class="bg-background-dark text-slate-100 min-h-screen flex flex-col">
+<body class="bg-background-dark text-slate-100 min-h-screen flex flex-col font-display">
     <!-- Header -->
     <header
-        class="sticky top-0 z-50 bg-background-dark/80 backdrop-blur-md border-b border-border-dark px-4 py-3 flex items-center justify-between">
-        <div class="flex items-center gap-3">
-            <a href="index.html"
-                class="flex items-center justify-center size-10 rounded-lg bg-primary/10 text-primary"><span
-                    class="material-symbols-outlined">terminal</span></a>
-            <div>
-                <h1 class="text-lg font-bold leading-none">Strategy Builder</h1>
-                <span class="text-[9px] text-slate-600 font-bold uppercase block mt-1">策略開發中心</span>
-                <div class="flex items-center gap-1.5 mt-1">
-                    <span class="size-2 rounded-full bg-primary animate-pulse"></span>
-                    <span class="text-[10px] uppercase tracking-wider text-slate-500 font-bold leading-none">System
-                        Online</span>
-                    <span class="text-[8px] text-primary/40 font-bold uppercase ml-1">系統連線中</span>
+        class="sticky top-0 z-50 bg-background-dark/90 backdrop-blur-md border-b border-border-dark px-4 pt-4 shadow-2xl">
+        <div class="max-w-6xl mx-auto flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+                <a href="index.html"
+                    class="flex items-center justify-center size-10 rounded-xl bg-primary/10 text-primary border border-primary/20 shadow-lg shadow-primary/5">
+                    <span class="material-symbols-outlined">terminal</span>
+                </a>
+                <div>
+                    <h1 class="text-xl font-black text-white leading-none tracking-tight">Q-Signal Admin</h1>
+                    <div class="flex items-center gap-1.5 mt-1.5">
+                        <span class="size-1.5 rounded-full bg-primary animate-pulse"></span>
+                        <span class="text-[10px] uppercase tracking-widest text-slate-500 font-black">Center of
+                            Operations</span>
+                    </div>
                 </div>
             </div>
+            <div class="flex items-center gap-2">
+                <span id="dbStats" class="text-[10px] text-slate-500 font-bold hidden md:block"></span>
+                <a href="members.html"
+                    class="size-10 flex items-center justify-center rounded-xl bg-surface-dark border border-border-dark hover:border-primary/50 transition-all text-slate-400 hover:text-primary shadow-sm"
+                    title="Member Management">
+                    <span class="material-symbols-outlined">group</span>
+                </a>
+                <button onclick="signOut()"
+                    class="size-10 flex items-center justify-center rounded-xl bg-surface-dark border border-border-dark hover:border-red-500/50 transition-all text-slate-400 hover:text-red-500 shadow-sm"
+                    title="Sign Out">
+                    <span class="material-symbols-outlined">logout</span>
+                </button>
+            </div>
         </div>
-        <div class="flex gap-2">
-            <span id="dbStats" class="text-[10px] text-slate-500 mr-2"></span>
-            <a href="members.html"
-                class="size-10 flex items-center justify-center rounded-lg hover:bg-white/5 transition-colors"><span
-                    class="material-symbols-outlined">group</span></a>
+
+        <!-- Main Tabs -->
+        <div class="max-w-6xl mx-auto flex">
+            <button onclick="switchMainTab('manual')" id="tabManual"
+                class="tab-btn px-6 py-3 text-xs font-black uppercase tracking-widest border-b-2 border-transparent transition-all flex items-center gap-2 active">
+                <span class="material-symbols-outlined text-sm">psychology</span> Manual Alpha
+            </button>
+            <button onclick="switchMainTab('builder')" id="tabBuilder"
+                class="tab-btn px-6 py-3 text-xs font-black uppercase tracking-widest border-b-2 border-transparent transition-all flex items-center gap-2 text-slate-500">
+                <span class="material-symbols-outlined text-sm">bolt</span> Strategy Builder
+            </button>
         </div>
     </header>
 
-    <main class="flex-1 overflow-y-auto pb-40">
-        <!-- Strategy Metadata -->
-        <section class="p-4 space-y-4 text-left">
-            <div class="flex items-center justify-between leading-none">
-                <div class="flex flex-col">
-                    <h2 class="text-xs font-semibold text-slate-400 uppercase tracking-widest leading-none">Strategy
-                        Metadata</h2>
-                    <span class="text-[9px] text-slate-600 font-bold uppercase mt-1">策略元數據配置</span>
-                </div>
-                <span
-                    class="px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold border border-primary/20">BUILDER
-                    v1.0</span>
-            </div>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-medium text-slate-500 mb-0.5 ml-1">Strategy Name</label>
-                    <span class="block text-[8px] text-slate-600 font-bold mb-1.5 ml-1 uppercase">策略名稱</span>
-                    <input id="stratName"
-                        class="w-full bg-surface-dark border border-border-dark rounded-lg px-4 py-3 text-white placeholder:text-slate-600 focus:border-primary focus:ring-1 focus:ring-primary/50 transition-all outline-none"
-                        placeholder="e.g. TrendFollower_BTC_H1" value="20 SMA Crossover" type="text" />
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1.5 ml-1">Category</label>
-                        <div class="flex bg-surface-dark border border-border-dark rounded-lg p-1">
-                            <button id="catBasic"
-                                class="flex-1 py-2 text-xs font-semibold rounded bg-primary text-black"
-                                onclick="selectCat('Basic')">Basic</button>
-                            <button id="catPremium" class="flex-1 py-2 text-xs font-semibold rounded text-slate-400"
-                                onclick="selectCat('Premium')">Premium</button>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-1.5 ml-1">Status</label>
-                        <div
-                            class="flex items-center h-[42px] px-4 bg-surface-dark border border-border-dark rounded-lg">
-                            <span class="material-symbols-outlined text-primary text-sm mr-2">check_circle</span>
-                            <span class="text-xs font-medium">Ready</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+    <main class="flex-1 overflow-y-auto max-w-6xl mx-auto w-full p-4 pb-40">
 
-        <!-- Code Editor -->
-        <section class="p-4 space-y-3">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-slate-400 text-lg">code</span>
-                    <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-widest">PineScript Source Code
-                    </h2>
-                </div>
-                <div class="flex gap-2">
-                    <button
-                        class="px-3 py-1 bg-surface-dark border border-border-dark rounded text-[10px] font-bold text-slate-300 hover:text-primary hover:border-primary transition-all"
-                        onclick="loadDefaultStrategy()">LOAD DEFAULT</button>
-                </div>
-            </div>
+        <!-- SECTION: MANUAL ALPHA (PRIORITIZED) -->
+        <section id="sectionManual" class="space-y-8 animate-in fade-in duration-500 mt-2">
+            <!-- New Signal Form -->
             <div
-                class="code-editor rounded-xl border border-border-dark overflow-hidden font-mono text-[13px] relative">
-                <div class="flex border-b border-border-dark/50 bg-black/40 px-3 py-2 items-center justify-between">
-                    <div class="flex gap-1.5">
-                        <div class="size-2.5 rounded-full bg-red-500/30 border border-red-500/50"></div>
-                        <div class="size-2.5 rounded-full bg-yellow-500/30 border border-yellow-500/50"></div>
-                        <div class="size-2.5 rounded-full bg-green-500/30 border border-green-500/50"></div>
-                    </div>
-                    <span class="text-[10px] text-slate-500 font-mono uppercase">strategy.pine</span>
+                class="bg-surface-dark border border-border-dark rounded-3xl p-6 shadow-xl relative overflow-hidden group">
+                <div
+                    class="absolute -right-12 -top-12 size-40 bg-indigo-500/5 rounded-full blur-3xl group-hover:bg-indigo-500/10 transition-all">
                 </div>
-                <textarea id="codeEditor"
-                    class="w-full bg-transparent text-slate-300 font-mono text-[13px] p-4 outline-none resize-none custom-scrollbar border-none focus:ring-0"
-                    rows="14" spellcheck="false">//@version=5
-strategy("20 SMA Crossover", overlay=true, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
 
-// Define the moving average
-sma20 = ta.sma(close, 20)
-
-// Define entry and exit conditions
-longCondition = ta.crossover(close, sma20)
-shortCondition = ta.crossunder(close, sma20)
-
-// Execute trades
-if longCondition
-    strategy.entry("Long", strategy.long)
-
-if shortCondition
-    strategy.close("Long")</textarea>
-            </div>
-        </section>
-
-        <!-- Backtest Parameters -->
-        <section class="p-4 space-y-4">
-            <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-widest">Backtest Parameters</h2>
-            <div class="bg-surface-dark border border-border-dark rounded-xl p-4 space-y-4">
-                <div>
-                    <label class="block text-xs font-medium text-slate-500 mb-2">Trading Pairs</label>
-                    <div class="flex flex-wrap gap-2">
-                        <button
-                            class="pair-btn px-3 py-1.5 rounded-lg border border-primary bg-primary/10 text-primary text-xs font-bold"
-                            data-symbol="BTCUSDT" onclick="selectPair(this)">BTC/USDT</button>
-                        <button
-                            class="pair-btn px-3 py-1.5 rounded-lg border border-border-dark bg-background-dark/50 text-slate-400 text-xs font-medium"
-                            data-symbol="ETHUSDT" onclick="selectPair(this)">ETH/USDT</button>
-                        <button
-                            class="pair-btn px-3 py-1.5 rounded-lg border border-border-dark bg-background-dark/50 text-slate-400 text-xs font-medium"
-                            data-symbol="SOLUSDT" onclick="selectPair(this)">SOL/USDT</button>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
+                <h2 class="text-xl font-black mb-6 flex items-center gap-3">
+                    <span
+                        class="material-symbols-outlined text-indigo-400 bg-indigo-400/10 p-2 rounded-xl">add_circle</span>
                     <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-2">Timeframe</label>
-                        <select id="timeframe"
-                            class="w-full bg-background-dark border border-border-dark rounded-lg px-3 py-2 text-xs text-white focus:border-primary focus:ring-0 outline-none">
-                            <option value="4h" selected>4 Hours (4h)</option>
+                        <p class="leading-none">發布新的人工信號</p>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase mt-1">Deploy New Manual Alpha Signal
+                        </p>
+                    </div>
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] font-black text-slate-500 uppercase ml-1">交易對 Pair</label>
+                        <input id="sigSymbol" type="text" placeholder="e.g. BTCUSDT"
+                            class="bg-background-dark border border-border-dark rounded-xl px-4 py-3 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 outline-none transition-all placeholder:text-slate-700">
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] font-black text-slate-500 uppercase ml-1">交易方向 Type</label>
+                        <select id="sigType"
+                            class="bg-background-dark border border-border-dark rounded-xl px-4 py-3 text-sm focus:border-indigo-500 outline-none transition-all">
+                            <option value="BUY">BUY (做多)</option>
+                            <option value="SELL">SELL (做空)</option>
                         </select>
                     </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] font-black text-slate-500 uppercase ml-1">進場價格 Entry</label>
+                        <input id="sigEntry" type="number" step="any" placeholder="Entry Price"
+                            class="bg-background-dark border border-border-dark rounded-xl px-4 py-3 text-sm focus:border-indigo-500 outline-none transition-all font-mono">
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[10px] font-black text-slate-500 uppercase ml-1">策略備註 Comment</label>
+                        <input id="sigComment" type="text" placeholder="Logic breakdown..."
+                            class="bg-background-dark border border-border-dark rounded-xl px-4 py-3 text-sm focus:border-indigo-500 outline-none transition-all placeholder:text-slate-700">
+                    </div>
+                </div>
+                <button onclick="publishSignal()" id="publishBtn"
+                    class="w-full mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-indigo-600/20 active:scale-[0.98]">
+                    <span class="material-symbols-outlined">send</span> 打入市場信號 (PUBLISH SIGNAL)
+                </button>
+            </div>
+
+            <!-- Management Area with Symbol Tabs -->
+            <div class="space-y-6">
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
-                        <label class="block text-xs font-medium text-slate-500 mb-2">Initial Capital</label>
-                        <input id="capital" type="number" value="10000"
-                            class="w-full bg-background-dark border border-border-dark rounded-lg px-3 py-2 text-xs text-white focus:border-primary focus:ring-0 outline-none" />
+                        <h2 class="text-2xl font-black text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary">data_usage</span> 信號管理 (MANAGEMENT)
+                        </h2>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase mt-1">Filter and manage manual
+                            subscriptions</p>
+                    </div>
+                    <!-- Symbol Tabs -->
+                    <div class="flex flex-wrap gap-2 bg-surface-dark border border-border-dark p-1.5 rounded-2xl">
+                        <button onclick="filterBySymbol('ALL')"
+                            class="symbol-tab px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all border border-transparent active"
+                            id="sym-ALL">ALL</button>
+                        <button onclick="filterBySymbol('BTCUSDT')"
+                            class="symbol-tab px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all border border-border-dark text-slate-500 hover:text-white"
+                            id="sym-BTCUSDT">BTC</button>
+                        <button onclick="filterBySymbol('ETHUSDT')"
+                            class="symbol-tab px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all border border-border-dark text-slate-500 hover:text-white"
+                            id="sym-ETHUSDT">ETH</button>
+                        <button onclick="filterBySymbol('SOLUSDT')"
+                            class="symbol-tab px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all border border-border-dark text-slate-500 hover:text-white"
+                            id="sym-SOLUSDT">SOL</button>
+                        <button onclick="filterBySymbol('XAUUSDT')"
+                            class="symbol-tab px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all border border-border-dark text-slate-500 hover:text-white"
+                            id="sym-XAUUSDT">XAU</button>
+                        <button onclick="filterBySymbol('SPXUSDT')"
+                            class="symbol-tab px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all border border-border-dark text-slate-500 hover:text-white"
+                            id="sym-SPXUSDT">SPX</button>
+                        <button onclick="filterBySymbol('NASUSDT')"
+                            class="symbol-tab px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all border border-border-dark text-slate-500 hover:text-white"
+                            id="sym-NASUSDT">NAS</button>
                     </div>
                 </div>
-                <div class="pt-2 flex items-center justify-between border-t border-border-dark/50">
-                    <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-slate-500 text-sm">database</span>
-                        <span class="text-[10px] text-slate-500 font-medium uppercase tracking-tighter">Data via
-                            Supabase + Binance API</span>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <!-- Active Signals List -->
+                    <div class="lg:col-span-12">
+                        <h3
+                            class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <span class="size-2 rounded-full bg-primary animate-pulse"></span> 持倉中 (ACTIVE)
+                        </h3>
+                        <div id="activeSignalsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Populated via JS -->
+                            <div
+                                class="col-span-full text-center py-20 border-2 border-dashed border-border-dark rounded-3xl text-slate-600 font-bold uppercase text-[10px]">
+                                正在載入活躍信號...</div>
+                        </div>
+                    </div>
+
+                    <!-- History Table -->
+                    <div class="lg:col-span-12">
+                        <h3
+                            class="text-xs font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-slate-500 text-sm">history</span> 交易歷史 (CLOSED
+                            TRADES)
+                        </h3>
+                        <div class="bg-surface-dark border border-border-dark rounded-3xl overflow-hidden shadow-2xl">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-background-dark/50 border-b border-border-dark">
+                                    <tr>
+                                        <th
+                                            class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                            Symbol</th>
+                                        <th
+                                            class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                            Type</th>
+                                        <th
+                                            class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">
+                                            ROI</th>
+                                        <th
+                                            class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                            Entry Time</th>
+                                        <th
+                                            class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">
+                                            Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="historyList" class="divide-y divide-border-dark/30">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Backtest Results (hidden initially) -->
-        <section class="p-4 space-y-4" id="resultsSection" style="display:none">
-            <h2 class="text-sm font-semibold text-primary uppercase tracking-widest flex items-center gap-2">
-                <span class="material-symbols-outlined text-sm">analytics</span> Backtest Results
-            </h2>
+        <!-- SECTION: STRATEGY BUILDER (PINESCRIPT) -->
+        <section id="sectionBuilder"
+            class="hidden space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 mt-2">
+            <!-- Metadata & Code Editor -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left: Meta & Params -->
+                <div class="space-y-6">
+                    <div class="bg-surface-dark border border-border-dark rounded-3xl p-6 shadow-lg">
+                        <h2
+                            class="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-sm">settings</span> Metadata
+                        </h2>
+                        <div class="space-y-5">
+                            <div>
+                                <label class="text-[10px] font-black text-slate-500 uppercase ml-1 block mb-2">Strategy
+                                    Name</label>
+                                <input id="stratName"
+                                    class="w-full bg-background-dark border border-border-dark rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-all placeholder:text-slate-700"
+                                    placeholder="e.g. SMA_CROSS_1H" value="20 SMA Crossover">
+                            </div>
+                            <div>
+                                <label
+                                    class="text-[10px] font-black text-slate-500 uppercase ml-1 block mb-2">Category</label>
+                                <div class="flex bg-background-dark border border-border-dark rounded-xl p-1">
+                                    <button id="catBasic"
+                                        class="flex-1 py-2 text-[10px] font-black uppercase rounded-lg bg-primary text-black transition-all"
+                                        onclick="selectCat('Basic')">Basic</button>
+                                    <button id="catPremium"
+                                        class="flex-1 py-2 text-[10px] font-black uppercase rounded-lg text-slate-500 transition-all"
+                                        onclick="selectCat('Premium')">Premium</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-            <div class="grid grid-cols-2 gap-3" id="resultGrid"></div>
+                    <div class="bg-surface-dark border border-border-dark rounded-3xl p-6 shadow-lg">
+                        <h2
+                            class="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-primary text-sm">bolt</span> Backtest Params
+                        </h2>
+                        <div class="space-y-5">
+                            <div>
+                                <label class="text-[10px] font-black text-slate-500 uppercase ml-1 block mb-3">Target
+                                    Asset</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button
+                                        class="pair-btn px-2 py-2 rounded-lg border border-primary bg-primary/10 text-primary text-[10px] font-black"
+                                        data-symbol="BTCUSDT" onclick="selectPair(this)">BTC</button>
+                                    <button
+                                        class="pair-btn px-2 py-2 rounded-lg border border-border-dark bg-background-dark text-slate-500 text-[10px] font-black hover:text-white transition-all"
+                                        data-symbol="ETHUSDT" onclick="selectPair(this)">ETH</button>
+                                    <button
+                                        class="pair-btn px-2 py-2 rounded-lg border border-border-dark bg-background-dark text-slate-500 text-[10px] font-black hover:text-white transition-all"
+                                        data-symbol="SOLUSDT" onclick="selectPair(this)">SOL</button>
+                                </div>
+                            </div>
+                            <button onclick="runBacktest()" id="runBtn"
+                                class="w-full bg-primary hover:bg-white text-black font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
+                                <span class="material-symbols-outlined text-lg">bolt</span> RUN & DEPLOY
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-            <div class="bg-surface-dark border border-border-dark rounded-xl overflow-hidden p-4"
-                style="height: 250px;">
-                <canvas id="resultChart"></canvas>
+                <!-- Right: Code Editor -->
+                <div
+                    class="lg:col-span-2 bg-surface-dark border border-border-dark rounded-3xl overflow-hidden shadow-2xl flex flex-col h-[500px]">
+                    <div
+                        class="flex border-b border-border-dark bg-background-dark/50 px-5 py-4 items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="flex gap-1.5">
+                                <div class="size-2.5 rounded-full bg-red-500/20 border border-red-500/40"></div>
+                                <div class="size-2.5 rounded-full bg-yellow-500/20 border border-yellow-500/40"></div>
+                                <div class="size-2.5 rounded-full bg-green-500/20 border border-green-500/40"></div>
+                            </div>
+                            <span
+                                class="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-2">pinescript_engine.v5</span>
+                        </div>
+                        <button onclick="loadDefaultStrategy()"
+                            class="text-[9px] font-black uppercase text-slate-500 hover:text-primary transition-all">Restore
+                            Default</button>
+                    </div>
+                    <textarea id="codeEditor"
+                        class="flex-1 bg-transparent text-slate-300 font-mono text-[13px] p-6 outline-none resize-none custom-scrollbar border-none focus:ring-0"
+                        spellcheck="false">//@version=5
+strategy("20 SMA Crossover", overlay=true, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
+
+ma = ta.sma(close, 20)
+long = ta.crossover(close, ma)
+short = ta.crossunder(close, ma)
+
+if long
+    strategy.entry("L", strategy.long)
+if short
+    strategy.close("L")</textarea>
+                </div>
             </div>
 
-            <div class="bg-surface-dark border border-border-dark rounded-xl divide-y divide-border-dark"
-                id="resultMetrics"></div>
+            <!-- Backtest Results (Hidden by default) -->
+            <div id="resultsSection" class="hidden space-y-6 animate-in zoom-in-95 duration-500">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-black text-white flex items-center gap-3">
+                        <span
+                            class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-xl">monitoring</span>
+                        Backtest Results
+                    </h2>
+                </div>
+                <div id="resultGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <!-- Stats cards go here -->
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-surface-dark border border-border-dark rounded-3xl p-6 h-80">
+                        <canvas id="resultChart"></canvas>
+                    </div>
+                    <div class="bg-surface-dark border border-border-dark rounded-3xl p-6 overflow-y-auto max-h-80 custom-scrollbar"
+                        id="resultMetrics">
+                        <!-- Metrics go here -->
+                    </div>
+                </div>
+            </div>
 
-            <div id="resultTrades" class="space-y-2"></div>
-        </section>
-        </section>
-
-        <!-- Strategy Management Section -->
-        <section class="p-4 space-y-4">
-            <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-widest">Strategy Management</h2>
-            <div class="bg-surface-dark border border-border-dark rounded-xl overflow-hidden">
-                <table class="w-full text-left text-xs">
-                    <thead class="bg-black/20 border-b border-border-dark text-slate-500 uppercase font-medium">
-                        <tr>
-                            <th class="px-4 py-3">Strategy Name</th>
-                            <th class="px-4 py-3">Category</th>
-                            <th class="px-4 py-3 text-right">Visible</th>
-                        </tr>
-                    </thead>
-                    <tbody id="stratMgmtList" class="divide-y divide-border-dark text-slate-300">
-                        <tr>
-                            <td colspan="3" class="px-4 py-3 text-center text-slate-500">Loading strategies...</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <!-- Management: Automated Strategies -->
+            <div class="mt-8">
+                <h2 class="text-xl font-black text-white flex items-center gap-3 mb-6">
+                    <span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-xl">database</span>
+                    <div>
+                        <p class="leading-none">系統策略管理</p>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase mt-1">Automated Strategy Registry</p>
+                    </div>
+                </h2>
+                <div class="bg-surface-dark border border-border-dark rounded-3xl overflow-hidden shadow-2xl">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-background-dark border-b border-border-dark">
+                            <tr>
+                                <th class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                    Strategy Name</th>
+                                <th class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                    Category</th>
+                                <th
+                                    class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">
+                                    Visibility</th>
+                            </tr>
+                        </thead>
+                        <tbody id="stratMgmtList" class="divide-y divide-border-dark/30">
+                            <!-- Populated via JS -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
+
     </main>
 
-    <!-- Footer Action -->
-    <footer
-        class="fixed bottom-0 left-0 right-0 p-4 bg-background-dark/90 backdrop-blur-xl border-t border-border-dark">
-        <div class="flex gap-4">
-            <button id="runBtn" onclick="runBacktest()"
-                class="flex-1 bg-primary hover:bg-primary/90 text-black font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,255,0,0.2)] transition-all active:scale-[0.98]">
-                <span class="material-symbols-outlined font-bold">bolt</span>
-                RUN BACKTEST & DEPLOY
-            </button>
-        </div>
-        <nav class="flex justify-around items-center pt-4 pb-2 border-t border-border-dark mt-4">
-            <a class="flex flex-col items-center gap-1 text-slate-500" href="index.html"><span
-                    class="material-symbols-outlined">home</span><span
-                    class="text-[10px] font-medium uppercase">Home</span></a>
-            <a class="flex flex-col items-center gap-1 text-primary" href="admin.html"><span
-                    class="material-symbols-outlined">terminal</span><span
-                    class="text-[10px] font-medium uppercase">Builder</span></a>
-            <a class="flex flex-col items-center gap-1 text-slate-500" href="members.html"><span
-                    class="material-symbols-outlined">group</span><span
-                    class="text-[10px] font-medium uppercase">Members</span></a>
-            <a class="flex flex-col items-center gap-1 text-slate-500" href="profile.html"><span
-                    class="material-symbols-outlined">person</span><span
-                    class="text-[10px] font-medium uppercase">Profile</span></a>
-        </nav>
-    </footer>
-
     <script>
-        let selectedSymbol = 'BTCUSDT';
+        // State
+        let currentMainTab = 'manual';
+        let currentSymbolFilter = 'ALL';
+        let allSignals = [];
+        let selectedSymbol = 'BTCUSDT'; // for builder
         let selectedCategory = 'Basic';
         let resultChart = null;
 
-        function selectPair(btn) {
-            document.querySelectorAll('.pair-btn').forEach(b => { b.className = 'pair-btn px-3 py-1.5 rounded-lg border border-border-dark bg-background-dark/50 text-slate-400 text-xs font-medium'; });
-            btn.className = 'pair-btn px-3 py-1.5 rounded-lg border border-primary bg-primary/10 text-primary text-xs font-bold';
-            selectedSymbol = btn.dataset.symbol;
+        // Auth & Init
+        requireAdmin().then(user => {
+            if (user) {
+                console.log('Admin verified:', user.email);
+                initData();
+            }
+        });
+
+        async function initData() {
+            loadSignals();
+            loadAdminStrategies();
+            loadStats();
         }
 
-        function selectCat(cat) {
-            selectedCategory = cat;
-            document.getElementById('catBasic').className = `flex-1 py-2 text-xs font-semibold rounded ${cat === 'Basic' ? 'bg-primary text-black' : 'text-slate-400'}`;
-            document.getElementById('catPremium').className = `flex-1 py-2 text-xs font-semibold rounded ${cat === 'Premium' ? 'bg-primary text-black' : 'text-slate-400'}`;
+        async function loadStats() {
+            fetch('/api/stats').then(r => r.json()).then(d => {
+                const counts = d.candleCounts;
+                const el = document.getElementById('dbStats');
+                if (el) el.textContent = `DB: ${Object.values(counts).reduce((a, b) => a + b, 0)}/CANDLES`;
+            }).catch(() => { });
         }
 
-        function loadDefaultStrategy() {
-            document.getElementById('codeEditor').value = `//@version=5
-strategy("60 MA Bidirectional", overlay=true, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
+        // --- Tab Management ---
+        function switchMainTab(tab) {
+            currentMainTab = tab;
+            document.getElementById('sectionManual').classList.toggle('hidden', tab !== 'manual');
+            document.getElementById('sectionBuilder').classList.toggle('hidden', tab !== 'builder');
 
-// Define the moving average
-ma = ta.sma(close, 60)
-
-// Define entry and exit conditions
-longCondition = ta.crossover(close, ma)
-shortCondition = ta.crossunder(close, ma)
-
-// Execute trades
-if longCondition
-    strategy.entry("Long", strategy.long)
-
-if shortCondition
-    strategy.entry("Short", strategy.short)`;
-            document.getElementById('stratName').value = '60 MA Bidirectional';
+            document.getElementById('tabManual').className = `tab-btn px-6 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all flex items-center gap-2 ${tab === 'manual' ? 'active' : 'text-slate-500 border-transparent'}`;
+            document.getElementById('tabBuilder').className = `tab-btn px-6 py-3 text-xs font-black uppercase tracking-widest border-b-2 transition-all flex items-center gap-2 ${tab === 'builder' ? 'active' : 'text-slate-500 border-transparent'}`;
         }
 
-        async function runBacktest() {
-            const btn = document.getElementById('runBtn');
-            btn.innerHTML = '<span class="material-symbols-outlined animate-spin-slow">progress_activity</span> RUNNING BACKTEST...';
-            btn.disabled = true;
+        function filterBySymbol(symbol) {
+            currentSymbolFilter = symbol;
+            document.querySelectorAll('.symbol-tab').forEach(btn => {
+                btn.className = `symbol-tab px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all border ${btn.id === 'sym-' + symbol ? 'active' : 'border-border-dark text-slate-500'}`;
+            });
+            renderSignalsList();
+        }
 
+        // --- Manual Signals Logic ---
+        async function loadSignals() {
             try {
-                const code = document.getElementById('codeEditor').value;
-                const name = document.getElementById('stratName').value;
-
-                // First add strategy
-                await fetch('/api/strategies', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, code, category: selectedCategory })
+                const { session } = await getSession();
+                const res = await fetch('/api/admin/manual-signals', {
+                    headers: { 'Authorization': `Bearer ${session.access_token}` }
                 });
-
-                // Then run backtest
-                const res = await fetch('/api/backtest', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code, symbol: selectedSymbol, strategyId: name.toLowerCase().replace(/[^a-z0-9]+/g, '_') })
-                });
-                const data = await res.json();
-
-                if (data.error) {
-                    alert('Backtest error: ' + data.error);
-                } else {
-                    renderResults(data);
-                }
+                allSignals = await res.json();
+                renderSignalsList();
             } catch (err) {
-                alert('Error: ' + err.message);
-            } finally {
-                btn.innerHTML = '<span class="material-symbols-outlined font-bold">bolt</span> RUN BACKTEST & DEPLOY';
-                btn.disabled = false;
+                console.error('Failed to load signals:', err);
             }
         }
 
-        function renderResults(data) {
-            document.getElementById('resultsSection').style.display = 'block';
-            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+        function renderSignalsList() {
+            const activeList = document.getElementById('activeSignalsList');
+            const historyList = document.getElementById('historyList');
 
-            const s = data.summary;
-            const grid = document.getElementById('resultGrid');
-            grid.innerHTML = `
-        <div class="bg-surface-dark border border-border-dark p-4 rounded-xl">
-          <p class="text-xs text-slate-400 uppercase">Total Return</p>
-          <p class="text-2xl font-bold ${s.totalReturn >= 0 ? 'text-primary' : 'text-red-500'}">${s.totalReturn > 0 ? '+' : ''}${s.totalReturn}%</p>
-        </div>
-        <div class="bg-surface-dark border border-border-dark p-4 rounded-xl">
-          <p class="text-xs text-slate-400 uppercase">Max Drawdown</p>
-          <p class="text-2xl font-bold text-white">-${s.maxDrawdown}%</p>
-        </div>
-        <div class="bg-surface-dark border border-border-dark p-4 rounded-xl">
-          <p class="text-xs text-slate-400 uppercase">Win Rate</p>
-          <p class="text-2xl font-bold text-white">${s.winRate}%</p>
-        </div>
-        <div class="bg-surface-dark border border-border-dark p-4 rounded-xl">
-          <p class="text-xs text-slate-400 uppercase">Sharpe Ratio</p>
-          <p class="text-2xl font-bold text-white">${s.sharpeRatio}</p>
-        </div>
-      `;
+            const filtered = currentSymbolFilter === 'ALL'
+                ? allSignals
+                : allSignals.filter(s => s.symbol === currentSymbolFilter);
 
-            // Metrics table
-            const metrics = document.getElementById('resultMetrics');
-            metrics.innerHTML = `
-        <div class="flex justify-between p-3"><span class="text-slate-400 text-sm">Profit Factor</span><span class="font-bold">${s.profitFactor}</span></div>
-        <div class="flex justify-between p-3"><span class="text-slate-400 text-sm">Total Trades</span><span class="font-bold">${s.totalTrades}</span></div>
-        <div class="flex justify-between p-3"><span class="text-slate-400 text-sm">Winning / Losing</span><span class="font-bold">${s.winningTrades} / ${s.losingTrades}</span></div>
-        <div class="flex justify-between p-3"><span class="text-slate-400 text-sm">Avg Hold Time</span><span class="font-bold">${s.avgHoldDays} Days</span></div>
-        <div class="flex justify-between p-3"><span class="text-slate-400 text-sm">Expectancy</span><span class="font-bold">${s.expectancy}%/trade</span></div>
-        <div class="flex justify-between p-3"><span class="text-slate-400 text-sm">Period</span><span class="font-bold">${s.period.startDate} → ${s.period.endDate}</span></div>
-        <div class="flex justify-between p-3"><span class="text-slate-400 text-sm">Initial Capital</span><span class="font-bold">$${s.initialCapital.toLocaleString()}</span></div>
-        <div class="flex justify-between p-3"><span class="text-slate-400 text-sm">Final Equity</span><span class="font-bold text-primary">$${s.finalEquity.toLocaleString()}</span></div>
-      `;
+            const active = filtered.filter(s => s.status === 'active');
+            const history = filtered.filter(s => s.status === 'closed');
 
-            // Chart
-            const ctx = document.getElementById('resultChart').getContext('2d');
-            if (resultChart) resultChart.destroy();
-            resultChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.equityCurve.map(p => new Date(p.time).toLocaleDateString('en-US', { month: 'short', year: '2-digit' })),
-                    datasets: [{
-                        data: data.equityCurve.map(p => p.equity),
-                        borderColor: '#00ff00', backgroundColor: 'rgba(0,255,0,0.08)',
-                        fill: true, tension: 0.3, pointRadius: 0, borderWidth: 2,
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { ticks: { color: '#666', maxTicksLimit: 6 }, grid: { color: '#273a2733' } },
-                        y: { ticks: { color: '#666', callback: v => '$' + v.toLocaleString() }, grid: { color: '#273a2733' } }
-                    }
-                }
-            });
-
-            // Recent trades
-            const trades = document.getElementById('resultTrades');
-            trades.innerHTML = '<h3 class="font-bold text-sm text-slate-400 uppercase mt-4">Recent Trades</h3>';
-            (data.recentTrades || []).slice(0, 5).forEach(t => {
-                const isProfit = t.pnlPercent > 0;
-                trades.innerHTML += `
-          <div class="bg-surface-dark border border-border-dark p-3 rounded-lg flex justify-between items-center">
-            <div><span class="px-1.5 py-0.5 rounded ${isProfit ? 'bg-primary/20 text-primary' : 'bg-red-500/20 text-red-500'} text-[10px] font-bold">LONG</span>
-            <span class="text-xs ml-2 text-slate-400">${t.entryDate?.split('T')[0] || ''}</span></div>
-            <span class="${isProfit ? 'text-primary' : 'text-red-500'} font-bold text-sm">${isProfit ? '+' : ''}${t.pnlPercent}%</span>
-          </div>`;
-            });
-        }
-
-        // Load DB stats
-        fetch('/api/stats').then(r => r.json()).then(d => {
-            const counts = d.candleCounts;
-            document.getElementById('dbStats').textContent = `DB: ${Object.values(counts).reduce((a, b) => a + b, 0)} candles`;
-        }).catch(() => { });
-
-        // Load Strategies for Management
-        async function loadAdminStrategies() {
-            try {
-                // We need to fetch strategies. Assuming we are logged in as admin (requireAuth checked on page load ideally)
-                // We use the same /api/strategies endpoint. It now returns isVisible flag if admin.
-                // We need to pass the auth token.
-                const { data: { session } } = await supabase.auth.getSession();
-                const token = session?.access_token;
-                if (!token) return;
-
-                const res = await fetch('/api/strategies', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+            // Active
+            activeList.innerHTML = '';
+            if (active.length === 0) {
+                activeList.innerHTML = '<div class="col-span-full text-center py-20 border-2 border-dashed border-border-dark rounded-3xl text-slate-600 font-bold uppercase text-[10px]">無活躍持倉 (NO ACTIVE POSITIONS)</div>';
+            } else {
+                active.forEach(s => {
+                    activeList.innerHTML += `
+                        <div class="bg-card-dark border border-border-dark rounded-3xl p-5 shadow-lg relative overflow-hidden group hover:border-indigo-500/50 transition-all">
+                            <div class="absolute right-0 top-0 bg-indigo-500/10 text-indigo-400 text-[8px] font-black px-3 py-1 uppercase rounded-bl-lg">LIVE</div>
+                            <div class="flex flex-col h-full">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="size-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 font-bold text-xs">${s.symbol.substring(0, 3)}</div>
+                                        <div>
+                                            <p class="font-black text-white text-sm">${s.symbol}</p>
+                                            <p class="text-[8px] text-slate-500 uppercase font-black">${new Date(s.entry_time).toLocaleString()}</p>
+                                        </div>
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded text-[8px] font-black ${s.type === 'BUY' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}">${s.type}</span>
+                                </div>
+                                <div class="bg-background-dark/50 p-3 rounded-xl mb-4 border border-border-dark/30">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-[8px] text-slate-500 font-black">ENTRY PRICE</span>
+                                        <span class="font-mono text-xs text-white">${parseFloat(s.entry_price).toFixed(2)}</span>
+                                    </div>
+                                    <textarea id="exit-price-${s.id}" placeholder="平倉價格 (Exit Price)" class="w-full bg-background-dark border border-border-dark rounded-lg px-3 py-2 text-xs font-mono outline-none focus:border-primary mt-2 transition-all"></textarea>
+                                </div>
+                                <div class="flex gap-2 mt-auto">
+                                    <button onclick="closeSignal('${s.id}')" class="flex-1 bg-primary text-black font-black py-2.5 rounded-xl text-[10px] hover:bg-white transition-all shadow-lg shadow-primary/10">CLOSE POSITION</button>
+                                    <button onclick="deleteSignal('${s.id}')" class="size-10 flex items-center justify-center rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all"><span class="material-symbols-outlined text-sm">delete</span></button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
                 });
-                const data = await res.json();
+            }
 
-                const list = document.getElementById('stratMgmtList');
-                list.innerHTML = '';
-
-                if (!data.strategies || data.strategies.length === 0) {
-                    list.innerHTML = '<tr><td colspan="3" class="px-4 py-3 text-center text-slate-500">No strategies found.</td></tr>';
-                    return;
-                }
-
-                data.strategies.forEach(s => {
-                    const isVisible = s.isVisible !== false; // Default true
-                    list.innerHTML += `
-                        <tr class="hover:bg-white/5 transition-colors">
-                            <td class="px-4 py-3 font-medium text-white">${s.name}</td>
-                            <td class="px-4 py-3 text-slate-400">${s.category || 'Basic'}</td>
-                            <td class="px-4 py-3 text-right">
-                                <button onclick="toggleStratVisibility('${s.id}', ${!isVisible})" 
-                                    class="px-2 py-1 rounded text-[10px] font-bold uppercase transition-colors ${isVisible ? 'bg-primary/20 text-primary hover:bg-red-500/20 hover:text-red-500' : 'bg-slate-700 text-slate-400 hover:bg-primary/20 hover:text-primary'}">
-                                    ${isVisible ? 'Hide' : 'Show'}
+            // History
+            historyList.innerHTML = '';
+            if (history.length === 0) {
+                historyList.innerHTML = '<tr><td colspan="5" class="px-6 py-10 text-center text-slate-600 font-bold text-[10px] uppercase">當前無交易歷史</td></tr>';
+            } else {
+                history.forEach(s => {
+                    const roi = parseFloat(s.roi || 0);
+                    const isProfit = roi >= 0;
+                    historyList.innerHTML += `
+                        <tr class="hover:bg-white/5 transition-colors group">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <span class="font-black text-white">${s.symbol}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <span class="text-[9px] font-black uppercase ${s.type === 'BUY' ? 'text-green-500 bg-green-500/10 px-2 py-0.5 rounded' : 'text-red-500 bg-red-500/10 px-2 py-0.5 rounded'}">${s.type}</span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <span class="font-mono font-black text-sm ${isProfit ? 'text-primary' : 'text-red-500'}">
+                                    ${isProfit ? '+' : ''}${roi.toFixed(1)}%
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <p class="text-[10px] text-slate-500 font-bold font-mono">${new Date(s.entry_time).toLocaleDateString()}</p>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button onclick="deleteSignal('${s.id}')" class="text-slate-700 hover:text-red-500 transition-colors">
+                                    <span class="material-symbols-outlined text-sm">delete</span>
                                 </button>
                             </td>
                         </tr>
                     `;
                 });
-            } catch (e) {
-                console.error('Error loading strategies for admin:', e);
             }
+        }
+
+        async function publishSignal() {
+            const btn = document.getElementById('publishBtn');
+            const symbol = document.getElementById('sigSymbol').value.toUpperCase().trim();
+            const type = document.getElementById('sigType').value;
+            const entry_price = document.getElementById('sigEntry').value;
+            const comment = document.getElementById('sigComment').value;
+
+            if (!symbol || !entry_price) return alert('Symbol and Entry Price required');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> PUBLISHING ALPHA...';
+
+            try {
+                const { session } = await getSession();
+                const res = await fetch('/api/admin/manual-signals', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+                    body: JSON.stringify({ symbol, type, entry_price, comment })
+                });
+
+                if (res.ok) {
+                    document.getElementById('sigSymbol').value = '';
+                    document.getElementById('sigEntry').value = '';
+                    document.getElementById('sigComment').value = '';
+                    loadSignals();
+                } else {
+                    const err = await res.json();
+                    alert('Error: ' + err.error);
+                }
+            } catch (err) { alert('Connection error'); }
+            finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined">send</span> 打入市場信號 (PUBLISH SIGNAL)';
+            }
+        }
+
+        async function closeSignal(id) {
+            const exit_price = document.getElementById(`exit-price-${id}`).value;
+            if (!exit_price) return alert('Please enter exit price');
+
+            try {
+                const { session } = await getSession();
+                const res = await fetch(`/api/admin/manual-signals/${id}/close`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+                    body: JSON.stringify({ exit_price })
+                });
+                if (res.ok) loadSignals();
+                else alert('Failed to close signal');
+            } catch (err) { console.error(err); }
+        }
+
+        async function deleteSignal(id) {
+            if (!confirm('Are you sure you want to delete this signal?')) return;
+            try {
+                const { session } = await getSession();
+                const res = await fetch(`/api/admin/manual-signals/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${session.access_token}` }
+                });
+                if (res.ok) loadSignals();
+            } catch (err) { console.error(err); }
+        }
+
+        // --- Strategy Builder Logic ---
+        function selectPair(btn) {
+            document.querySelectorAll('.pair-btn').forEach(b => {
+                b.className = 'pair-btn px-2 py-2 rounded-lg border border-border-dark bg-background-dark text-slate-500 text-[10px] font-black hover:text-white transition-all';
+            });
+            btn.className = 'pair-btn px-2 py-2 rounded-lg border border-primary bg-primary/10 text-primary text-[10px] font-black';
+            selectedSymbol = btn.dataset.symbol;
+        }
+
+        function selectCat(cat) {
+            selectedCategory = cat;
+            document.getElementById('catBasic').className = `flex-1 py-2 text-[10px] font-black uppercase rounded-lg ${cat === 'Basic' ? 'bg-primary text-black' : 'text-slate-500 transition-all'}`;
+            document.getElementById('catPremium').className = `flex-1 py-2 text-[10px] font-black uppercase rounded-lg ${cat === 'Premium' ? 'bg-primary text-black' : 'text-slate-500 transition-all'}`;
+        }
+
+        function loadDefaultStrategy() {
+            document.getElementById('codeEditor').value = `//@version=5\nstrategy("Default SMA", overlay=true)\nma = ta.sma(close, 20)\nif ta.crossover(close, ma)\n    strategy.entry("L", strategy.long)\nif ta.crossunder(close, ma)\n    strategy.close("L")`;
+        }
+
+        async function runBacktest() {
+            const btn = document.getElementById('runBtn');
+            const code = document.getElementById('codeEditor').value;
+            const name = document.getElementById('stratName').value;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> RUNNING...';
+
+            try {
+                const { session } = await getSession();
+                // Save
+                await fetch('/api/strategies', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+                    body: JSON.stringify({ name, code, category: selectedCategory })
+                });
+                // Test
+                const res = await fetch('/api/backtest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+                    body: JSON.stringify({ code, symbol: selectedSymbol, strategyId: name.toLowerCase().replace(/[^a-z0-9]+/g, '_') })
+                });
+                const data = await res.json();
+                if (data.error) alert('Error: ' + data.error);
+                else {
+                    renderResults(data);
+                    loadAdminStrategies();
+                }
+            } catch (err) { alert('Internal Error'); }
+            finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span class="material-symbols-outlined text-lg">bolt</span> RUN & DEPLOY';
+            }
+        }
+
+        function renderResults(data) {
+            document.getElementById('resultsSection').classList.remove('hidden');
+            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+
+            const s = data.summary;
+            document.getElementById('resultGrid').innerHTML = `
+                <div class="bg-surface-dark border border-border-dark p-5 rounded-2xl">
+                    <p class="text-[10px] text-slate-500 font-black uppercase mb-1 tracking-widest">Total Return</p>
+                    <p class="text-2xl font-black ${s.totalReturn >= 0 ? 'text-primary' : 'text-red-500'}">${s.totalReturn > 0 ? '+' : ''}${s.totalReturn}%</p>
+                </div>
+                <div class="bg-surface-dark border border-border-dark p-5 rounded-2xl">
+                    <p class="text-[10px] text-slate-500 font-black uppercase mb-1 tracking-widest">Drawdown</p>
+                    <p class="text-2xl font-black text-white">-${s.maxDrawdown}%</p>
+                </div>
+                <div class="bg-surface-dark border border-border-dark p-5 rounded-2xl">
+                    <p class="text-[10px] text-slate-500 font-black uppercase mb-1 tracking-widest">Win Rate</p>
+                    <p class="text-2xl font-black text-white">${s.winRate}%</p>
+                </div>
+                <div class="bg-surface-dark border border-border-dark p-5 rounded-2xl">
+                    <p class="text-[10px] text-slate-500 font-black uppercase mb-1 tracking-widest">Trades</p>
+                    <p class="text-2xl font-black text-white">${s.totalTrades}</p>
+                </div>
+            `;
+
+            const metrics = document.getElementById('resultMetrics');
+            metrics.innerHTML = `
+                <div class="flex justify-between py-2 border-b border-white/5"><span class="text-slate-500 text-xs font-bold uppercase">Profit Factor</span><span class="font-mono text-white">${s.profitFactor}</span></div>
+                <div class="flex justify-between py-2 border-b border-white/5"><span class="text-slate-500 text-xs font-bold uppercase">Sharpe Ratio</span><span class="font-mono text-white">${s.sharpeRatio}</span></div>
+                <div class="flex justify-between py-2 border-b border-white/5"><span class="text-slate-500 text-xs font-bold uppercase">Expectancy</span><span class="font-mono text-white">${s.expectancy}%</span></div>
+                <div class="flex justify-between py-2 border-b border-white/5"><span class="text-slate-500 text-xs font-bold uppercase">Avg Hold Time</span><span class="font-mono text-white">${s.avgHoldDays}D</span></div>
+                <div class="flex justify-between py-2 border-b border-white/5"><span class="text-slate-500 text-xs font-bold uppercase">Initial Cap</span><span class="font-mono text-white">$${s.initialCapital.toLocaleString()}</span></div>
+                <div class="flex justify-between py-2"><span class="text-slate-500 text-xs font-bold uppercase">Final Equity</span><span class="font-mono text-primary">$${s.finalEquity.toLocaleString()}</span></div>
+            `;
+
+            const ctx = document.getElementById('resultChart').getContext('2d');
+            if (resultChart) resultChart.destroy();
+            resultChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.equityCurve.map((_, i) => i),
+                    datasets: [{
+                        data: data.equityCurve.map(p => p.equity),
+                        borderColor: '#00ff00',
+                        backgroundColor: 'rgba(0,255,0,0.05)',
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 0,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { display: false },
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { font: { size: 10, family: 'JetBrains Mono' }, color: '#666' }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function loadAdminStrategies() {
+            const list = document.getElementById('stratMgmtList');
+            if (!list) return;
+
+            try {
+                const { session } = await getSession();
+                const res = await fetch('/api/strategies', {
+                    headers: { 'Authorization': `Bearer ${session?.access_token}` }
+                });
+                const data = await res.json();
+
+                list.innerHTML = '';
+                if (!data.strategies || data.strategies.length === 0) {
+                    list.innerHTML = '<tr><td colspan="3" class="px-6 py-4 text-center text-slate-600">No automated strategies found.</td></tr>';
+                    return;
+                }
+
+                data.strategies.forEach(s => {
+                    const isVisible = s.isVisible !== false;
+                    list.innerHTML += `
+                        <tr class="hover:bg-white/5 transition-colors">
+                            <td class="px-6 py-4 font-black text-white text-xs">${s.name}</td>
+                            <td class="px-6 py-4">
+                                <span class="text-[9px] font-black uppercase px-2 py-0.5 rounded ${s.category === 'Premium' ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'bg-slate-800 text-slate-500'}">${s.category || 'Basic'}</span>
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <button onclick="toggleStratVisibility('${s.id}', ${!isVisible})" class="px-3 py-1.5 rounded-xl text-[9px] font-black uppercase transition-all ${isVisible ? 'bg-primary/10 text-primary hover:bg-red-500/20 hover:text-red-500' : 'bg-slate-800 text-slate-600 hover:text-white'}">
+                                    ${isVisible ? 'Visible' : 'Hidden'}
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (err) { }
         }
 
         async function toggleStratVisibility(id, newState) {
             try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (!session) return;
-
+                const { session } = await getSession();
                 const res = await fetch('/api/admin/strategies/toggle-visibility', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session.access_token}`
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
                     body: JSON.stringify({ id, isVisible: newState })
                 });
-
-                if (res.ok) {
-                    loadAdminStrategies(); // Reload list
-                } else {
-                    alert('Failed to update visibility');
-                }
-            } catch (e) {
-                alert('Error: ' + e.message);
-            }
+                if (res.ok) loadAdminStrategies();
+            } catch (err) { }
         }
-
-        // Initialize Supabase client for admin page usage
-        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-        // Wait for auth then load
-        setTimeout(() => {
-            loadAdminStrategies();
-        }, 1000);
     </script>
 </body>
 
