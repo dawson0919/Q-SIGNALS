@@ -469,7 +469,7 @@
             ${symbol === 'BTCUSDT' && strat.id === 'granville_eth_4h' ? `<p class="text-[11px] text-amber-500/90 leading-tight mb-4 font-medium border-l-2 border-amber-500 pl-2">特性：針對 BTC 優化的葛蘭碧法則。具備極限乖離過濾器，專注於捕捉主流幣大波段行情。</p>` : ''}
             ${symbol === 'ETHUSDT' && strat.id === 'granville_eth_4h' ? `<p class="text-[11px] text-primary/90 leading-tight mb-4 font-medium border-l-2 border-primary pl-2">特性：針對 ETH 優化的葛蘭碧法則。旗艦級多空雙向策略，結合動態均線濾鏡，捕捉以太坊強勢波段。</p>` : ''}
             ${symbol === 'SOLUSDT' && strat.id === 'granville_eth_4h' ? `<p class="text-[11px] text-purple-400/90 leading-tight mb-4 font-medium border-l-2 border-purple-400 pl-2">特性：針對 SOL 優化的葛蘭碧法則。高波動捕手設計，具備專屬風險防護機制，適合捕捉強勢噴發行情。</p>` : ''}
-            ${(symbol === 'XAUUSDT' || symbol === 'XAUTUSDT') && strat.id === 'granville_eth_4h' ? `<p class="text-[11px] text-yellow-500/90 leading-tight mb-4 font-medium border-l-2 border-yellow-500 pl-2">特性：針對黃金(XAUT)優化的葛蘭碧法則。具備多空雙向自動適配機制，專注於捕捉貴金屬避險趨勢與回調。</p>` : ''}
+            ${symbol === 'XAUUSDT' && strat.id === 'granville_eth_4h' ? `<p class="text-[11px] text-yellow-500/90 leading-tight mb-4 font-medium border-l-2 border-yellow-500 pl-2">特性：針對黃金(XAUT)優化的葛蘭碧法則。具備多空雙向自動適配機制，專注於捕捉貴金屬避險趨勢與回調。</p>` : ''}
             
             ${symbol === 'XAUUSDT' && timeframe === '1h' && strat.id === 'three_style' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：短線爆發型。專為黃金日內交易優化，具備極高的反應速度。</p>` : ''}
             ${symbol === 'XAUUSDT' && timeframe === '4h' && strat.id === 'three_style' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：穩健波段型。專注於捕捉黃金長期趨勢，適合長線佈局。</p>` : ''}

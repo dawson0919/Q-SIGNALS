@@ -55,6 +55,9 @@ strategies[dualStBreakout.id] = dualStBreakout;
 const donchianTrend = require('../engine/strategies/donchianTrend');
 strategies[donchianTrend.id] = donchianTrend;
 
+const meanReversion = require('../engine/strategies/meanReversion');
+strategies[meanReversion.id] = meanReversion;
+
 // Debug Cache
 router.get('/debug/cache', (req, res) => {
     res.json({
