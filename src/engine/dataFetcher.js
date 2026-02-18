@@ -5,6 +5,15 @@ const { fetchKlines } = require('../data/backfill');
 
 const BACKTEST_DAYS = 180; // only use the last 180 days
 
+// In-memory candle cache: prevents duplicate CoinGecko hits from concurrent backtest requests
+// Key: "symbol_timeframe", Value: { candles, fetchedAt }
+const candleCache = {};
+const CANDLE_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+// Fetch lock: prevents multiple simultaneous CoinGecko/Binance fetches for the same symbol+timeframe
+// Key: "symbol_timeframe", Value: Promise
+const activeFetches = {};
+
 /**
  * Get candle data for backtesting.
  * @param {string} symbol
@@ -33,7 +42,6 @@ async function getCandleData(symbol, timeframe = '4h', options = {}) {
     console.log(`[DataFetcher] DB has ${candles.length} candles for ${symbol} @ ${timeframe}`);
 
     // Step 2: Check for staleness
-    // Calculate expected latest candle time based on timeframe
     const intervalMs = (timeframe === '4h' ? 4 : 1) * 60 * 60 * 1000;
     // Allow 2 intervals of latency before triggering fetch
     const staleThreshold = now - (intervalMs * 2);
@@ -46,28 +54,50 @@ async function getCandleData(symbol, timeframe = '4h', options = {}) {
 
     // Step 3: Fetch fresh data if stale or empty
     if (candles.length === 0 || lastCandleTime < staleThreshold) {
-        console.log(`[DataFetcher] Data stale for ${symbol} (Last: ${new Date(lastCandleTime).toISOString()}). Fetching fresh...`);
+        const lockKey = `${symbol}_${timeframe}`;
 
-        // Fetch from external source (Binance/CoinGecko via backfill)
-        // Ensure we fetch from the last candle time forward, or full window if empty
-        const fetchStart = lastCandleTime ? lastCandleTime + intervalMs : startTime;
-
-        try {
-            const freshCandles = await fetchKlines(symbol, timeframe, fetchStart, now);
-
-            if (freshCandles.length > 0) {
-                console.log(`[DataFetcher] Fetched ${freshCandles.length} fresh candles.`);
-
-                // Persist to DB
-                await insertCandles(symbol, timeframe, freshCandles);
-
-                // Merge with DB candles
-                // Convert fresh candles to DB format for consistency if needed, or just push
-                // (fetchKlines returns {openTime, open...}, similar to what getCandles returns or what we need)
-                candles = [...candles, ...freshCandles];
+        // Check in-memory cache first (avoids DB round-trip + CG rate-limit burst)
+        const cached = candleCache[lockKey];
+        if (cached && (now - cached.fetchedAt) < CANDLE_CACHE_TTL_MS) {
+            console.log(`[DataFetcher] Using in-memory cache for ${symbol} @ ${timeframe} (age: ${Math.round((now - cached.fetchedAt) / 1000)}s)`);
+            candles = cached.candles;
+        } else {
+            // If a fetch is already in-flight for this symbol/timeframe, wait for it
+            // instead of firing a duplicate external request (prevents CG 429 bursts)
+            if (!activeFetches[lockKey]) {
+                const fetchStart = lastCandleTime ? lastCandleTime + intervalMs : startTime;
+                activeFetches[lockKey] = (async () => {
+                    try {
+                        const freshCandles = await fetchKlines(symbol, timeframe, fetchStart, now);
+                        if (freshCandles.length > 0) {
+                            console.log(`[DataFetcher] Fetched ${freshCandles.length} fresh candles for ${symbol}.`);
+                            await insertCandles(symbol, timeframe, freshCandles);
+                        }
+                        return freshCandles;
+                    } catch (err) {
+                        console.error(`[DataFetcher] Failed to fetch ${symbol}:`, err.message);
+                        return [];
+                    }
+                })().finally(() => {
+                    delete activeFetches[lockKey];
+                });
+            } else {
+                console.log(`[DataFetcher] Waiting for in-flight fetch for ${symbol} @ ${timeframe}...`);
             }
-        } catch (err) {
-            console.error(`[DataFetcher] Failed to update stale data: ${err.message}`);
+
+            const freshCandles = await activeFetches[lockKey];
+
+            if (freshCandles && freshCandles.length > 0) {
+                candles = [...candles, ...freshCandles];
+            } else if (freshCandles && freshCandles.length === 0 && candles.length === 0) {
+                // Fetch returned nothing — re-read DB in case a concurrent request already saved data
+                candles = await getCandles(symbol, timeframe, startTime, endTime);
+            }
+
+            // Update in-memory cache
+            if (candles.length > 0) {
+                candleCache[lockKey] = { candles: [...candles], fetchedAt: now };
+            }
         }
     }
 
