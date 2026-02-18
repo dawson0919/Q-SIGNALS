@@ -176,19 +176,45 @@
     <div class="px-4 pt-3">
       <div class="flex border-b border-border-dark overflow-x-auto">
         <button
-          class="tab-btn px-4 py-2 text-sm font-semibold border-b-2 border-primary text-primary whitespace-nowrap flex flex-col items-center"
-          data-filter="all"><span>All Strategies</span><span
-            class="text-[9px] font-normal opacity-70">全部策略</span></button>
+          class="tab-btn px-4 py-2 text-sm font-semibold border-b-2 border-primary text-primary whitespace-nowrap flex flex-col items-center relative"
+          data-filter="all">
+          <div class="flex items-center gap-1.5">
+            <span>All Strategies</span>
+            <span class="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-bold"
+              id="count-all">0</span>
+          </div>
+          <span class="text-[9px] font-normal opacity-70">全部策略</span>
+        </button>
         <button
-          class="tab-btn px-4 py-2 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-200 whitespace-nowrap flex flex-col items-center"
-          data-filter="Basic"><span>Basic</span><span class="text-[9px] font-normal opacity-70">基礎策略</span></button>
+          class="tab-btn px-4 py-2 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-200 whitespace-nowrap flex flex-col items-center relative"
+          data-filter="Basic">
+          <div class="flex items-center gap-1.5">
+            <span>Basic</span>
+            <span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded-full font-bold"
+              id="count-Basic">0</span>
+          </div>
+          <span class="text-[9px] font-normal opacity-70">基礎策略</span>
+        </button>
         <button
-          class="tab-btn px-4 py-2 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-200 whitespace-nowrap flex flex-col items-center"
-          data-filter="Premium"><span>Premium</span><span class="text-[9px] font-normal opacity-70">進階會員</span></button>
+          class="tab-btn px-4 py-2 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-200 whitespace-nowrap flex flex-col items-center relative"
+          data-filter="Premium">
+          <div class="flex items-center gap-1.5">
+            <span>Premium</span>
+            <span class="text-[10px] bg-primary/20 text-primary px-1.5 py-0.5 rounded-full font-bold"
+              id="count-Premium">0</span>
+          </div>
+          <span class="text-[9px] font-normal opacity-70">進階會員</span>
+        </button>
         <button
-          class="tab-btn px-4 py-2 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-200 whitespace-nowrap flex flex-col items-center"
-          data-filter="Platinum"><span>Platinum</span><span
-            class="text-[9px] font-normal opacity-70">白金專屬</span></button>
+          class="tab-btn px-4 py-2 text-sm font-medium text-slate-400 border-b-2 border-transparent hover:text-slate-200 whitespace-nowrap flex flex-col items-center relative"
+          data-filter="Platinum">
+          <div class="flex items-center gap-1.5">
+            <span>Platinum</span>
+            <span class="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded-full font-bold"
+              id="count-Platinum">0</span>
+          </div>
+          <span class="text-[9px] font-normal opacity-70">白金專屬</span>
+        </button>
       </div>
     </div>
 
@@ -346,8 +372,8 @@
             if (strat.id === 'dual_st_breakout' && (symbol === 'XAUUSDT' || symbol === 'SPXUSDT' || symbol === 'NASUSDT')) continue;
 
             // For Gold, show both 1h and 4h
-            if (symbol === 'XAUUSDT' && (strat.id === 'three_blade' || strat.id === 'granville_eth_4h')) {
-              const tf = (strat.id === 'three_blade') ? '1h' : '4h';
+            if (symbol === 'XAUUSDT' && (strat.id === 'three_style' || strat.id === 'granville_eth_4h')) {
+              const tf = (strat.id === 'three_style') ? '1h' : '4h';
               const card = createStrategyCard(strat, symbol, symbolNames[symbol], tf);
               strategyList.appendChild(card);
               runBacktestForCard(strat.id, symbol, card, tf);
@@ -358,9 +384,26 @@
             }
           }
         }
+        updateTabCounts();
       } catch (err) {
         console.error('Failed to load strategies:', err);
       }
+    }
+
+    function updateTabCounts() {
+      const cards = document.querySelectorAll('.strategy-card');
+      const counts = { all: 0, Basic: 0, Premium: 0, Platinum: 0 };
+
+      cards.forEach(card => {
+        const cat = card.dataset.category;
+        counts.all++;
+        if (counts[cat] !== undefined) counts[cat]++;
+      });
+
+      Object.keys(counts).forEach(key => {
+        const el = document.getElementById(`count-${key}`);
+        if (el) el.textContent = counts[key];
+      });
     }
 
     function createStrategyCard(strat, symbol, symbolShort, timeframe = '4h') {
@@ -428,8 +471,8 @@
             ${symbol === 'SOLUSDT' && strat.id === 'granville_eth_4h' ? `<p class="text-[11px] text-purple-400/90 leading-tight mb-4 font-medium border-l-2 border-purple-400 pl-2">特性：針對 SOL 優化的葛蘭碧法則。高波動捕手設計，具備專屬風險防護機制，適合捕捉強勢噴發行情。</p>` : ''}
             ${(symbol === 'XAUUSDT' || symbol === 'XAUTUSDT') && strat.id === 'granville_eth_4h' ? `<p class="text-[11px] text-yellow-500/90 leading-tight mb-4 font-medium border-l-2 border-yellow-500 pl-2">特性：針對黃金(XAUT)優化的葛蘭碧法則。具備多空雙向自動適配機制，專注於捕捉貴金屬避險趨勢與回調。</p>` : ''}
             
-            ${symbol === 'XAUUSDT' && timeframe === '1h' && strat.id === 'three_blade' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：短線爆發型。專為黃金日內交易優化，具備極高的反應速度。</p>` : ''}
-            ${symbol === 'XAUUSDT' && timeframe === '4h' && strat.id === 'three_blade' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：穩健波段型。專注於捕捉黃金長期趨勢，適合長線佈局。</p>` : ''}
+            ${symbol === 'XAUUSDT' && timeframe === '1h' && strat.id === 'three_style' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：短線爆發型。專為黃金日內交易優化，具備極高的反應速度。</p>` : ''}
+            ${symbol === 'XAUUSDT' && timeframe === '4h' && strat.id === 'three_style' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：穩健波段型。專注於捕捉黃金長期趨勢，適合長線佈局。</p>` : ''}
             
             ${symbol === 'SPXUSDT' && timeframe === '4h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-blue-400/80 leading-tight mb-4 font-medium italic">特性：波段捕手。針對標普 500 階梯式漲勢優化。</p>` : ''}
             ${symbol === 'NASUSDT' && timeframe === '4h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-indigo-400/80 leading-tight mb-4 font-medium italic">特性：高增長趨勢。專為科技股強勢波段設計。</p>` : ''}
@@ -526,7 +569,7 @@
       '比特幣': 'btc', '以太坊': 'eth', '黃金': 'gold xau',
       '索拉納': 'sol', 'solana': 'sol', 'bitcoin': 'btc', 'ethereum': 'eth',
       '標普': 'spx', '納斯達克': 'nas', '海龜': 'turtle', '葛蘭碧': 'granville',
-      '三刀流': 'three_blade', 'macd': 'macd',
+      '三刀流': 'three_style', 'macd': 'macd',
       '雙st': 'dual_st', 'supertrend': 'dual_st', '超級趨勢': 'dual_st', '唐奇安': 'dual_st donchian'
     };
 

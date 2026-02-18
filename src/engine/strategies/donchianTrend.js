@@ -53,16 +53,17 @@ function createStrategy(params = {}) {
         const adx = indicatorData.adx[i];
         const trendOk = adx !== null && adx > ADX_THRESHOLD;
 
-        // Volume Filter
+        // Volume Filter - Handle cases with no volume data (e.g. some Gold feeds)
         const volSma = indicatorData.volumeSma[i];
-        const volOk = volSma && volume > volSma * VOL_FILTER;
+        const volOk = (!volSma || volSma === 0) ? true : (volume > volSma * VOL_FILTER);
+        if (!volOk) return null;
 
         // Donchian Breakout (using previous bar's channel)
         const dc = indicatorData.getDonchian(DC_PERIOD);
         const dcPrevUpper = dc.upper[i - 1];
         const dcPrevLower = dc.lower[i - 1];
 
-        if (!trendOk || !volOk || dcPrevUpper === null) return null;
+        if (!trendOk || dcPrevUpper === null) return null;
 
         const atrVal = indicatorData.atr[i];
 

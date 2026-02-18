@@ -15,11 +15,12 @@ function getStrategies() {
     const strategyModules = [
         require('../engine/strategies/ma60'),
         require('../engine/strategies/dualEma'),
-        require('../engine/strategies/threeBlade'),
+        require('../engine/strategies/threeStyle'),
         require('../engine/strategies/turtleBreakout'),
         require('../engine/strategies/macdMa'),
         require('../engine/strategies/granville_eth_4h'),
         require('../engine/strategies/dualSuperTrend'),
+        require('../engine/strategies/donchianTrend'),
     ];
     const map = {};
     strategyModules.forEach(s => {
@@ -51,7 +52,9 @@ const MONITOR_COMBOS = [
     { symbol: 'SOLUSDT', strategyId: 'macd_ma_optimized', timeframe: '4h' },
     { symbol: 'SOLUSDT', strategyId: 'dual_st_breakout', timeframe: '4h' },
     // XAU (Gold)
-    { symbol: 'XAUUSDT', strategyId: 'three_blade', timeframe: '1h' },
+    { symbol: 'XAUUSDT', strategyId: 'three_style', timeframe: '1h' },
+    { symbol: 'XAUUSDT', strategyId: 'three_style', timeframe: '4h' },
+    { symbol: 'XAUUSDT', strategyId: 'donchian_trend', timeframe: '4h' },
     { symbol: 'XAUUSDT', strategyId: 'dual_ema', timeframe: '4h' },
     { symbol: 'XAUUSDT', strategyId: 'granville_eth_4h', timeframe: '4h' },
     // Indices
