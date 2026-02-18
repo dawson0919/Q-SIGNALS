@@ -45,6 +45,22 @@ class Backtester {
             indicatorData.ema[p] = indicators.ema(closes, p);
         });
         indicatorData.rsi[14] = indicators.rsi(closes, 14);
+        indicatorData.atr = indicators.atr(indicatorData.high, indicatorData.low, indicatorData.close, 14);
+        indicatorData.volumeSma = indicators.sma(indicatorData.volume, 20);
+
+        // Pre-compute ADX and Donchian for new strategies
+        indicatorData.adx = indicators.adx(indicatorData.high, indicatorData.low, indicatorData.close, 14);
+        indicatorData.dc_40 = indicators.donchian(indicatorData.high, indicatorData.low, 40);
+        indicatorData.dc_30 = indicators.donchian(indicatorData.high, indicatorData.low, 30);
+
+        // Helper to get specific Donchian
+        indicatorData.getDonchian = (p) => {
+            const key = `dc_${p}`;
+            if (!indicatorData[key]) {
+                indicatorData[key] = indicators.donchian(indicatorData.high, indicatorData.low, p);
+            }
+            return indicatorData[key];
+        };
 
         // ── Helper for dynamic MACD ──────
         const getDynamicMacd = (f, s, sig) => {
@@ -102,30 +118,52 @@ class Backtester {
         };
 
         // ── Helper: open a new position ─────────────────────
-        const openPosition = (type, price, time) => {
+        const openPosition = (type, price, time, sl = null, tp = null) => {
             const slippedEntry = type === 'LONG'
                 ? price * (1 + this.slippage)
                 : price * (1 - this.slippage);
             const size = (capital * this.positionSize) / slippedEntry;
             const commission = capital * this.positionSize * this.commission;
             capital -= commission;
-            position = { type, entryPrice: slippedEntry, entryTime: time, size };
+            position = { type, entryPrice: slippedEntry, entryTime: time, size, slPrice: sl, tpPrice: tp };
         };
 
         // ── Main loop ───────────────────────────────────────
         for (let i = 1; i < candles.length; i++) {
             const candle = candles[i];
             const time = candle.open_time || candle.openTime;
-            const signal = strategyFn(candles, indicatorData, i, indicators);
+
+            // 1. Check stop loss/take profit first (intra-bar estimation)
+            if (position) {
+                if (position.type === 'LONG') {
+                    if (position.slPrice && candle.low <= position.slPrice) {
+                        closePosition(position.slPrice, time);
+                    } else if (position.tpPrice && candle.high >= position.tpPrice) {
+                        closePosition(position.tpPrice, time);
+                    }
+                } else {
+                    if (position.slPrice && candle.high >= position.slPrice) {
+                        closePosition(position.slPrice, time);
+                    } else if (position.tpPrice && candle.low <= position.tpPrice) {
+                        closePosition(position.tpPrice, time);
+                    }
+                }
+            }
+
+            // 2. Get signal from strategy if still flat or for reversal
+            const result = strategyFn(candles, indicatorData, i, indicators);
+            const signal = (result && typeof result === 'object') ? result.signal : result;
+            const sl = (result && typeof result === 'object') ? result.sl : null;
+            const tp = (result && typeof result === 'object') ? result.tp : null;
 
             if (signal === 'BUY') {
                 // Close short if open, then go long
                 if (position && position.type === 'SHORT') closePosition(candle.close, time);
-                if (!position) openPosition('LONG', candle.close, time);
+                if (!position) openPosition('LONG', candle.close, time, sl, tp);
             } else if (signal === 'SELL') {
                 // Close long if open, then go short
                 if (position && position.type === 'LONG') closePosition(candle.close, time);
-                if (!position) openPosition('SHORT', candle.close, time);
+                if (!position) openPosition('SHORT', candle.close, time, sl, tp);
             } else if (signal === 'CLOSE_LONG' && position && position.type === 'LONG') {
                 closePosition(candle.close, time);
             } else if (signal === 'CLOSE_SHORT' && position && position.type === 'SHORT') {

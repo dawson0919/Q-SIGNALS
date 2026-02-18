@@ -34,8 +34,8 @@ const backtestCache = {};
 const ma60 = require('../engine/strategies/ma60');
 strategies[ma60.id] = ma60;
 
-const threeBlade = require('../engine/strategies/threeBlade');
-strategies[threeBlade.id] = threeBlade;
+const threeStyle = require('../engine/strategies/threeStyle');
+strategies[threeStyle.id] = threeStyle;
 
 const turtleBreakout = require('../engine/strategies/turtleBreakout');
 strategies[turtleBreakout.id] = turtleBreakout;
@@ -51,6 +51,9 @@ strategies[granvilleEth4h.id] = granvilleEth4h;
 
 const dualStBreakout = require('../engine/strategies/dualSuperTrend');
 strategies[dualStBreakout.id] = dualStBreakout;
+
+const donchianTrend = require('../engine/strategies/donchianTrend');
+strategies[donchianTrend.id] = donchianTrend;
 
 // Debug Cache
 router.get('/debug/cache', (req, res) => {

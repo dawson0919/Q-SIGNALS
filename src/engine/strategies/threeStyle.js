@@ -1,4 +1,4 @@
-// Strategy: Three-Blade MA Style (Triple EMA Trend)
+// Strategy: 三刀流趨勢策略 (Three-Style MA - Triple EMA Trend)
 // Logic:
 // 1. Uses 3 EMAs: Fast (20), Medium (50), Slow (200)
 // 2. Buy Condition: Fast > Medium > Slow (Full Bullish Alignment)
@@ -7,7 +7,7 @@
 
 const pineScript = `
 //@version=5
-strategy("Three-Blade MA", overlay=true)
+strategy("均線三刀流", overlay=true)
 
 fast_len = input.int(20, "Fast EMA")
 mid_len = input.int(50, "Medium EMA")
@@ -44,10 +44,10 @@ function createStrategy(params = {}) {
     if (params.symbol === 'XAUUSDT') {
         if (params.timeframe === '1h') {
             fast = 8; mid = 15; slow = 30;
-            console.log(`[ThreeBlade] Init XAUUSDT 1H Optimized: ${fast}/${mid}/${slow}`);
+            console.log(`[ThreeStyle] Init XAUUSDT 1H Optimized: ${fast}/${mid}/${slow}`);
         } else if (params.timeframe === '4h') {
             fast = 20; mid = 60; slow = 120;
-            console.log(`[ThreeBlade] Init XAUUSDT 4H Optimized: ${fast}/${mid}/${slow}`);
+            console.log(`[ThreeStyle] Init XAUUSDT 4H Optimized: ${fast}/${mid}/${slow}`);
         }
     }
 
@@ -119,7 +119,7 @@ function createStrategy(params = {}) {
 }
 
 module.exports = {
-    id: 'three_blade',
+    id: 'three_style',
     name: '均線三刀流 (Triple MA)',
     description: '三刀流趨勢策略：利用三條不同週期的 EMA 形成的多空排列捕捉趨勢。已針對黃金 1H (8/15/30) 與 4H (20/60/120) 以及主流幣完成優化。',
     category: 'Premium',

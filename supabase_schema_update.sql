@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS public.premium_applications (
   trading_account TEXT NOT NULL,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
   telegram_config JSONB,
+  proof_urls TEXT[],
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

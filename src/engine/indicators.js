@@ -134,6 +134,86 @@ function crossunder(a, b, i) {
     return a[i - 1] >= b[i - 1] && a[i] < b[i];
 }
 
+/**
+ * Average Directional Index (ADX)
+ */
+function adx(high, low, close, period = 14) {
+    const n = high.length;
+    const tr = new Array(n).fill(0);
+    const plusDM = new Array(n).fill(0);
+    const minusDM = new Array(n).fill(0);
+
+    for (let i = 1; i < n; i++) {
+        const hl = high[i] - low[i];
+        const hc = Math.abs(high[i] - close[i - 1]);
+        const lc = Math.abs(low[i] - close[i - 1]);
+        tr[i] = Math.max(hl, hc, lc);
+
+        const upMove = high[i] - high[i - 1];
+        const downMove = low[i - 1] - low[i];
+
+        if (upMove > downMove && upMove > 0) {
+            plusDM[i] = upMove;
+        } else {
+            plusDM[i] = 0;
+        }
+
+        if (downMove > upMove && downMove > 0) {
+            minusDM[i] = downMove;
+        } else {
+            minusDM[i] = 0;
+        }
+    }
+
+    const smoothTR = new Array(n).fill(0);
+    const smoothPlusDM = new Array(n).fill(0);
+    const smoothMinusDM = new Array(n).fill(0);
+
+    let trSum = 0;
+    let plusSum = 0;
+    let minusSum = 0;
+
+    for (let i = 0; i < period; i++) {
+        trSum += tr[i];
+        plusSum += plusDM[i];
+        minusSum += minusDM[i];
+    }
+
+    smoothTR[period - 1] = trSum;
+    smoothPlusDM[period - 1] = plusSum;
+    smoothMinusDM[period - 1] = minusSum;
+
+    for (let i = period; i < n; i++) {
+        smoothTR[i] = smoothTR[i - 1] - (smoothTR[i - 1] / period) + tr[i];
+        smoothPlusDM[i] = smoothPlusDM[i - 1] - (smoothPlusDM[i - 1] / period) + plusDM[i];
+        smoothMinusDM[i] = smoothMinusDM[i - 1] - (smoothMinusDM[i - 1] / period) + minusDM[i];
+    }
+
+    const plusDI = new Array(n).fill(0);
+    const minusDI = new Array(n).fill(0);
+    const dx = new Array(n).fill(0);
+
+    for (let i = period - 1; i < n; i++) {
+        plusDI[i] = 100 * (smoothPlusDM[i] / smoothTR[i]);
+        minusDI[i] = 100 * (smoothMinusDM[i] / smoothTR[i]);
+        const sumDI = plusDI[i] + minusDI[i];
+        dx[i] = sumDI === 0 ? 0 : 100 * Math.abs(plusDI[i] - minusDI[i]) / sumDI;
+    }
+
+    const adxResult = new Array(n).fill(null);
+    let dxSum = 0;
+    for (let i = period - 1; i < period * 2 - 1; i++) {
+        dxSum += dx[i];
+    }
+    adxResult[period * 2 - 2] = dxSum / period;
+
+    for (let i = period * 2 - 1; i < n; i++) {
+        adxResult[i] = (adxResult[i - 1] * (period - 1) + dx[i]) / period;
+    }
+
+    return adxResult;
+}
+
 module.exports = {
     sma,
     ema,
@@ -144,7 +224,8 @@ module.exports = {
     bollingerBands,
     atr,
     donchian,
-    superTrend
+    superTrend,
+    adx
 };
 
 /**
