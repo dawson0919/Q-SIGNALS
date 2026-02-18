@@ -21,6 +21,7 @@ function getStrategies() {
         require('../engine/strategies/granville_eth_4h'),
         require('../engine/strategies/dualSuperTrend'),
         require('../engine/strategies/donchianTrend'),
+        require('../engine/strategies/meanReversion'),
     ];
     const map = {};
     strategyModules.forEach(s => {
@@ -60,6 +61,9 @@ const MONITOR_COMBOS = [
     // Indices
     { symbol: 'SPXUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
     { symbol: 'NASUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
+    // Mean Reversion (ETH/SOL optimized per strategy description)
+    { symbol: 'ETHUSDT', strategyId: 'mean_reversion', timeframe: '4h' },
+    { symbol: 'SOLUSDT', strategyId: 'mean_reversion', timeframe: '4h' },
 ];
 
 /**
@@ -210,7 +214,7 @@ async function runSignalCheck(supabaseAdmin) {
 
             // Also update latest_signal in subscriptions table
             try {
-                await supabaseAdmin
+                const { error: updateErr } = await supabaseAdmin
                     .from('subscriptions')
                     .update({
                         latest_signal: {
@@ -224,6 +228,9 @@ async function runSignalCheck(supabaseAdmin) {
                     .eq('strategy_id', signal.strategyId)
                     .eq('symbol', signal.symbol)
                     .eq('timeframe', signal.timeframe);
+                if (updateErr) {
+                    console.error('[SignalMonitor] DB update failed:', updateErr.message);
+                }
             } catch (err) {
                 console.error('[SignalMonitor] DB update error:', err.message);
             }
