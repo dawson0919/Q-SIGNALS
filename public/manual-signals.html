@@ -144,6 +144,9 @@
     </main>
 
     <script>
+        let globalSignals = [];
+        let livePrices = {};
+
         async function loadData() {
             const { session } = await getSession();
             if (!session) {
@@ -164,7 +167,52 @@
             }
 
             const signals = await res.json();
+            globalSignals = signals;
             renderSignals(signals);
+
+            // Start live updates
+            startLiveUpdates();
+        }
+
+        async function startLiveUpdates() {
+            updatePrices();
+            setInterval(updatePrices, 5000); // Update every 5 seconds
+        }
+
+        async function updatePrices() {
+            try {
+                const res = await fetch('/api/prices/current');
+                livePrices = await res.json();
+                refreshLiveStats();
+            } catch (err) { }
+        }
+
+        function refreshLiveStats() {
+            globalSignals.forEach(s => {
+                if (s.status !== 'active') return;
+                const priceData = livePrices[s.symbol];
+                if (!priceData) return;
+
+                const curPrice = priceData.price;
+                const entry = parseFloat(s.entry_price);
+                let roi = 0;
+                if (s.type === 'BUY') {
+                    roi = ((curPrice - entry) / entry) * 100;
+                } else {
+                    roi = ((entry - curPrice) / entry) * 100;
+                }
+
+                const roiEl = document.getElementById(`roi-${s.id}`);
+                const curPriceEl = document.getElementById(`cur-price-${s.id}`);
+
+                if (roiEl) {
+                    roiEl.textContent = `${roi > 0 ? '+' : ''}${roi.toFixed(2)}%`;
+                    roiEl.className = `text-lg font-black ${roi >= 0 ? 'text-primary' : 'text-red-500'}`;
+                }
+                if (curPriceEl) {
+                    curPriceEl.textContent = `$${curPrice.toLocaleString()}`;
+                }
+            });
         }
 
         function renderSignals(signals) {
@@ -195,6 +243,16 @@
                 <div class="text-right">
                     <span class="text-[10px] font-black uppercase text-slate-400 block mb-1">Entry Price</span>
                     <span class="text-lg font-mono font-bold text-white">$${s.entry_price}</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mt-6">
+                <div class="bg-background-dark/50 rounded-xl p-3 border border-border-dark/50">
+                    <span class="text-[8px] font-black text-slate-500 uppercase block mb-1">Current Price</span>
+                    <span class="text-sm font-mono font-bold text-slate-300" id="cur-price-${s.id}">$---</span>
+                </div>
+                <div class="bg-background-dark/50 rounded-xl p-3 border border-border-dark/50">
+                    <span class="text-[8px] font-black text-slate-500 uppercase block mb-1">Live Profit/Loss</span>
+                    <span class="text-lg font-black text-slate-500" id="roi-${s.id}">--%</span>
                 </div>
             </div>
             <div class="mt-4 flex items-center justify-between">

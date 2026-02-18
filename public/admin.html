@@ -139,7 +139,8 @@
                     <span
                         class="material-symbols-outlined text-indigo-400 bg-indigo-400/10 p-2 rounded-xl">add_circle</span>
                     <div>
-                        <p class="leading-none">發布新的人工信號</p>
+                        <p class="leading-none flex items-center gap-2">發布新的人工信號 <span
+                                class="bg-indigo-500/20 text-indigo-400 text-[8px] px-1 rounded">v1.4</span></p>
                         <p class="text-[10px] text-slate-500 font-bold uppercase mt-1">Deploy New Manual Alpha Signal
                         </p>
                     </div>
@@ -166,7 +167,15 @@
                         </select>
                     </div>
                     <div class="flex flex-col gap-2">
-                        <label class="text-[10px] font-black text-slate-500 uppercase ml-1">進場價格 Entry</label>
+                        <label
+                            class="text-[10px] font-black text-slate-500 uppercase ml-1 flex items-center justify-between">
+                            進場價格 Entry
+                            <button onclick="updateEntryPrice()" id="syncBtn"
+                                class="hover:text-indigo-400 transition-colors flex items-center gap-1 bg-indigo-500/10 px-2 py-0.5 rounded">
+                                <span class="material-symbols-outlined text-[10px]" id="syncIcon">sync</span>
+                                <span class="text-[8px] font-bold" id="syncText">SYNC</span>
+                            </button>
+                        </label>
                         <input id="sigEntry" type="number" step="any" placeholder="Entry Price"
                             class="bg-background-dark border border-border-dark rounded-xl px-4 py-3 text-sm focus:border-indigo-500 outline-none transition-all font-mono">
                     </div>
@@ -432,12 +441,30 @@ if short
         let selectedSymbol = 'BTCUSDT'; // for builder
         let selectedCategory = 'Basic';
         let resultChart = null;
+        let adminLivePrices = {};
 
         // Auth & Init
         requireAdmin().then(user => {
             if (user) {
                 console.log('Admin verified:', user.email);
                 initData();
+
+                // Add listeners to auto-populate price
+                const symSelect = document.getElementById('sigSymbol');
+                symSelect.addEventListener('change', updateEntryPrice);
+                symSelect.addEventListener('input', updateEntryPrice);
+                symSelect.addEventListener('mousedown', updateEntryPrice); // Update when user clicks to open
+
+                // Keep checking briefly on load until price is populated
+                const bootInterval = setInterval(() => {
+                    const entry = document.getElementById('sigEntry');
+                    if (entry && !entry.value) {
+                        updateEntryPrice();
+                    } else if (entry && entry.value) {
+                        clearInterval(bootInterval);
+                    }
+                }, 1000);
+                setTimeout(() => clearInterval(bootInterval), 10000); // Guard
             }
         });
 
@@ -445,6 +472,51 @@ if short
             loadSignals();
             loadAdminStrategies();
             loadStats();
+
+            // Start live price loop for ROI
+            startLiveROILoop();
+        }
+
+        async function startLiveROILoop() {
+            updateLivePrices();
+            setInterval(updateLivePrices, 5000);
+        }
+
+        async function updateLivePrices() {
+            try {
+                const res = await fetch('/api/prices/current');
+                adminLivePrices = await res.json();
+                refreshAllLiveROI();
+            } catch (err) { }
+        }
+
+        function refreshAllLiveROI() {
+            allSignals.forEach(s => {
+                if (s.status !== 'active') return;
+                const priceData = adminLivePrices[s.symbol];
+                if (!priceData) return;
+
+                const currentPrice = priceData.price;
+                const entryPrice = parseFloat(s.entry_price);
+                let roi = 0;
+
+                if (s.type === 'BUY') {
+                    roi = ((currentPrice - entryPrice) / entryPrice) * 100;
+                } else {
+                    roi = ((entryPrice - currentPrice) / entryPrice) * 100;
+                }
+
+                const roiEl = document.getElementById(`live-roi-${s.id}`);
+                const priceEl = document.getElementById(`live-price-${s.id}`);
+
+                if (roiEl) {
+                    roiEl.textContent = `${roi > 0 ? '+' : ''}${roi.toFixed(2)}%`;
+                    roiEl.className = `font-mono text-xs font-black ${roi >= 0 ? 'text-primary' : 'text-red-500'}`;
+                }
+                if (priceEl) {
+                    priceEl.textContent = `$${currentPrice.toLocaleString()}`;
+                }
+            });
         }
 
         async function loadStats() {
@@ -528,7 +600,15 @@ if short
                                 <div class="bg-background-dark/50 p-3 rounded-xl mb-4 border border-border-dark/30">
                                     <div class="flex justify-between items-center mb-1">
                                         <span class="text-[8px] text-slate-500 font-black">ENTRY PRICE</span>
-                                        <span class="font-mono text-xs text-white">${parseFloat(s.entry_price).toFixed(2)}</span>
+                                        <span class="font-mono text-xs text-white">$${parseFloat(s.entry_price).toFixed(2)}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-[8px] text-slate-500 font-black">CURRENT PRICE</span>
+                                        <span class="font-mono text-xs text-slate-300" id="live-price-${s.id}">Loading...</span>
+                                    </div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="text-[8px] text-slate-500 font-black uppercase">Live ROI</span>
+                                        <span class="font-mono text-xs font-black text-slate-500" id="live-roi-${s.id}">--%</span>
                                     </div>
                                     <textarea id="exit-price-${s.id}" placeholder="平倉價格 (Exit Price)" class="w-full bg-background-dark border border-border-dark rounded-lg px-3 py-2 text-xs font-mono outline-none focus:border-primary mt-2 transition-all"></textarea>
                                 </div>
@@ -600,10 +680,11 @@ if short
                 });
 
                 if (res.ok) {
-                    document.getElementById('sigSymbol').value = '';
                     document.getElementById('sigEntry').value = '';
                     document.getElementById('sigComment').value = '';
                     loadSignals();
+                    // Don't clear symbol, but refresh for next potential entry?
+                    setTimeout(updateEntryPrice, 500);
                 } else {
                     const err = await res.json();
                     alert('Error: ' + err.error);
@@ -612,6 +693,44 @@ if short
             finally {
                 btn.disabled = false;
                 btn.innerHTML = '<span class="material-symbols-outlined">send</span> 打入市場信號 (PUBLISH SIGNAL)';
+            }
+        }
+
+        async function updateEntryPrice() {
+            const symbol = document.getElementById('sigSymbol').value;
+            const entryInput = document.getElementById('sigEntry');
+            const syncBtn = document.getElementById('syncBtn');
+            const syncIcon = document.getElementById('syncIcon');
+            const syncText = document.getElementById('syncText');
+
+            if (!symbol) return;
+            console.log('[Admin] Updating entry price for:', symbol);
+
+            if (syncIcon) syncIcon.classList.add('animate-spin');
+            if (syncText) syncText.textContent = 'SYNCING...';
+
+            // Check global cache
+            if (adminLivePrices && adminLivePrices[symbol]) {
+                console.log('[Admin] Using cached price:', adminLivePrices[symbol].price);
+                entryInput.value = adminLivePrices[symbol].price;
+                if (syncIcon) syncIcon.classList.remove('animate-spin');
+                if (syncText) syncText.textContent = 'SYNC';
+                return;
+            }
+
+            try {
+                console.log('[Admin] Fetching fresh prices...');
+                const res = await fetch('/api/prices/current');
+                const prices = await res.json();
+                console.log('[Admin] Received prices:', prices);
+                if (prices[symbol]) {
+                    entryInput.value = prices[symbol].price;
+                }
+            } catch (err) {
+                console.warn('[Admin] Failed to fetch real-time price:', err);
+            } finally {
+                if (syncIcon) syncIcon.classList.remove('animate-spin');
+                if (syncText) syncText.textContent = 'SYNC';
             }
         }
 
