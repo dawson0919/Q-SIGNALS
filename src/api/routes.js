@@ -443,20 +443,49 @@ router.get('/manual-signals/performance', async (req, res) => {
     }
 });
 
-// NEW: Public Featured Gold Signals (Last 3 days)
+// NEW: Public Featured Gold Signals (Last 5 days) + Best Result
 router.get('/featured-signals/gold', async (req, res) => {
     try {
-        const threeDaysAgo = new Date();
-        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+        const fiveDaysAgo = new Date();
+        fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
 
-        const allSignals = await getManualSignals('XAUUSDT', 20);
-        // Filter: Active OR entered in last 3 days
-        const featured = allSignals.filter(s => {
+        // 1. Get Manual Signals (XAUUSDT)
+        const manualSignals = await getManualSignals('XAUUSDT', 20);
+        const filteredManual = manualSignals.map(s => ({
+            ...s,
+            source: 'manual',
+            comment: s.comment || (s.type === 'BUY' ? '突破關鍵壓力位' : '跌破關鍵支撐位')
+        })).filter(s => {
             const entryTime = new Date(s.entry_time);
-            return s.status === 'active' || entryTime >= threeDaysAgo;
+            return s.status === 'active' || entryTime >= fiveDaysAgo;
         });
 
-        res.json(featured);
+        // 2. Get Algorithmic Signals (from subscriptions where symbol is XAUUSDT)
+        // We use admin client to get public view of these signals
+        const { data: algoSubs, error: algoError } = await getAdminClient()
+            .from('subscriptions')
+            .select('*')
+            .eq('symbol', 'XAUUSDT')
+            .not('latest_signal', 'is', null);
+
+        const filteredAlgo = (algoSubs || []).map(s => ({
+            id: s.id,
+            symbol: s.symbol,
+            type: s.latest_signal.type,
+            entry_price: s.latest_signal.price,
+            roi: s.latest_signal.roi || 0,
+            status: 'active', // Strategy signals are live updates
+            entry_time: s.latest_signal.time,
+            comment: `${s.latest_signal.strategyName}: ${s.latest_signal.rule || '趨勢突破信號'}`,
+            source: 'algo'
+        })).filter(s => {
+            const entryTime = new Date(s.entry_time);
+            return entryTime >= fiveDaysAgo;
+        });
+
+        // Combine and respond
+        const combined = [...filteredManual, ...filteredAlgo];
+        res.json(combined);
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
