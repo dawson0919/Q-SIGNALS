@@ -157,11 +157,13 @@ async function requireAuth(req, res, next) {
 }
 
 async function requireAdmin(req, res, next) {
-    // TEMPORARY DEBUG: Bypass Admin Check
-    // Allow any authenticated user to access admin routes to verify data fetching path
     await requireAuth(req, res, async () => {
-        console.log(`[AdminDebug] Allowing access for user: ${req.user.email}`);
-        next();
+        const profile = await getProfile(req.user.id, req.token);
+        if (profile?.role === 'admin') {
+            next();
+        } else {
+            res.status(403).json({ error: 'Admin access required' });
+        }
     });
 }
 // --- TEMPORARY DEBUG ENDPOINT (REMOVE AFTER TESTING) ---
@@ -493,9 +495,14 @@ router.get('/featured-signals/gold', async (req, res) => {
 
 // --- Admin Panel Routes ---
 // --- Manual Signals API (Platinum & Admin Only) ---
-router.get('/manual-signals', async (req, res) => {
+router.get('/manual-signals', requireAuth, async (req, res) => {
     try {
-        // OPEN TO ALL USERS: Per user request to make it public
+        const profile = await getProfile(req.user.id, req.token);
+        const hasAccess = ['platinum', 'admin'].includes(profile?.role);
+        if (!hasAccess) {
+            return res.status(403).json({ error: 'Platinum membership required' });
+        }
+
         const symbol = req.query.symbol;
         const limit = parseInt(req.query.limit) || 50;
         const signals = await getManualSignals(symbol, limit);
