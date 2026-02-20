@@ -430,7 +430,7 @@ router.get('/subscriptions', requireAuth, async (req, res) => {
 // (Duplicate route removed)
 
 
-// --- Manual Signals Public Performance ---
+// --- Manual Signals Public Performance & Featured ---
 router.get('/manual-signals/performance', async (req, res) => {
     try {
         const signals = await getManualSignals(null, 500);
@@ -443,17 +443,30 @@ router.get('/manual-signals/performance', async (req, res) => {
     }
 });
 
+// NEW: Public Featured Gold Signals (Last 3 days)
+router.get('/featured-signals/gold', async (req, res) => {
+    try {
+        const threeDaysAgo = new Date();
+        threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+        const allSignals = await getManualSignals('XAUUSDT', 20);
+        // Filter: Active OR entered in last 3 days
+        const featured = allSignals.filter(s => {
+            const entryTime = new Date(s.entry_time);
+            return s.status === 'active' || entryTime >= threeDaysAgo;
+        });
+
+        res.json(featured);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // --- Admin Panel Routes ---
 // --- Manual Signals API (Platinum & Admin Only) ---
-router.get('/manual-signals', requireAuth, async (req, res) => {
+router.get('/manual-signals', async (req, res) => {
     try {
-        const profile = await getProfile(req.user.id, req.token);
-        // Only Platinum members, Ultra and Admins can see manual signals
-        const hasAccess = profile.role === 'platinum' || profile.role === 'admin' || profile.role === 'ultra';
-        if (!hasAccess) {
-            return res.status(403).json({ error: 'Platinum membership required' });
-        }
-
+        // OPEN TO ALL USERS: Per user request to make it public
         const symbol = req.query.symbol;
         const limit = parseInt(req.query.limit) || 50;
         const signals = await getManualSignals(symbol, limit);

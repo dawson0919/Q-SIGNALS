@@ -68,7 +68,7 @@
         </div>
         <div class="flex items-center gap-2">
             <span class="material-symbols-outlined text-indigo-500 fill-1 text-xl">stars</span>
-            <span class="text-[10px] font-black text-white bg-indigo-600 px-2 py-0.5 rounded uppercase">Platinum
+            <span class="text-[10px] font-black text-white bg-indigo-600 px-2 py-0.5 rounded uppercase">Members
                 Only</span>
         </div>
     </header>
@@ -77,11 +77,11 @@
         <!-- Exclusive Notice for Non-Platinum -->
         <div id="premiumLock" class="hidden premium-overlay rounded-3xl mt-20 mx-4 h-80 relative overflow-hidden">
             <span class="material-symbols-outlined text-indigo-500 text-6xl mb-4">lock</span>
-            <h3 class="text-xl font-black text-white">Platinum Exclusive</h3>
-            <p class="text-slate-400 text-sm mt-2 text-center px-8">This human-input strategy is only available to
-                Platinum members and Admins.</p>
-            <a href="profile.html"
-                class="mt-6 bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-500 transition-all">Upgrade
+            <h3 class="text-xl font-black text-white">Login Required</h3>
+            <p class="text-slate-400 text-sm mt-2 text-center px-8">These human-input alpha signals are available to all
+                registered members.</p>
+            <a href="login.html"
+                class="mt-6 bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-500 transition-all">Login
                 Now</a>
         </div>
 
@@ -155,8 +155,13 @@
                 return;
             }
 
+            const params = new URLSearchParams(window.location.search);
+            const symbolFilter = params.get('symbol');
+            let url = '/api/manual-signals';
+            if (symbolFilter) url += `?symbol=${symbolFilter}`;
+
             syncOnlineStatus(user.id);
-            const res = await fetch('/api/manual-signals', {
+            const res = await fetch(url, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
