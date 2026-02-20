@@ -1,0 +1,27 @@
+name: quant_signal_mobile
+description: A mobile application for the QuantSignal Trading Platform.
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  supabase_flutter: ^2.0.2
+  provider: ^6.1.1
+  google_fonts: ^6.1.0
+  fl_chart: ^0.66.0
+  intl: ^0.19.0
+  http: ^1.1.0
+  shared_preferences: ^2.2.2
+  shimmer: ^3.0.0
+  url_launcher: ^6.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true

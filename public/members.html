@@ -99,6 +99,7 @@
                 return;
             }
 
+            syncOnlineStatus(user.id);
             await loadData(token);
             renderFilters();
         }

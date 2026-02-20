@@ -322,7 +322,7 @@ router.post('/subscribe', requireAuth, async (req, res) => {
         console.log(`[Subscribe] User: ${req.user.email} (${req.user.id}), Role: ${role}, Strategy: ${s.name} (${s.category}), Symbol: ${symbol}`);
 
         // Index Restrictions (SPX/NAS)
-        const isIndex = (symbol === 'SPXUSDT' || symbol === 'NASUSDT');
+        const isIndex = (symbol === 'SPXUSDT' || symbol === 'NASUSDT' || symbol === 'NQUSDT' || symbol === 'ESUSDT');
         // RELAXED: Allow Advanced users to subscribe for now
         if (isIndex && !['admin', 'platinum', 'advanced'].includes(role)) {
             console.log(`[Subscribe] DENIED: ${symbol} requiring Advanced+.`);
@@ -429,6 +429,19 @@ router.get('/subscriptions', requireAuth, async (req, res) => {
 
 // (Duplicate route removed)
 
+
+// --- Manual Signals Public Performance ---
+router.get('/manual-signals/performance', async (req, res) => {
+    try {
+        const signals = await getManualSignals(null, 500);
+        const closed = signals.filter(s => s.status === 'closed');
+        let totalRoi = 0;
+        closed.forEach(s => totalRoi += parseFloat(s.roi || 0));
+        res.json({ totalRoi, closedCount: closed.length });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
 
 // --- Admin Panel Routes ---
 // --- Manual Signals API (Platinum & Admin Only) ---
@@ -597,7 +610,7 @@ router.post('/backtest', async (req, res) => {
         let strategyFn;
         let strategyName;
 
-        const isIndex = (symbol === 'SPXUSDT' || symbol === 'NASUSDT');
+        const isIndex = (symbol === 'SPXUSDT' || symbol === 'NASUSDT' || symbol === 'NQUSDT' || symbol === 'ESUSDT');
 
         if (strategyId && strategies[strategyId]) {
             const s = strategies[strategyId];
@@ -713,7 +726,7 @@ router.get('/prices/history', async (req, res) => {
 
 // DB stats
 router.get('/stats', async (req, res) => {
-    const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT'];
+    const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'NQUSDT', 'ESUSDT'];
     const stats = {};
     for (const s of symbols) {
         stats[s] = await getCandleCount(s, '4h');

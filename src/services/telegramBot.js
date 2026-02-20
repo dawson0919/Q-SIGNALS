@@ -75,6 +75,31 @@ async function sendSignalNotification(chatId, signal) {
         'S5': '跌破均線 Death Cross'
     };
 
+    // Format time to Asia/Taipei explicitly
+    const signalDate = new Date(signal.entryTime || Date.now());
+    let timeStr = signalDate.toLocaleString('en-US', {
+        timeZone: 'Asia/Taipei',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+
+    // Fix common Node.js formatting quirk where midnight is sometimes 24:00
+    // e.g. "Feb 7, 24:00" -> "Feb 8, 00:00"
+    if (timeStr.includes(' 24:')) {
+        const nextDay = new Date(signalDate.getTime() + 60 * 60 * 1000);
+        timeStr = nextDay.toLocaleString('en-US', {
+            timeZone: 'Asia/Taipei',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        }).replace(/\b24:/, '00:');
+    }
+
     const message = [
         `${emoji} <b>NEW SIGNAL — ${action}</b>`,
         ``,
@@ -82,7 +107,7 @@ async function sendSignalNotification(chatId, signal) {
         `💰 ${symbolClean} • ${timeframe}`,
         `💲 Price: <b>$${Number(price).toLocaleString('en-US', { minimumFractionDigits: precision, maximumFractionDigits: precision })}</b>`,
         rule ? `📐 ${ruleMap[rule] || rule}` : '',
-        `⏰ ${new Date(signal.entryTime || Date.now()).toLocaleString('en-US', { timeZone: 'Asia/Taipei', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}`,
+        `⏰ <b>${timeStr} (UTC+8)</b>`,
         ``,
         `🔗 <a href="${SITE_URL}/strategy-detail.html?strategy=${signal.strategyId}&symbol=${symbol}&timeframe=${timeframe}">View Details</a>`
     ].filter(Boolean).join('\n');

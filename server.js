@@ -28,15 +28,18 @@ app.use('/api', apiRoutes);
 
 // WebSocket for live price streaming and online status
 const wss = new WebSocketServer({ server, path: '/ws/prices' });
-const onlineUsers = new Map(); // Store userId -> socket
+const onlineUsers = new Map(); // Store userId -> Set of sockets
 
 wss.on('connection', (ws, req) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const userId = url.searchParams.get('userId');
 
     if (userId && userId !== 'null' && userId !== 'undefined') {
-        onlineUsers.set(userId, ws);
-        console.log(`[WS] User ${userId} is online. Total: ${onlineUsers.size}`);
+        if (!onlineUsers.has(userId)) {
+            onlineUsers.set(userId, new Set());
+        }
+        onlineUsers.get(userId).add(ws);
+        console.log(`[WS] User ${userId} connected. Total unique: ${onlineUsers.size}`);
     } else {
         console.log('[WS] Anonymous client connected');
     }
@@ -48,9 +51,13 @@ wss.on('connection', (ws, req) => {
     }
 
     ws.on('close', () => {
-        if (userId) {
-            onlineUsers.delete(userId);
-            console.log(`[WS] User ${userId} went offline. Total: ${onlineUsers.size}`);
+        if (userId && onlineUsers.has(userId)) {
+            const sockets = onlineUsers.get(userId);
+            sockets.delete(ws);
+            if (sockets.size === 0) {
+                onlineUsers.delete(userId);
+            }
+            console.log(`[WS] User ${userId} tab closed. Total unique: ${onlineUsers.size}`);
         } else {
             console.log('[WS] Anonymous client disconnected');
         }

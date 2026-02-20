@@ -148,16 +148,16 @@
         let livePrices = {};
 
         async function loadData() {
-            const { session } = await getSession();
-            if (!session) {
+            const { user, token } = await getUser();
+            if (!user) {
                 document.getElementById('mainContent').style.display = 'none';
                 document.getElementById('premiumLock').classList.remove('hidden');
                 return;
             }
 
-            // 1. Check permissions & Get Signals in one go if possible, or sequentially
+            syncOnlineStatus(user.id);
             const res = await fetch('/api/manual-signals', {
-                headers: { 'Authorization': `Bearer ${session.access_token}` }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
 
             if (res.status === 403) {
@@ -232,34 +232,49 @@
                 if (s.status === 'active') {
                     activeCount++;
                     const card = document.createElement('div');
-                    card.className = "bg-surface-dark border-l-4 border-primary p-5 rounded-xl shadow-lg relative overflow-hidden";
+                    card.className = "bg-surface-dark border border-border-dark p-5 rounded-3xl shadow-xl relative overflow-hidden group hover:border-primary/30 transition-all";
                     card.innerHTML = `
             <div class="absolute right-0 top-0 bg-primary/10 text-primary text-[8px] font-black px-3 py-1 uppercase rounded-bl-lg">LIVE</div>
-            <div class="flex justify-between items-start">
-                <div>
-                    <h4 class="text-lg font-black text-white">${s.symbol}</h4>
-                    <p class="text-[10px] font-bold text-slate-500 mt-0.5">${new Date(s.entry_time).toLocaleString()}</p>
+            <div class="flex justify-between items-start mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="size-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-bold shadow-lg shadow-primary/5">
+                        <span class="material-symbols-outlined text-xl">${s.type === 'BUY' ? 'trending_up' : 'trending_down'}</span>
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-black text-white leading-none">${s.symbol}</h4>
+                        <p class="text-[9px] font-bold text-slate-500 uppercase mt-2">${new Date(s.entry_time).toLocaleString()}</p>
+                    </div>
                 </div>
-                <div class="text-right">
-                    <span class="text-[10px] font-black uppercase text-slate-400 block mb-1">Entry Price</span>
-                    <span class="text-lg font-mono font-bold text-white">$${s.entry_price}</span>
+                <span class="px-3 py-1 rounded-lg text-[10px] font-black tracking-widest ${s.type === 'BUY' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}">${s.type === 'BUY' ? 'LONG' : 'SHORT'}</span>
+            </div>
+
+            <div class="bg-background-dark/30 rounded-2xl p-4 border border-border-dark/30 mb-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-[8px] font-black text-slate-500 uppercase block mb-1">Entry Price</span>
+                        <span class="text-sm font-mono font-bold text-slate-400">$${parseFloat(s.entry_price).toLocaleString()}</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[8px] font-black text-slate-500 uppercase block mb-1">Current Price</span>
+                        <span class="text-sm font-mono font-bold text-white" id="cur-price-${s.id}">$---</span>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-border-dark/20 flex justify-between items-end">
+                    <div>
+                        <span class="text-[8px] font-black text-slate-500 uppercase block mb-1">Live Profit/Loss</span>
+                        <span class="font-mono text-2xl font-black text-slate-600 transition-colors" id="roi-${s.id}">--%</span>
+                    </div>
+                    <div class="flex flex-col items-end">
+                         <span class="text-[8px] font-black text-slate-500 uppercase mb-1">Status</span>
+                         <span class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-primary/10 text-primary text-[8px] font-black">
+                            <span class="size-1 rounded-full bg-primary animate-pulse"></span>
+                            TRACKING
+                         </span>
+                    </div>
                 </div>
             </div>
-            <div class="grid grid-cols-2 gap-4 mt-6">
-                <div class="bg-background-dark/50 rounded-xl p-3 border border-border-dark/50">
-                    <span class="text-[8px] font-black text-slate-500 uppercase block mb-1">Current Price</span>
-                    <span class="text-sm font-mono font-bold text-slate-300" id="cur-price-${s.id}">$---</span>
-                </div>
-                <div class="bg-background-dark/50 rounded-xl p-3 border border-border-dark/50">
-                    <span class="text-[8px] font-black text-slate-500 uppercase block mb-1">Live Profit/Loss</span>
-                    <span class="text-lg font-black text-slate-500" id="roi-${s.id}">--%</span>
-                </div>
-            </div>
-            <div class="mt-4 flex items-center justify-between">
-                <span class="px-3 py-1 rounded-full text-[10px] font-black ${s.type === 'BUY' ? 'bg-primary text-background-dark' : 'bg-red-500 text-white'}">${s.type} POSITION</span>
-                <span class="text-xs text-slate-400 italic">${s.comment || 'Human entry based on technical analysis'}</span>
-            </div>
-          `;
+            ${s.comment ? `<p class="text-[10px] text-slate-500 font-medium italic px-2">" ${s.comment} "</p>` : ''}
+            `;
                     activeContainer.appendChild(card);
                 } else {
                     closedCount++;
@@ -272,7 +287,7 @@
                     <span class="material-symbols-outlined">${s.roi >= 0 ? 'trending_up' : 'trending_down'}</span>
                 </div>
                 <div>
-                    <p class="font-bold text-sm text-white">${s.symbol} <span class="text-[10px] text-slate-500 font-normal uppercase ml-1">${s.type}</span></p>
+                    <p class="font-bold text-sm text-white">${s.symbol} <span class="text-[10px] text-slate-500 font-normal uppercase ml-1">${s.type === 'BUY' ? 'LONG' : 'SHORT'}</span></p>
                     <p class="text-[10px] text-slate-600 font-bold">${new Date(s.closed_at).toLocaleDateString()}</p>
                 </div>
             </div>
@@ -289,9 +304,9 @@
                 activeContainer.innerHTML = `<div class="text-slate-600 text-center py-10 italic text-sm">No active signals at the moment...</div>`;
             }
 
-            totalROIEl.textContent = `${totalROI > 0 ? '+' : ''}${totalROI.toFixed(1)}%`;
+            totalROIEl.textContent = `${totalROI > 0 ? '+' : ''}${totalROI.toFixed(2)}%`;
             totalROIEl.className = `text-3xl font-black ${totalROI >= 0 ? 'text-primary' : 'text-red-500'}`;
-            totalTradesEl.textContent = signals.length;
+            totalTradesEl.textContent = closedCount;
         }
 
         loadData();

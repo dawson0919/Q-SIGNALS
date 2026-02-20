@@ -60,6 +60,8 @@ const MONITOR_COMBOS = [
     // Indices
     { symbol: 'SPXUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
     { symbol: 'NASUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
+    { symbol: 'NQUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
+    { symbol: 'ESUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
 ];
 
 /**
@@ -90,6 +92,14 @@ async function checkSignal(combo, strategiesMap) {
             oldSignal.entryTime !== latest.entryTime ||
             oldSignal.type !== latest.type;
 
+        // CRITICAL: Recency Check
+        // Only notify if the signal happened recently (e.g. within last 24 hours)
+        // This prevents re-broadcasting old signals from 2 weeks ago on restart
+        const now = Date.now();
+        const signalTime = new Date(latest.entryTime).getTime();
+        const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
+        const isRecent = (now - signalTime) < MAX_AGE_MS;
+
         // Always update cache
         lastSignals[signalKey] = {
             entryTime: latest.entryTime,
@@ -98,7 +108,7 @@ async function checkSignal(combo, strategiesMap) {
             rule: latest.rule
         };
 
-        if (isNew) {
+        if (isNew && isRecent) {
             return {
                 strategyId,
                 strategyName: s.name,
@@ -243,6 +253,11 @@ function startSignalMonitor(supabaseAdmin) {
     if (!supabaseAdmin) {
         console.error('[SignalMonitor] No Supabase admin client provided');
         return;
+    }
+
+    if (monitorInterval) {
+        console.warn('[SignalMonitor] monitor already running, clearing old interval...');
+        stopSignalMonitor();
     }
 
     // Initial check after 30 seconds (let data load first)

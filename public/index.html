@@ -152,9 +152,19 @@
             <br /><span class="text-slate-500 text-[10px]">在合作交易平台註冊，即可免費獲得進階策略信號！請至個人資料提交帳號 ID。</span>
           </p>
         </div>
-        <a href="profile.html"
-          class="ml-auto text-[10px] bg-yellow-500/20 text-yellow-500 px-2 py-1 rounded font-bold hover:bg-yellow-500/30 whitespace-nowrap">GO
-          APPLY &rarr;</a>
+        <div class="flex flex-col gap-2 ml-auto">
+          <a href="profile.html"
+            class="text-[10px] bg-yellow-500/20 text-yellow-500 px-3 py-2 rounded-lg font-bold hover:bg-yellow-500/30 whitespace-nowrap text-center">GO
+            APPLY &rarr;</a>
+          <a href="https://lin.ee/WuRqowF" target="_blank" title="Contact Support on LINE"
+            class="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-[#06C755]/10 text-[#06C755] border border-[#06C755]/20 hover:bg-[#06C755]/20 transition-all text-[10px] font-bold">
+            <svg class="w-3 h-3 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M24 10.304c0-5.232-5.383-9.489-12-9.489s-12 4.257-12 9.489c0 4.69 4.27 8.604 10.04 9.351.391.084.923.258 1.058.591.121.303.079.777.039 1.083l-.173 1.041c-.052.312-.252 1.221 1.083.666 1.334-.555 7.203-4.242 9.831-7.257 1.838-2.029 2.122-3.483 2.122-5.476zm-16.712 4.102h-1.442a.288.288 0 0 1-.288-.288V9.166a.288.288 0 0 1 .288-.288h1.442a.288.288 0 0 1 .288.288v4.95a.288.288 0 0 1-.288.288zm3.434 0h-1.44a.288.288 0 0 1-.288-.288V9.166a.288.288 0 0 1 .288-.288h.002a.288.288 0 0 1 .288.288l.002 2.768 2.053-2.71c.061-.081.161-.137.279-.146h.547a.288.288 0 0 1 .288.288v4.95a.288.288 0 0 1-.288.288h-1.442a.288.288 0 0 1-.288-.288v-2.766l-2.052 2.709a.301.301 0 0 1-.252.141zm5.344-1.63h-1.44a.288.288 0 0 1-.288-.288V9.166a.288.288 0 0 1 .288-.288h1.442a.288.288 0 0 1 .288.288v3.224h1.442a.288.288 0 0 1 .288.288v1.14c0 .159-.129.288-.288.288zm3.434-3.32h-1.44a.288.288 0 0 1-.288-.288v-.288h1.44c.159 0 .288-.129.288-.288v-1.14a.288.288 0 0 0-.288-.288h-3.17c-.159 0-.288.129-.288.288v4.95c0 .159.129.288.288.288h3.17c.159 0 .288-.129.288-.288v-1.14a.288.288 0 0 0-.288-.288h-1.44v-.288h1.44a.288.288 0 0 0 .288-.288V10.6a.288.288 0 0 0-.288-.288z" />
+            </svg>
+            客服
+          </a>
+        </div>
       </div>
     </div>
 
@@ -302,7 +312,7 @@
       <div class="grid grid-cols-2 gap-4">
         <a href="https://reurl.cc/oKAgxg" target="_blank"
           class="bg-card-dark border border-border-dark hover:border-primary/50 p-4 rounded-xl flex flex-col items-center justify-center gap-2 group transition-all">
-          <img src="https://assets.pionex.com/fe-static/images/common/logo_white_v2.svg" alt="Pionex"
+          <img src="https://www.pionex.com/static/img/logo_white.png" alt="Pionex"
             class="h-8 object-contain opacity-80 group-hover:opacity-100 transition-opacity"
             onerror="this.onerror=null; this.src='https://placehold.co/120x40/000000/FFFFFF?text=Pionex'">
           <span
@@ -368,7 +378,7 @@
             // For Index strategies, only show Turtle Breakout
             if ((symbol === 'SPXUSDT' || symbol === 'NASUSDT') && strat.id !== 'turtle_breakout') continue;
 
-            // Dual ST Breakout: only show for crypto (BTC, ETH, SOL), 4h timeframe
+            // Dual ST Breakout: only show for crypto (BTC, ETH, SOL)
             if (strat.id === 'dual_st_breakout' && (symbol === 'XAUUSDT' || symbol === 'SPXUSDT' || symbol === 'NASUSDT')) continue;
 
             // For Gold, show both 1h and 4h
@@ -444,21 +454,17 @@
 
     async function updateManualROIOnCard() {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
-
-        const res = await fetch('/api/manual-signals', {
-          headers: { 'Authorization': `Bearer ${session.access_token}` }
-        });
+        // Use the public specific endpoint so ROI shows for non-logged-in users too!
+        const res = await fetch('/api/manual-signals/performance');
         if (!res.ok) return;
 
-        const signals = await res.json();
-        let total = 0;
-        signals.forEach(s => { if (s.status === 'closed') total += parseFloat(s.roi || 0); });
+        const data = await res.json();
+        console.log('Manual Signal ROI Data:', data);
+        const total = parseFloat(data.totalRoi || 0);
 
         const el = document.getElementById('manual-total-roi');
         if (el) {
-          el.textContent = `${total > 0 ? '+' : ''}${total.toFixed(1)}%`;
+          el.textContent = `${total > 0 ? '+' : ''}${total.toFixed(2)}%`;
           el.className = `text-3xl font-black ${total >= 0 ? 'text-primary' : 'text-red-500'}`;
         }
       } catch (err) { }
@@ -686,19 +692,6 @@
       searchInput.focus();
     });
 
-    // Live price WebSocket
-    async function connectPriceWS() {
-      const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const { user } = await getUser();
-      const userId = user ? user.id : 'null';
-
-      const ws = new WebSocket(`${wsProtocol}//${location.host}/ws/prices?userId=${userId}`);
-      ws.onmessage = (e) => {
-        const msg = JSON.parse(e.data);
-        if (msg.type === 'prices') updatePriceTicker(msg.data);
-      };
-      ws.onclose = () => setTimeout(connectPriceWS, 3000);
-    }
 
     let lastTickerUpdate = 0;
     function updatePriceTicker(prices) {
@@ -788,7 +781,6 @@
 
     // Init
     loadStrategies();
-    connectPriceWS();
     checkDbStatus();
     setInterval(pollPrices, 10000);
     setInterval(checkDbStatus, 30000);
@@ -843,7 +835,7 @@
     </div>
   </footer>
 
-  <script src="/js/auth.js"></script>
+
   <script>
     // Visitor Counter Fetch
     async function updateVisitorCount() {

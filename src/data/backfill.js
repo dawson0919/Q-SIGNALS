@@ -1,11 +1,16 @@
-// Historical Data Backfill from Binance REST API
+const YahooFinance = require('yahoo-finance2').default;
+const yahoo = new YahooFinance();
 const { insertCandles, getLatestCandleTime, getCandleCount } = require('./database');
 
-const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'SPXUSDT', 'NASUSDT'];
+// Yahoo Finance Info: NQ=F (Nasdaq 100 Futures), ES=F (S&P 500 Futures) - 15m delay
+const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT'];
 const CG_ID_MAP = {
     'SPXUSDT': 'spdr-s-p-500-etf-ondo-tokenized-etf',
-    'NASUSDT': 'invesco-qqq-etf-ondo-tokenized-etf',
-    'XAUUSDT': 'tether-gold' // Fallback to CoinGecko
+    'NASUSDT': 'invesco-qqq-etf-ondo-tokenized-etf'
+};
+const YAHOO_SYMBOL_MAP = {
+    'NQUSDT': 'NQ=F',
+    'ESUSDT': 'ES=F'
 };
 const TIMEFRAMES = ['1h', '4h'];
 const BACKFILL_DAYS = parseInt(process.env.BACKFILL_DAYS || '365');
@@ -15,11 +20,13 @@ const BINANCE_FUTURES_API = 'https://fapi.binance.com/fapi/v1/klines';
 async function fetchKlines(symbol, interval, startTime, endTime, limit = 1000) {
     // Route to CoinGecko for SPX/NAS/XAU
     if (CG_ID_MAP[symbol]) {
-        // CoinGecko Hourly data is only available for < 90 days.
-        // Force max 90 days to ensure we get granularity (4H/1H) instead of Daily.
         let days = 90;
-
         return fetchKlinesFromCG(symbol, interval, days);
+    }
+
+    // Route to Yahoo Finance for NQ/ES (Delayed 15m)
+    if (YAHOO_SYMBOL_MAP[symbol]) {
+        return fetchKlinesFromYahoo(symbol, interval, startTime, endTime);
     }
 
     const isFutures = symbol === 'XAUUSDT';
@@ -57,6 +64,70 @@ async function fetchKlines(symbol, interval, startTime, endTime, limit = 1000) {
     }
 }
 
+async function fetchKlinesFromYahoo(symbol, interval, startTime, endTime) {
+    const yahooSymbol = YAHOO_SYMBOL_MAP[symbol];
+    if (!yahooSymbol) return [];
+
+    console.log(`[Backfill] Fetching ${symbol} (${yahooSymbol}) from Yahoo Finance (15m delay)...`);
+
+    try {
+        // Yahoo Finance supports 1h, but not 4h. Fetch 1h and aggregate.
+        const yahooInterval = '1h';
+        const queryOptions = {
+            period1: Math.floor(startTime / 1000),
+            period2: Math.floor(endTime / 1000),
+            interval: yahooInterval
+        };
+
+        const result = await yahoo.chart(yahooSymbol, queryOptions);
+        if (!result || !result.quotes || result.quotes.length === 0) return [];
+
+        const quotes = result.quotes.filter(q => q.close !== null);
+        if (interval === '1h') {
+            return quotes.map(q => ({
+                openTime: q.date.getTime(),
+                open: q.open,
+                high: q.high,
+                low: q.low,
+                close: q.close,
+                volume: q.volume || 0,
+                closeTime: q.date.getTime() + 60 * 60 * 1000 - 1
+            }));
+        }
+
+        // Aggregate to 4h
+        const intervalMs = 4 * 60 * 60 * 1000;
+        const candles = [];
+        const groups = {};
+
+        for (const q of quotes) {
+            const ts = q.date.getTime();
+            const bucket = Math.floor(ts / intervalMs) * intervalMs;
+            if (!groups[bucket]) groups[bucket] = [];
+            groups[bucket].push(q);
+        }
+
+        const sortedBuckets = Object.keys(groups).sort((a, b) => parseInt(a) - parseInt(b));
+        for (const bucketStr of sortedBuckets) {
+            const bucket = parseInt(bucketStr);
+            const qList = groups[bucket];
+            candles.push({
+                openTime: bucket,
+                open: qList[0].open,
+                high: Math.max(...qList.map(q => q.high)),
+                low: Math.min(...qList.map(q => q.low)),
+                close: qList[qList.length - 1].close,
+                volume: qList.reduce((sum, q) => sum + (q.volume || 0), 0),
+                closeTime: bucket + intervalMs - 1
+            });
+        }
+
+        return candles;
+    } catch (err) {
+        console.error(`[Backfill] Yahoo Failed for ${symbol}:`, err.message);
+        return [];
+    }
+}
 async function fetchKlinesFromCG(symbol, interval, days) {
     const cgId = CG_ID_MAP[symbol];
     if (!cgId) return [];
@@ -113,19 +184,19 @@ async function fetchKlinesFromCG(symbol, interval, days) {
 // Backfill a single symbol with pagination
 async function backfillSymbol(symbol, timeframe) {
     const isCG = !!CG_ID_MAP[symbol];
+    const isYahoo = !!YAHOO_SYMBOL_MAP[symbol];
     const latestTime = await getLatestCandleTime(symbol, timeframe);
     const now = Date.now();
     let startTime;
 
-    if (isCG) {
-        // CoinGecko historical data handling
-        // CG gives hourly for 90d, daily for the rest.
-        // We'll fetch 90d to ensure good 1h/4h resolution.
+    if (isCG || (isYahoo && !latestTime)) {
+        // For CG or initial Yahoo, fetch a window
         const days = 90;
-        const candles = await fetchKlinesFromCG(symbol, timeframe, days);
+        startTime = now - (days * 24 * 60 * 60 * 1000);
+        const candles = await fetchKlines(symbol, timeframe, startTime, now);
         if (candles.length > 0) {
             const count = await insertCandles(symbol, timeframe, candles);
-            console.log(`[Backfill] ${symbol} (${timeframe}): Inserted ${count} candles from CoinGecko`);
+            console.log(`[Backfill] ${symbol} (${timeframe}): Inserted ${count} candles from ${isCG ? 'CoinGecko' : 'Yahoo'}`);
         }
         return;
     }

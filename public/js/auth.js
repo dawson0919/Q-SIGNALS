@@ -1,9 +1,9 @@
 // Supabase Auth Client (shared across all pages)
 // Include via <script src="/js/auth.js"></script>
 
-const SUPABASE_URL = 'https://zrhussirvsgsoffmrkxb.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_MERSBCkwCzs880gVcz_J7Q_urxy9azM';
-const ADMIN_EMAIL = 'nbamoment@gmail.com';
+var SUPABASE_URL = 'https://zrhussirvsgsoffmrkxb.supabase.co';
+var SUPABASE_ANON_KEY = 'sb_publishable_MERSBCkwCzs880gVcz_J7Q_urxy9azM';
+var ADMIN_EMAIL = 'nbamoment@gmail.com';
 
 // Initialize Supabase client
 const { createClient } = supabase;
@@ -121,8 +121,39 @@ async function updateHeaderAuth() {
             ? `<img src="${avatar}" class="w-7 h-7 rounded-full border border-primary/30" alt="${name}" referrerpolicy="no-referrer"/>${adminBadge}`
             : `<span class="text-sm text-primary font-bold">${name}</span>${adminBadge}`;
         authLink.href = '/profile.html';
+
+        // Trigger online status sync if not already active
+        syncOnlineStatus(user.id);
     } else {
         authLink.innerHTML = '<span class="text-sm text-primary font-bold hover:underline">Login</span>';
         authLink.href = '/login.html';
     }
+}
+
+let _statusWs = null;
+function syncOnlineStatus(userId) {
+    if (_statusWs && _statusWs.readyState <= 1) return; // Already connecting or open
+
+    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${protocol}//${location.host}/ws/prices?userId=${userId}`);
+
+    ws.onmessage = (e) => {
+        try {
+            const msg = JSON.parse(e.data);
+            if (msg.type === 'prices' && typeof updatePriceTicker === 'function') {
+                updatePriceTicker(msg.data);
+            }
+        } catch (err) { }
+    };
+
+    ws.onclose = () => {
+        _statusWs = null;
+        setTimeout(() => syncOnlineStatus(userId), 5000);
+    };
+
+    ws.onerror = () => {
+        ws.close();
+    };
+
+    _statusWs = ws;
 }
