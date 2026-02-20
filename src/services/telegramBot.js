@@ -109,7 +109,9 @@ async function sendSignalNotification(chatId, signal) {
         rule ? `📐 ${ruleMap[rule] || rule}` : '',
         `⏰ <b>${timeStr} (UTC+8)</b>`,
         ``,
-        `🔗 <a href="${SITE_URL}/strategy-detail.html?strategy=${signal.strategyId}&symbol=${symbol}&timeframe=${timeframe}">View Details</a>`
+        `🔗 <a href="${SITE_URL}/strategy-detail.html?strategy=${signal.strategyId}&symbol=${symbol}&timeframe=${timeframe}">View Details</a>`,
+        ``,
+        `<pre>v2.2-stable</pre>`
     ].filter(Boolean).join('\n');
 
     return sendMessage(chatId, message);

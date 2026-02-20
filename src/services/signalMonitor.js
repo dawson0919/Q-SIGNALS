@@ -51,17 +51,15 @@ const MONITOR_COMBOS = [
     { symbol: 'SOLUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
     { symbol: 'SOLUSDT', strategyId: 'macd_ma_optimized', timeframe: '4h' },
     { symbol: 'SOLUSDT', strategyId: 'dual_st_breakout', timeframe: '4h' },
-    // XAU (Gold)
+    // XAU (Gold) - Standardized on XAUUSDT and XAUTUSDT is covered by variations
     { symbol: 'XAUUSDT', strategyId: 'three_style', timeframe: '1h' },
     { symbol: 'XAUUSDT', strategyId: 'three_style', timeframe: '4h' },
     { symbol: 'XAUUSDT', strategyId: 'donchian_trend', timeframe: '4h' },
     { symbol: 'XAUUSDT', strategyId: 'dual_ema', timeframe: '4h' },
     { symbol: 'XAUUSDT', strategyId: 'granville_eth_4h', timeframe: '4h' },
-    // Indices
+    // Indices (Removed duplicates ES/NQ)
     { symbol: 'SPXUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
     { symbol: 'NASUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
-    { symbol: 'NQUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
-    { symbol: 'ESUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
 ];
 
 /**
@@ -88,8 +86,9 @@ async function checkSignal(combo, strategiesMap) {
         const oldSignal = lastSignals[signalKey];
 
         // Check if this is a NEW signal (different entry time or type)
+        // Use new Date().getTime() to ensure comparison works between string (ISO) and number (timestamp)
         const isNew = !oldSignal ||
-            oldSignal.entryTime !== latest.entryTime ||
+            new Date(oldSignal.entryTime).getTime() !== new Date(latest.entryTime).getTime() ||
             oldSignal.type !== latest.type;
 
         // CRITICAL: Recency Check
@@ -97,8 +96,8 @@ async function checkSignal(combo, strategiesMap) {
         // This prevents re-broadcasting old signals from 2 weeks ago on restart
         const now = Date.now();
         const signalTime = new Date(latest.entryTime).getTime();
-        const MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
-        const isRecent = (now - signalTime) < MAX_AGE_MS;
+        const MAX_AGE_MS = 4 * 60 * 60 * 1000; // 4 hours (User requested: no signals older than 4h)
+        const isRecent = !isNaN(signalTime) && (now - signalTime) < MAX_AGE_MS;
 
         // Always update cache
         lastSignals[signalKey] = {
@@ -134,12 +133,15 @@ async function checkSignal(combo, strategiesMap) {
 async function notifySubscribers(signal, supabaseAdmin) {
     try {
         // Find all subscriptions for this strategy+symbol+timeframe
-        // that have linked Telegram accounts
+        // Handle symbol variations (XAUUSDT vs XAU/USDT)
+        const symbolVariations = [signal.symbol];
+        if (signal.symbol === 'XAUUSDT') symbolVariations.push('XAU/USDT', 'GOLD', 'XAUTUSDT', 'Tether Gold');
+
         const { data: subs, error } = await supabaseAdmin
             .from('subscriptions')
             .select('user_id')
             .eq('strategy_id', signal.strategyId)
-            .eq('symbol', signal.symbol)
+            .in('symbol', symbolVariations)
             .eq('timeframe', signal.timeframe);
 
         if (error || !subs || subs.length === 0) return 0;
@@ -214,11 +216,39 @@ async function runSignalCheck(supabaseAdmin) {
     for (const combo of MONITOR_COMBOS) {
         const signal = await checkSignal(combo, strategies);
         if (signal) {
+            const symbolVariations = [signal.symbol];
+            if (signal.symbol === 'XAUUSDT') symbolVariations.push('XAU/USDT', 'GOLD', 'XAUTUSDT', 'Tether Gold');
+
+            // ATOMIC RE-CHECK: See if DB already has this signal
+            // This handles multi-instance overlaps where one server already notified
+            try {
+                const { data: existing } = await supabaseAdmin
+                    .from('subscriptions')
+                    .select('latest_signal')
+                    .eq('strategy_id', signal.strategyId)
+                    .in('symbol', symbolVariations)
+                    .not('latest_signal', 'is', null)
+                    .limit(5);
+
+                const alreadyProcessed = (existing || []).some(sub => {
+                    if (!sub.latest_signal) return false;
+                    const dbTime = new Date(sub.latest_signal.time).getTime();
+                    const signalTime = new Date(signal.entryTime).getTime();
+                    return dbTime === signalTime && sub.latest_signal.type === signal.type;
+                });
+
+                if (alreadyProcessed) {
+                    // console.log(`[SignalMonitor] ⏭️ Skipping: ${signal.strategyId}/${signal.symbol} (Already processed in DB)`);
+                    continue;
+                }
+            } catch (err) {
+                console.warn('[SignalMonitor] Atomic check failed, proceeding with caution:', err.message);
+            }
+
             newSignals++;
             console.log(`[SignalMonitor] 🔔 NEW SIGNAL: ${signal.type} ${signal.symbol} @ $${signal.price} (${signal.strategyName})`);
-            await notifySubscribers(signal, supabaseAdmin);
 
-            // Also update latest_signal in subscriptions table
+            // First update DB to "mark" it as processed by this combo
             try {
                 await supabaseAdmin
                     .from('subscriptions')
@@ -228,15 +258,19 @@ async function runSignalCheck(supabaseAdmin) {
                             price: signal.price,
                             time: signal.entryTime,
                             rule: signal.rule,
-                            strategyName: signal.strategyName
+                            strategyName: signal.strategyName,
+                            processed_at: new Date().toISOString()
                         }
                     })
                     .eq('strategy_id', signal.strategyId)
-                    .eq('symbol', signal.symbol)
+                    .in('symbol', symbolVariations)
                     .eq('timeframe', signal.timeframe);
             } catch (err) {
                 console.error('[SignalMonitor] DB update error:', err.message);
             }
+
+            // Then notify users
+            await notifySubscribers(signal, supabaseAdmin);
         }
     }
 
