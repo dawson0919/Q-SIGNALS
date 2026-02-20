@@ -436,7 +436,7 @@
               <span class="material-symbols-outlined text-slate-500 text-xl">timer</span>
             </div>
             <div>
-              <p class="text-[11px] text-slate-500 font-medium italic">目前暫無 3 日內信號更新</p>
+              <p class="text-[11px] text-slate-500 font-medium italic">目前暫無 5 日內信號更新</p>
             </div>
           </div>
         `;
@@ -936,9 +936,11 @@
 
     // Init
     loadStrategies();
+    loadFeaturedGoldSignals();
     checkDbStatus();
     setInterval(pollPrices, 10000);
     setInterval(checkDbStatus, 30000);
+    setInterval(loadFeaturedGoldSignals, 60000); // Also refresh data every minute
   </script>
   <script>
     updateHeaderAuth();

@@ -463,30 +463,56 @@ router.get('/featured-signals/gold', async (req, res) => {
         });
 
         // 2. Get Algorithmic Signals (from subscriptions where symbol is XAUUSDT)
-        // We use admin client to get public view of these signals
         const { data: algoSubs, error: algoError } = await getAdminClient()
             .from('subscriptions')
             .select('*')
-            .eq('symbol', 'XAUUSDT')
+            .in('symbol', ['XAUUSDT', 'XAUTUSDT', 'GOLD'])
             .not('latest_signal', 'is', null);
 
         const filteredAlgo = (algoSubs || []).map(s => ({
             id: s.id,
             symbol: s.symbol,
             type: s.latest_signal.type,
-            entry_price: s.latest_signal.price,
-            roi: s.latest_signal.roi || 0,
-            status: 'active', // Strategy signals are live updates
-            entry_time: s.latest_signal.time,
-            comment: `${s.latest_signal.strategyName}: ${s.latest_signal.rule || '趨勢突破信號'}`,
+            entry_price: s.latest_signal.price || s.latest_signal.entry_price,
+            roi: s.latest_signal.roi || s.latest_signal.pnlPercent || 0,
+            status: 'active',
+            entry_time: s.latest_signal.time || s.latest_signal.entryTime,
+            comment: `${s.latest_signal.strategyName || 'Strategy'}: ${s.latest_signal.rule || '趨勢突破信號'}`,
             source: 'algo'
         })).filter(s => {
             const entryTime = new Date(s.entry_time);
             return entryTime >= fiveDaysAgo;
         });
 
+        // 3. Fallback to Backtest Cache (to catch signals from cards that might not be in Subscriptions yet)
+        const cachedAlgo = [];
+        for (const [key, result] of Object.entries(backtestCache)) {
+            // Check if key or strategy symbol relates to gold
+            const isGold = key.includes('XAU') || key.includes('GOLD') ||
+                (result.strategy && (result.strategy.symbol || '').includes('XAU'));
+
+            if (isGold && result.recentTrades && result.recentTrades.length > 0) {
+                const latest = result.recentTrades[0];
+                const entryTime = new Date(latest.time || latest.entryTime);
+
+                if (entryTime >= fiveDaysAgo) {
+                    cachedAlgo.push({
+                        id: `cache_${key}`,
+                        symbol: result.strategy.symbol || 'XAUUSDT',
+                        type: latest.type === 'LONG' ? 'BUY' : (latest.type === 'SHORT' ? 'SELL' : latest.type),
+                        entry_price: latest.price || latest.entryPrice,
+                        roi: latest.roi || latest.pnlPercent || 0,
+                        status: 'active',
+                        entry_time: entryTime,
+                        comment: `${result.strategy.name}: ${latest.rule || '即時獲利信號'}`,
+                        source: 'cache'
+                    });
+                }
+            }
+        }
+
         // Combine and respond
-        const combined = [...filteredManual, ...filteredAlgo];
+        const combined = [...filteredManual, ...filteredAlgo, ...cachedAlgo];
         res.json(combined);
     } catch (e) {
         res.status(500).json({ error: e.message });
