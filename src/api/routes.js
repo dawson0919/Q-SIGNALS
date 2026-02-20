@@ -448,8 +448,8 @@ router.get('/manual-signals/performance', async (req, res) => {
 // NEW: Public Featured Gold Signals (Last 5 days) + Best Result
 router.get('/featured-signals/gold', async (req, res) => {
     try {
-        const fiveDaysAgo = new Date();
-        fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
         // 1. Get Manual Signals (XAUUSDT)
         const manualSignals = await getManualSignals('XAUUSDT', 20);
@@ -459,35 +459,40 @@ router.get('/featured-signals/gold', async (req, res) => {
             comment: s.comment || (s.type === 'BUY' ? '突破關鍵壓力位' : '跌破關鍵支撐位')
         })).filter(s => {
             const entryTime = new Date(s.entry_time);
-            return s.status === 'active' || entryTime >= fiveDaysAgo;
+            // Closed signals must be within 7 days. Active signals always shown.
+            return s.status === 'active' || entryTime >= sevenDaysAgo;
         });
 
-        // 2. Get Algorithmic Signals (from subscriptions where symbol is XAUUSDT)
+        // 2. Get Algorithmic Signals from Subscriptions
         const { data: algoSubs, error: algoError } = await getAdminClient()
             .from('subscriptions')
             .select('*')
-            .in('symbol', ['XAUUSDT', 'XAUTUSDT', 'GOLD'])
+            .in('symbol', ['XAUUSDT', 'XAUTUSDT', 'GOLD', 'XAU/USDT', 'Tether Gold'])
             .not('latest_signal', 'is', null);
 
-        const filteredAlgo = (algoSubs || []).map(s => ({
-            id: s.id,
-            symbol: s.symbol,
-            type: s.latest_signal.type,
-            entry_price: s.latest_signal.price || s.latest_signal.entry_price,
-            roi: s.latest_signal.roi || s.latest_signal.pnlPercent || 0,
-            status: 'active',
-            entry_time: s.latest_signal.time || s.latest_signal.entryTime,
-            comment: `${s.latest_signal.strategyName || 'Strategy'}: ${s.latest_signal.rule || '趨勢突破信號'}`,
-            source: 'algo'
-        })).filter(s => {
+        if (algoError) console.error('[FeaturedGold] Algo Error:', algoError);
+
+        const filteredAlgo = (algoSubs || []).map(s => {
+            const sig = s.latest_signal;
+            return {
+                id: s.id,
+                symbol: s.symbol,
+                type: sig.type,
+                entry_price: sig.price || sig.entry_price,
+                roi: sig.roi || sig.pnlPercent || 0,
+                status: 'active', // Algo signals are generally considered active if in latest_signal
+                entry_time: sig.time || sig.entryTime,
+                comment: `${sig.strategyName || 'Strategy'}: ${sig.rule || '趨勢突破信號'}`,
+                source: 'algo'
+            };
+        }).filter(s => {
             const entryTime = new Date(s.entry_time);
-            return entryTime >= fiveDaysAgo;
+            return entryTime >= sevenDaysAgo;
         });
 
-        // 3. Fallback to Backtest Cache (to catch signals from cards that might not be in Subscriptions yet)
+        // 3. Fallback to Backtest Cache (to catch signals from cards)
         const cachedAlgo = [];
         for (const [key, result] of Object.entries(backtestCache)) {
-            // Check if key or strategy symbol relates to gold
             const isGold = key.includes('XAU') || key.includes('GOLD') ||
                 (result.strategy && (result.strategy.symbol || '').includes('XAU'));
 
@@ -495,7 +500,7 @@ router.get('/featured-signals/gold', async (req, res) => {
                 const latest = result.recentTrades[0];
                 const entryTime = new Date(latest.time || latest.entryTime);
 
-                if (entryTime >= fiveDaysAgo) {
+                if (entryTime >= sevenDaysAgo) {
                     cachedAlgo.push({
                         id: `cache_${key}`,
                         symbol: result.strategy.symbol || 'XAUUSDT',
@@ -513,7 +518,19 @@ router.get('/featured-signals/gold', async (req, res) => {
 
         // Combine and respond
         const combined = [...filteredManual, ...filteredAlgo, ...cachedAlgo];
-        res.json(combined);
+
+        // Final deduplication (by symbol and type if entry_time is very close)
+        const unique = [];
+        const seen = new Set();
+        combined.forEach(s => {
+            const key = `${s.symbol}_${s.type}_${Math.floor(new Date(s.entry_time).getTime() / 3600000)}`; // 1h bucket
+            if (!seen.has(key)) {
+                unique.push(s);
+                seen.add(key);
+            }
+        });
+
+        res.json(unique);
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
