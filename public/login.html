@@ -24,7 +24,7 @@
             darkMode: "class",
             theme: {
                 extend: {
-                    colors: { "primary": "#00ff00", "background-dark": "#0a0c0a", "card-dark": "#161d16", "border-dark": "#243324" },
+                    colors: { "primary": "#EAB308", "background-dark": "#0a0c0a", "card-dark": "#161d16", "border-dark": "#243324" },
                     fontFamily: { "display": ["Inter", "sans-serif"] },
                 },
             },
@@ -36,11 +36,11 @@
         }
 
         .glow-button {
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.25);
+            box-shadow: 0 0 20px rgba(234, 179, 8, 0.2);
         }
 
         .glow-button:hover {
-            box-shadow: 0 0 30px rgba(0, 255, 0, 0.4);
+            box-shadow: 0 0 30px rgba(234, 179, 8, 0.35);
         }
 
         .google-btn {
@@ -53,7 +53,7 @@
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
         }
 
-        @keyframes pulse-green {
+        @keyframes pulse-gold {
 
             0%,
             100% {
@@ -65,12 +65,12 @@
             }
         }
 
-        .pulse-green {
-            animation: pulse-green 2s ease-in-out infinite;
+        .pulse-gold {
+            animation: pulse-gold 2s ease-in-out infinite;
         }
 
         .bg-grid {
-            background-image: radial-gradient(circle, rgba(0, 255, 0, 0.03) 1px, transparent 1px);
+            background-image: radial-gradient(circle, rgba(234, 179, 8, 0.05) 1px, transparent 1px);
             background-size: 30px 30px;
         }
     </style>
@@ -93,8 +93,8 @@
             <!-- Welcome -->
             <div class="text-center mb-8">
                 <div
-                    class="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1 rounded-full text-xs font-bold mb-4">
-                    <span class="w-1.5 h-1.5 rounded-full bg-primary pulse-green"></span> LIVE TRADING SIGNALS
+                    class="inline-flex items-center gap-1.5 bg-yellow-500/10 text-yellow-500 px-3 py-1 rounded-full text-xs font-bold mb-4">
+                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 pulse-gold"></span> LIVE TRADING SIGNALS
                 </div>
                 <h2 class="text-3xl font-extrabold text-white mb-2">歡迎回來</h2>
                 <p class="text-sm text-slate-400">登入 QuantSignal 獲取專業量化交易信號</p>

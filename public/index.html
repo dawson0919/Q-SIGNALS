@@ -31,7 +31,8 @@
       theme: {
         extend: {
           colors: {
-            "primary": "#00ff00",
+            "primary": "#EAB308",
+            "accent-red": "#EF4444",
             "background-dark": "#0a0c0a",
             "card-dark": "#161d16",
             "border-dark": "#243324",
@@ -52,7 +53,13 @@
     }
 
     .glow-button {
-      box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+      box-shadow: 0 0 20px rgba(234, 179, 8, 0.2);
+    }
+
+    .glass-card {
+      background: rgba(22, 29, 22, 0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(234, 179, 8, 0.1);
     }
 
     .price-ticker-container {
@@ -243,36 +250,70 @@
       </div>
     </div>
 
-    <!-- Gold Market Highlight -->
     <div class="px-4 pt-4">
       <div
-        class="bg-gradient-to-br from-yellow-600/30 via-card-dark to-card-dark border border-yellow-500/40 rounded-2xl p-5 relative overflow-hidden group shadow-[0_0_20px_rgba(234,179,8,0.1)]">
-        <div class="absolute -right-6 -top-6 opacity-20 group-hover:scale-110 transition-transform duration-1000">
-          <span class="material-symbols-outlined text-yellow-500 text-[120px]">savings</span>
+        class="bg-gradient-to-br from-yellow-600/20 via-card-dark to-card-dark border border-yellow-500/30 rounded-2xl p-6 relative overflow-hidden group shadow-[0_0_30px_rgba(234,179,8,0.05)]">
+        <div class="absolute -right-6 -top-6 opacity-10 group-hover:scale-110 transition-transform duration-[2000ms]">
+          <span class="material-symbols-outlined text-yellow-500 text-[140px]">savings</span>
         </div>
         <div class="relative z-10">
-          <div class="flex items-center gap-2 mb-2">
-            <span class="flex h-2 w-2 rounded-full bg-yellow-500 animate-pulse"></span>
-            <span
-              class="text-[10px] font-black bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded uppercase tracking-widest">Market
-              Top Asset</span>
-            <span class="text-[9px] text-yellow-500/60 font-bold uppercase">市場熱門資產</span>
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-2">
+              <span class="flex h-2 w-2 rounded-full bg-yellow-500 animate-pulse"></span>
+              <span
+                class="text-[10px] font-black bg-yellow-500/20 text-yellow-500 px-2 py-0.5 rounded uppercase tracking-widest">Market
+                Top Asset</span>
+              <span class="text-[9px] text-yellow-500/60 font-bold uppercase">市場熱門資產</span>
+            </div>
+            <div class="flex items-center gap-1.5 px-2 py-1 rounded bg-black/40 border border-yellow-500/20">
+              <span class="material-symbols-outlined text-yellow-500 text-xs">verified</span>
+              <span class="text-[9px] font-black text-yellow-500 uppercase tracking-tighter">Premium Data Feed</span>
+            </div>
           </div>
-          <div class="flex justify-between items-end">
-            <div>
-              <h3 class="text-sm font-bold text-slate-400 uppercase tracking-tighter mb-1">Tether Gold (XAU/USDT)</h3>
-              <div class="flex items-baseline gap-3">
+
+          <div class="flex flex-col md:flex-row justify-between md:items-end gap-6">
+            <div class="flex-1">
+              <h3 class="text-xs font-bold text-slate-500 uppercase tracking-tight mb-1">Tether Gold (XAU/USDT)</h3>
+              <div class="flex items-baseline gap-4">
                 <span id="goldPriceMain"
-                  class="text-4xl font-black text-white italic tracking-tighter tabular-nums">$----.--</span>
-                <span id="goldChangeMain" class="text-sm font-bold text-slate-500">--%</span>
+                  class="text-4xl md:text-5xl font-black text-white italic tracking-tighter tabular-nums drop-shadow-md">$----.--</span>
+                <span id="goldChangeMain"
+                  class="text-base font-bold text-slate-500 bg-slate-800/50 px-2 py-0.5 rounded">--%</span>
               </div>
             </div>
-            <div class="text-right pb-1">
-              <p class="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1 opacity-60">Status</p>
-              <div class="flex items-center gap-2 justify-end">
-                <span class="text-[11px] font-black text-yellow-500 tracking-tight">VIP SIGNAL READY</span>
-                <span class="material-symbols-outlined text-yellow-500 text-sm">verified</span>
+
+            <div class="flex-1 bg-black/30 backdrop-blur-sm rounded-xl p-4 border border-white/5">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] text-slate-500 font-black uppercase tracking-widest flex items-center gap-1">
+                  <span class="w-1 h-3 bg-yellow-500 rounded-full"></span>
+                  VIP Signal Ready
+                </span>
+                <span
+                  class="text-[9px] bg-red-500/20 text-red-500 px-1.5 py-0.5 rounded-full font-black animate-pulse">LIVE</span>
               </div>
+              <div class="flex items-center gap-3">
+                <div class="bg-yellow-500/20 p-2 rounded-lg">
+                  <span class="material-symbols-outlined text-yellow-500 text-xl">bolt</span>
+                </div>
+                <div>
+                  <p class="text-xs font-bold text-slate-300">熱門策略預報 (Preview)</p>
+                  <p class="text-[11px] text-yellow-500/90 font-medium">海龜突破策略: [預備發出多單信號...]</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="text-right hidden sm:block">
+                <p class="text-[9px] text-slate-500 uppercase font-bold tracking-widest mb-1 opacity-60">Success Rate
+                </p>
+                <p class="text-xl font-black text-white italic">72.4% <span
+                    class="text-[10px] text-yellow-500 text-xs">↑</span></p>
+              </div>
+              <a href="profile.html"
+                class="bg-yellow-500 hover:bg-yellow-400 text-black px-6 py-3 rounded-xl font-black text-sm transition-all flex items-center gap-2 glow-button whitespace-nowrap">
+                UNLOCK VIP
+                <span class="material-symbols-outlined text-base">lock_open</span>
+              </a>
             </div>
           </div>
         </div>
