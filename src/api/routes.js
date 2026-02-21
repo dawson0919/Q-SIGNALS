@@ -486,8 +486,9 @@ router.get('/featured-signals/gold', async (req, res) => {
                 source: 'algo'
             };
         }).filter(s => {
-            const entryTime = new Date(s.entry_time);
-            return entryTime >= sevenDaysAgo;
+            // RELAXED: Show all latest signals from DB regardless of time 
+            // to ensure "Latest Signal" always shows something.
+            return true;
         });
 
         // 3. Fallback to Backtest Cache (to catch signals from cards)
