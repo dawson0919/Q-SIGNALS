@@ -453,15 +453,7 @@ router.get('/featured-signals/gold', async (req, res) => {
 
         // 1. Get Manual Signals (XAUUSDT)
         const manualSignals = await getManualSignals('XAUUSDT', 20);
-        const filteredManual = manualSignals.map(s => ({
-            ...s,
-            source: 'manual',
-            comment: s.comment || (s.type === 'BUY' ? '突破關鍵壓力位' : '跌破關鍵支撐位')
-        })).filter(s => {
-            const entryTime = new Date(s.entry_time);
-            // Closed signals must be within 7 days. Active signals always shown.
-            return s.status === 'active' || entryTime >= sevenDaysAgo;
-        });
+        const filteredManual = []; // Exclude manual signals from VIP featured section as requested
 
         // 2. Get Algorithmic Signals from Subscriptions
         const { data: algoSubs, error: algoError } = await getAdminClient()
