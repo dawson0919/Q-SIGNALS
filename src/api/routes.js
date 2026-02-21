@@ -478,11 +478,11 @@ router.get('/featured-signals/gold', async (req, res) => {
                 id: s.id,
                 symbol: s.symbol,
                 type: sig.type,
-                entry_price: sig.price || sig.entry_price,
+                entry_price: sig.price || sig.entryPrice || sig.entry_price,
                 roi: sig.roi || sig.pnlPercent || 0,
                 status: 'active', // Algo signals are generally considered active if in latest_signal
                 entry_time: sig.time || sig.entryTime,
-                comment: `${sig.strategyName || 'Strategy'}: ${sig.rule || '趨勢突破信號'}`,
+                comment: sig.comment || `${sig.strategyName || 'Strategy'}: ${sig.rule || '趨勢突破信號'}`,
                 source: 'algo'
             };
         }).filter(s => {
@@ -505,11 +505,11 @@ router.get('/featured-signals/gold', async (req, res) => {
                         id: `cache_${key}`,
                         symbol: result.strategy.symbol || 'XAUUSDT',
                         type: latest.type === 'LONG' ? 'BUY' : (latest.type === 'SHORT' ? 'SELL' : latest.type),
-                        entry_price: latest.price || latest.entryPrice,
+                        entry_price: latest.price || latest.entryPrice || latest.entry_price,
                         roi: latest.roi || latest.pnlPercent || 0,
                         status: 'active',
                         entry_time: entryTime,
-                        comment: `${result.strategy.name}: ${latest.rule || '即時獲利信號'}`,
+                        comment: latest.comment || `${result.strategy.name}: ${latest.rule || '即時獲利信號'}`,
                         source: 'cache'
                     });
                 }

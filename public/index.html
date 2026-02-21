@@ -447,38 +447,39 @@
       if (liveIndicator) liveIndicator.classList.remove('hidden');
 
       // Sort signals: active first, then by ROI descending
-      const signalsWithRoi = featuredGoldSignals.map(sig => {
-        const entry = parseFloat(sig.entry_price);
-        let roi = 0;
-        if (sig.status === 'active') {
-          if (currentGoldPrice > 0) {
-            const current = parseFloat(currentGoldPrice);
+      const entry = parseFloat(String(sig.entry_price || '0').replace(/[^0-9.]/g, ''));
+      let roi = 0;
+      if (sig.status === 'active') {
+        if (currentGoldPrice > 0) {
+          const current = parseFloat(currentGoldPrice);
+          if (entry > 0) {
             roi = sig.type === 'BUY'
               ? ((current - entry) / entry) * 100
               : ((entry - current) / entry) * 100;
           }
-        } else {
-          roi = parseFloat(sig.roi || 0);
         }
-        return { ...sig, calculatedRoi: roi };
-      });
+      } else {
+        roi = parseFloat(sig.roi || sig.calculatedRoi || 0);
+      }
+      return { ...sig, entry_price: entry, calculatedRoi: isNaN(roi) ? 0 : roi };
+    });
 
-      signalsWithRoi.sort((a, b) => {
-        if (a.status === 'active' && b.status !== 'active') return -1;
-        if (a.status !== 'active' && b.status === 'active') return 1;
-        return b.calculatedRoi - a.calculatedRoi;
-      });
+    signalsWithRoi.sort((a, b) => {
+      if (a.status === 'active' && b.status !== 'active') return -1;
+      if (a.status !== 'active' && b.status === 'active') return 1;
+      return b.calculatedRoi - a.calculatedRoi;
+    });
 
-      container.innerHTML = '';
+    container.innerHTML = '';
 
-      // Limit to top 2 signals to keep the layout clean
-      signalsWithRoi.slice(0, 2).forEach(sig => {
-        const isBuy = sig.type === 'BUY';
-        const roi = sig.calculatedRoi;
-        const time = new Date(sig.entry_time).toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        const isActive = sig.status === 'active';
+    // Limit to top 2 signals to keep the layout clean
+    signalsWithRoi.slice(0, 2).forEach(sig => {
+      const isBuy = sig.type === 'BUY';
+      const roi = sig.calculatedRoi;
+      const time = new Date(sig.entry_time).toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const isActive = sig.status === 'active';
 
-        container.innerHTML += `
+      container.innerHTML += `
           <div class="flex items-start gap-3 bg-white/5 p-3 rounded-xl border ${isActive ? 'border-yellow-500/30' : 'border-white/5'} group hover:border-yellow-500/50 transition-all cursor-pointer shadow-lg" onclick="location.href='manual-signals.html?symbol=XAUUSDT'">
             <div class="${isActive ? 'bg-yellow-500/10' : 'bg-slate-800/50'} p-2 rounded-lg shrink-0 group-hover:scale-110 transition-transform">
               <span class="material-symbols-outlined ${isActive ? 'text-yellow-500' : 'text-slate-500'} text-lg font-bold">bolt</span>
@@ -488,15 +489,15 @@
                 <p class="text-[10px] font-black ${isActive ? 'text-yellow-500' : 'text-slate-500'} uppercase tracking-wider italic">${sig.source === 'manual' ? '專家點評' : '策略預報'}${isActive ? ' (LIVE)' : ''}</p>
                 <span class="text-[8px] text-slate-600 font-medium">${time}</span>
               </div>
-              <h4 class="text-xs font-black text-white leading-tight mb-1">${sig.type} @ <span class="text-yellow-500">$${parseFloat(sig.entry_price).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span> <span class="material-symbols-outlined text-[10px] text-slate-600 align-middle">double_arrow</span> <span class="${roi >= 0 ? 'text-primary' : 'text-red-400'}">${roi > 0 ? '+' : ''}${roi.toFixed(2)}%</span></h4>
+              <h4 class="text-xs font-black text-white leading-tight mb-1">${sig.type} @ <span class="text-yellow-500">$${(parseFloat(sig.entry_price) || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</span> <span class="material-symbols-outlined text-[10px] text-slate-600 align-middle">double_arrow</span> <span class="${roi >= 0 ? 'text-primary' : 'text-red-400'}">${roi > 0 ? '+' : ''}${(roi || 0).toFixed(2)}%</span></h4>
               <p class="text-[9px] text-slate-400 font-medium line-clamp-1 opacity-80">${sig.comment || (isBuy ? '突破關鍵壓力位' : '跌破關鍵支撐位')}</p>
             </div>
           </div>
         `;
-      });
+    });
 
-      // Add Unlock link if there are more signals or just as a CTA
-      container.innerHTML += `
+    // Add Unlock link if there are more signals or just as a CTA
+    container.innerHTML += `
         <div class="pt-0.5">
           <a href="profile.html" class="flex items-center justify-center gap-2 py-1.5 w-full rounded-lg bg-yellow-500/10 text-yellow-500 text-[9px] font-black uppercase tracking-widest hover:bg-yellow-500/20 transition-all">
             <span class="material-symbols-outlined text-xs">auto_awesome</span>
