@@ -491,89 +491,46 @@ router.get('/manual-signals/performance', async (req, res) => {
     }
 });
 
-// NEW: Public Featured Gold Signals (Last 5 days) + Best Result
+// Public Featured Gold Signals — sourced from strategy_performance (refreshed every 4h)
 router.get('/featured-signals/gold', async (req, res) => {
     try {
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        // Read from strategy_performance table (always fresh — background task updates every 4h)
+        const { getAllStrategyPerformance } = require('../data/database');
+        const allPerf = await getAllStrategyPerformance();
 
-        // 1. Get Manual Signals (XAUUSDT)
-        const manualSignals = await getManualSignals('XAUUSDT', 20);
-        const filteredManual = []; // Exclude manual signals from VIP featured section as requested
+        const signals = allPerf
+            .filter(p => p.symbol === 'XAUUSDT' && p.latest_signal)
+            .map(p => {
+                const sig = p.latest_signal;
+                return {
+                    id: `perf_${p.strategy_id}_${p.timeframe}`,
+                    symbol: p.symbol,
+                    strategy_id: p.strategy_id,
+                    timeframe: p.timeframe,
+                    type: sig.type === 'LONG' ? 'BUY' : (sig.type === 'SHORT' ? 'SELL' : sig.type),
+                    entry_price: sig.entryPrice || sig.price || sig.entry_price,
+                    roi: sig.pnlPercent || sig.roi || 0,
+                    status: 'active',
+                    entry_time: sig.entryTime || sig.entryDate || sig.time,
+                    comment: `Strategy: 趨勢突破信號`,
+                    source: 'algo'
+                };
+            })
+            .filter(s => s.entry_price && s.entry_time);
 
-        // 2. Get Algorithmic Signals from Subscriptions
-        const { data: algoSubs, error: algoError } = await getAdminClient()
-            .from('subscriptions')
-            .select('*')
-            .in('symbol', ['XAUUSDT', 'XAUTUSDT', 'GOLD', 'XAU/USDT', 'Tether Gold'])
-            .not('latest_signal', 'is', null);
-
-        if (algoError) console.error('[FeaturedGold] Algo Error:', algoError);
-
-        const filteredAlgo = (algoSubs || []).map(s => {
-            const sig = s.latest_signal;
-            return {
-                id: s.id,
-                symbol: s.symbol,
-                strategy_id: s.strategy_id,
-                timeframe: s.timeframe || '4h',
-                type: sig.type === 'LONG' ? 'BUY' : (sig.type === 'SHORT' ? 'SELL' : sig.type),
-                entry_price: sig.price || sig.entryPrice || sig.entry_price,
-                roi: sig.roi || sig.pnlPercent || 0,
-                status: 'active', // Algo signals are generally considered active if in latest_signal
-                entry_time: sig.time || sig.entryTime,
-                comment: sig.comment || `${sig.strategyName || 'Strategy'}: ${sig.rule || '趨勢突破信號'}`,
-                source: 'algo'
-            };
-        }).filter(s => {
-            // RELAXED: Show all latest signals from DB regardless of time 
-            // to ensure "Latest Signal" always shows something.
-            return true;
-        });
-
-        // 3. Fallback to Backtest Cache (to catch signals from cards)
-        const cachedAlgo = [];
-        for (const [key, result] of Object.entries(backtestCache)) {
-            const isGold = key.includes('XAU') || key.includes('GOLD') ||
-                (result.strategy && (result.strategy.symbol || '').includes('XAU'));
-
-            if (isGold && result.recentTrades && result.recentTrades.length > 0) {
-                const latest = result.recentTrades[0];
-                const entryTime = new Date(latest.time || latest.entryTime);
-
-                if (entryTime >= sevenDaysAgo) {
-                    cachedAlgo.push({
-                        id: `cache_${key}`,
-                        symbol: result.strategy.symbol || 'XAUUSDT',
-                        type: latest.type === 'LONG' ? 'BUY' : (latest.type === 'SHORT' ? 'SELL' : latest.type),
-                        entry_price: latest.price || latest.entryPrice || latest.entry_price,
-                        roi: latest.roi || latest.pnlPercent || 0,
-                        status: 'active',
-                        entry_time: entryTime,
-                        comment: latest.comment || `${result.strategy.name}: ${latest.rule || '即時獲利信號'}`,
-                        source: 'cache'
-                    });
-                }
-            }
-        }
-
-        // Combine and respond
-        const combined = [...filteredManual, ...filteredAlgo, ...cachedAlgo];
-
-        // Final deduplication (by symbol and type if entry_time is very close)
+        // Sort by most recent entry first, deduplicate by 1h bucket
+        signals.sort((a, b) => new Date(b.entry_time) - new Date(a.entry_time));
         const unique = [];
         const seen = new Set();
-        combined.forEach(s => {
-            const key = `${s.symbol}_${s.type}_${Math.floor(new Date(s.entry_time).getTime() / 3600000)}`; // 1h bucket
-            if (!seen.has(key)) {
-                unique.push(s);
-                seen.add(key);
-            }
-        });
+        for (const s of signals) {
+            const key = `${s.type}_${Math.floor(new Date(s.entry_time).getTime() / 3600000)}`;
+            if (!seen.has(key)) { unique.push(s); seen.add(key); }
+        }
 
         res.json(unique);
     } catch (e) {
-        res.status(500).json({ error: e.message });
+        console.error('[FeaturedGold] Error:', e.message);
+        res.json([]);
     }
 });
 
