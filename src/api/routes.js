@@ -47,7 +47,7 @@ const {
     getSubscriptions,
     addSubscription,
     removeSubscription,
-    updateSubscriptionSignal, // New Import
+    updateSubscriptionSignal,
     applyPremium,
     getApplications,
     updateApplicationStatus,
@@ -59,7 +59,9 @@ const {
     getManualSignals,
     addManualSignal,
     closeManualSignal,
-    deleteManualSignal
+    deleteManualSignal,
+    getAllStrategyPerformance,
+    upsertStrategyPerformance
 } = require('../data/database');
 const indicators = require('../engine/indicators');
 
@@ -95,6 +97,30 @@ strategies[donchianTrend.id] = donchianTrend;
 // Health Check
 router.get('/health', (req, res) => {
     res.json({ status: 'ok', uptime: process.uptime() });
+});
+
+// Strategy Performance Cache (DB-backed, replaces per-card backtest calls on homepage)
+router.get('/strategies/performance', async (req, res) => {
+    try {
+        const rows = await getAllStrategyPerformance();
+        // Transform to a map keyed by "strategyId_symbol_timeframe" for easy lookup
+        const map = {};
+        for (const r of rows) {
+            const key = `${r.strategy_id}_${r.symbol}_${r.timeframe}`;
+            map[key] = {
+                totalReturn: r.total_return,
+                winRate: r.win_rate,
+                profitFactor: r.profit_factor,
+                totalTrades: r.total_trades,
+                latestSignal: r.latest_signal,
+                computedAt: r.computed_at
+            };
+        }
+        res.json(map);
+    } catch (e) {
+        console.error('[StrategyPerformance] Error:', e.message);
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // List all strategies
@@ -793,10 +819,16 @@ router.post('/backtest', backtestLimiter, async (req, res) => {
             }
         }
 
+        const latestSignal = (result.recentTrades && result.recentTrades.length > 0) ? result.recentTrades[0] : null;
+
+        // Always persist performance summary to strategy_performance table (for homepage cache)
+        if (strategyId && result.summary) {
+            upsertStrategyPerformance(strategyId, symbol, timeframe, result.summary, latestSignal)
+                .catch(e => console.warn('[Backtest] Performance cache write failed:', e.message));
+        }
+
         if (userId) {
-            const latestSignal = (result.recentTrades && result.recentTrades.length > 0) ? result.recentTrades[0] : null;
-            console.log(`[Backtest] Attempting to persist signal for user ${userId} on ${symbol} ${timeframe}`);
-            // MUST await to ensure DB write completes before response
+            console.log(`[Backtest] Persisting signal for user ${userId} on ${symbol} ${timeframe}`);
             await updateSubscriptionSignal(userId, strategyId, symbol, timeframe, latestSignal);
         }
 

@@ -449,6 +449,41 @@ async function deleteManualSignal(id) {
     if (error) throw error;
 }
 
+// --- Strategy Performance Cache ---
+// Reads all cached backtest summaries from DB (public read, no auth needed)
+async function getAllStrategyPerformance() {
+    const { data, error } = await getSupabase()
+        .from('strategy_performance')
+        .select('strategy_id, symbol, timeframe, total_return, win_rate, profit_factor, total_trades, latest_signal, computed_at');
+
+    if (error) {
+        console.error('[DB] getAllStrategyPerformance error:', error.message);
+        return [];
+    }
+    return data || [];
+}
+
+// Upsert a single backtest result (called by backtest engine after computing)
+async function upsertStrategyPerformance(strategyId, symbol, timeframe, summary, latestSignal) {
+    const { error } = await getAdminClient()
+        .from('strategy_performance')
+        .upsert({
+            strategy_id: strategyId,
+            symbol,
+            timeframe,
+            total_return: summary?.totalReturn ?? null,
+            win_rate: summary?.winRate ?? null,
+            profit_factor: summary?.profitFactor ?? null,
+            total_trades: summary?.totalTrades ?? null,
+            latest_signal: latestSignal || null,
+            computed_at: new Date().toISOString()
+        }, { onConflict: 'strategy_id,symbol,timeframe' });
+
+    if (error) {
+        console.error('[DB] upsertStrategyPerformance error:', error.message);
+    }
+}
+
 module.exports = {
     initSupabase,
     getSupabase,
@@ -477,5 +512,8 @@ module.exports = {
     getManualSignals,
     addManualSignal,
     closeManualSignal,
-    deleteManualSignal
+    deleteManualSignal,
+    // Strategy Performance Cache
+    getAllStrategyPerformance,
+    upsertStrategyPerformance
 };

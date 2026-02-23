@@ -6,7 +6,7 @@ const path = require('path');
 const { WebSocketServer } = require('ws');
 const http = require('http');
 
-const { initSupabase, getAdminClient } = require('./src/data/database');
+const { initSupabase, getAdminClient, upsertStrategyPerformance } = require('./src/data/database');
 const { backfillAllSymbols, startScheduledSync } = require('./src/data/backfill');
 const { startPriceMonitor, getCurrentPrices } = require('./src/data/priceMonitor');
 const { startPolling: startTelegramBot } = require('./src/services/telegramBot');
@@ -130,9 +130,88 @@ async function startBackgroundTasks() {
         const adminClient = getAdminClient();
         startSignalMonitor(adminClient);
         console.log('✅ Signal Monitor started');
+
+        // 7. Pre-compute strategy performance cache for homepage
+        console.log('⚙️  Pre-computing strategy performance cache...');
+        computeStrategyPerformanceCache().catch(err =>
+            console.error('❌ Strategy cache error:', err.message)
+        );
     } catch (err) {
         console.error('❌ Background task error:', err);
     }
+}
+
+// Pre-compute all strategy × symbol backtest results and persist to DB.
+// This allows the homepage to read pre-built data instead of running live backtests.
+async function computeStrategyPerformanceCache() {
+    const Backtester = require('./src/engine/backtester');
+    const { getCandleData } = require('./src/engine/dataFetcher');
+
+    // Load strategy modules
+    const strategyModules = [
+        require('./src/engine/strategies/ma60'),
+        require('./src/engine/strategies/threeStyle'),
+        require('./src/engine/strategies/turtleBreakout'),
+        require('./src/engine/strategies/dualEma'),
+        require('./src/engine/strategies/macdMa'),
+        require('./src/engine/strategies/granville_eth_4h'),
+        require('./src/engine/strategies/dualSuperTrend'),
+        require('./src/engine/strategies/donchianTrend'),
+    ];
+
+    // Same symbol × timeframe combinations shown on homepage
+    const jobs = [];
+    const cryptoSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT'];
+    const indexSymbols  = ['SPXUSDT', 'NASUSDT'];
+
+    for (const s of strategyModules) {
+        for (const symbol of cryptoSymbols) {
+            if (s.id === 'dual_st_breakout' && symbol === 'XAUUSDT') continue;
+            // Gold: three_style gets both 1h and 4h; granville_eth_4h gets 4h only
+            if (symbol === 'XAUUSDT' && s.id === 'three_style') {
+                jobs.push({ s, symbol, timeframe: '1h' });
+                jobs.push({ s, symbol, timeframe: '4h' });
+            } else {
+                jobs.push({ s, symbol, timeframe: '4h' });
+            }
+        }
+        // Only turtle_breakout runs on index symbols
+        if (s.id === 'turtle_breakout') {
+            for (const symbol of indexSymbols) {
+                jobs.push({ s, symbol, timeframe: '4h' });
+            }
+        }
+    }
+
+    let done = 0;
+    for (const { s, symbol, timeframe } of jobs) {
+        try {
+            const isIndex = (symbol === 'SPXUSDT' || symbol === 'NASUSDT');
+            const daysBack = isIndex ? 90 : (timeframe === '1h' ? 45 : 180);
+            const candles = await getCandleData(symbol, timeframe, { daysBack });
+            if (candles.length < 50) continue;
+
+            let params = { ...s.defaultParams, symbol, timeframe };
+            if (isIndex && s.id === 'turtle_breakout') {
+                if (symbol === 'NASUSDT') params = { leftBars: 4, rightBars: 5, minHoldBars: 20 };
+                else params = { leftBars: 6, rightBars: 5, minHoldBars: 15 };
+            }
+            const stratFn = s.createStrategy ? s.createStrategy(params) : s.execute;
+
+            const backtester = new Backtester({ initialCapital: 10000, positionSize: 0.95, commission: 0, slippage: 0 });
+            const result = backtester.run(stratFn, candles);
+            const latestSignal = result.recentTrades?.[0] || null;
+
+            await upsertStrategyPerformance(s.id, symbol, timeframe, result.summary, latestSignal);
+            done++;
+        } catch (e) {
+            console.warn(`[StrategyCache] Skipped ${s.id}/${symbol}/${timeframe}: ${e.message}`);
+        }
+    }
+    console.log(`✅ Strategy performance cache: ${done}/${jobs.length} entries saved to DB`);
+
+    // Re-run every 4 hours to keep data fresh
+    setTimeout(() => computeStrategyPerformanceCache().catch(e => console.error('[StrategyCache] Refresh error:', e.message)), 4 * 60 * 60 * 1000);
 }
 
 start();

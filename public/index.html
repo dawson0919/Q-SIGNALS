@@ -409,16 +409,18 @@
     let featuredGoldSignals = [];
     let currentGoldPrice = 0;
 
-    // Load featured Gold signals (Last 5 days)
+    // Load featured Gold signals
     async function loadFeaturedGoldSignals() {
       try {
         const res = await fetch('/api/featured-signals/gold');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const signals = await res.json();
-        console.log('[LoadFeaturedGold] Received signals:', signals.length);
-        featuredGoldSignals = signals;
+        featuredGoldSignals = Array.isArray(signals) ? signals : [];
         renderFeaturedGoldSignals();
       } catch (err) {
         console.error('Failed to load featured signals:', err);
+        featuredGoldSignals = [];
+        renderFeaturedGoldSignals();
       }
     }
 
@@ -508,41 +510,44 @@
       `;
     }
 
-    // Load strategies
+    // Load strategies — reads pre-computed performance from DB (no live backtest calls)
     async function loadStrategies() {
       try {
         const strategyList = document.getElementById('strategyList');
         strategyList.innerHTML = '';
 
-        // Add Manual Signal Card (Platinum) - ADDED AT START FOR RESILIENCE
+        // Add Manual Signal Card (Platinum) at top
         const manualCard = createManualSignalCard();
         strategyList.appendChild(manualCard);
         updateManualROIOnCard();
 
-        const res = await fetch('/api/strategies');
-        const data = await res.json();
+        // Fetch strategy list and DB-cached performance in parallel
+        const [strategiesRes, perfRes] = await Promise.all([
+          fetch('/api/strategies'),
+          fetch('/api/strategies/performance')
+        ]);
+
+        const data = await strategiesRes.json();
+        // Performance map: key = "strategyId_symbol_timeframe"
+        const perfMap = perfRes.ok ? await perfRes.json() : {};
 
         const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'SPXUSDT', 'NASUSDT'];
         const symbolNames = { BTCUSDT: 'BTC', ETHUSDT: 'ETH', SOLUSDT: 'SOL', XAUUSDT: 'GOLD', SPXUSDT: 'SPX', NASUSDT: 'NAS' };
 
         for (const strat of data.strategies) {
           for (const symbol of symbols) {
-            // For Index strategies, only show Turtle Breakout
             if ((symbol === 'SPXUSDT' || symbol === 'NASUSDT') && strat.id !== 'turtle_breakout') continue;
-
-            // Dual ST Breakout: only show for crypto (BTC, ETH, SOL)
             if (strat.id === 'dual_st_breakout' && (symbol === 'XAUUSDT' || symbol === 'SPXUSDT' || symbol === 'NASUSDT')) continue;
 
-            // For Gold, show both 1h and 4h
             if (symbol === 'XAUUSDT' && (strat.id === 'three_style' || strat.id === 'granville_eth_4h')) {
               const tf = (strat.id === 'three_style') ? '1h' : '4h';
               const card = createStrategyCard(strat, symbol, symbolNames[symbol], tf);
               strategyList.appendChild(card);
-              runBacktestForCard(strat.id, symbol, card, tf);
+              applyPerformanceToCard(strat.id, symbol, tf, card, perfMap);
             } else {
               const card = createStrategyCard(strat, symbol, symbolNames[symbol], '4h');
               strategyList.appendChild(card);
-              runBacktestForCard(strat.id, symbol, card, '4h');
+              applyPerformanceToCard(strat.id, symbol, '4h', card, perfMap);
             }
           }
         }
@@ -551,6 +556,44 @@
       } catch (err) {
         console.error('Failed to load strategies:', err);
       }
+    }
+
+    // Apply pre-fetched performance data to a card; falls back to live backtest if DB has no data
+    function applyPerformanceToCard(strategyId, symbol, timeframe, card, perfMap) {
+      const key = `${strategyId}_${symbol}_${timeframe}`;
+      const perf = perfMap[key];
+
+      if (perf && perf.totalReturn !== null && perf.totalReturn !== undefined) {
+        // DB hit — fill in immediately with no extra request
+        fillCardStats(strategyId, symbol, timeframe, card, perf);
+      } else {
+        // DB miss (first run or new strategy) — fall back to live backtest
+        runBacktestForCard(strategyId, symbol, card, timeframe);
+      }
+    }
+
+    function fillCardStats(strategyId, symbol, timeframe, card, perf) {
+      const roi = parseFloat(perf.totalReturn);
+      card.dataset.roiPositive = roi >= 0 ? 'true' : 'false';
+
+      const roiEl = document.getElementById(`roi-${strategyId}-${symbol}-${timeframe}`);
+      if (roiEl) {
+        roiEl.textContent = `${roi > 0 ? '+' : ''}${roi.toFixed(1)}%`;
+        roiEl.className = `text-xl font-black ${roi >= 0 ? 'text-primary' : 'text-red-500'} truncate`;
+      }
+      const wrEl = document.getElementById(`winrate-${strategyId}-${symbol}-${timeframe}`);
+      if (wrEl) wrEl.textContent = `${parseFloat(perf.winRate).toFixed(1)}%`;
+
+      const pfEl = document.getElementById(`pf-${strategyId}-${symbol}-${timeframe}`);
+      if (pfEl) {
+        const pf = perf.profitFactor;
+        pfEl.textContent = (pf === null || pf === 'null' || pf === undefined) ? '∞' : Number(pf).toFixed(2);
+      }
+      const trEl = document.getElementById(`trades-${strategyId}-${symbol}-${timeframe}`);
+      if (trEl) trEl.textContent = `${perf.totalTrades}`;
+
+      const barEl = document.getElementById(`bar-${strategyId}-${symbol}-${timeframe}`);
+      if (barEl) barEl.style.width = `${Math.min(parseFloat(perf.winRate), 100)}%`;
     }
     function updateTabCounts() {
       const cards = document.querySelectorAll('.strategy-card');
@@ -908,13 +951,15 @@
         const res = await fetch('/api/prices/current');
         const data = await res.json();
         if (Object.keys(data).length > 0) updatePriceTicker(data);
-      } catch (e) { }
+      } catch (e) {
+        // Price poll failure is non-critical; WebSocket is the primary source
+      }
     }
 
-    // Check DB Status
+    // Check DB / server status via health endpoint
     async function checkDbStatus() {
       try {
-        const res = await fetch('/api/debug/db-status');
+        const res = await fetch('/api/health');
         const data = await res.json();
         const dbStatus = document.getElementById('dbStatus');
         const dbDot = document.getElementById('dbStatusDot');
@@ -922,19 +967,21 @@
 
         if (dbStatus) {
           dbStatus.classList.remove('hidden');
-          if (data.success) {
+          if (data.status === 'ok') {
             dbDot.classList.replace('bg-red-500', 'bg-primary');
-            dbText.textContent = 'DB Online';
-            dbStatus.title = 'Supabase Connected';
+            dbText.textContent = 'Online';
+            dbStatus.title = 'Server Online';
           } else {
             dbDot.classList.replace('bg-primary', 'bg-red-500');
-            dbText.textContent = 'DB Error';
-            dbStatus.title = data.message || 'Connection Failed';
+            dbText.textContent = 'Error';
           }
         }
       } catch (e) {
         const dbStatus = document.getElementById('dbStatus');
-        if (dbStatus) dbStatus.classList.remove('hidden');
+        if (dbStatus) {
+          dbStatus.classList.remove('hidden');
+          document.getElementById('dbStatusText').textContent = 'Offline';
+        }
       }
     }
 
@@ -943,8 +990,8 @@
     loadFeaturedGoldSignals();
     checkDbStatus();
     setInterval(pollPrices, 10000);
-    setInterval(checkDbStatus, 30000);
-    setInterval(loadFeaturedGoldSignals, 60000); // Also refresh data every minute
+    setInterval(checkDbStatus, 60000);
+    setInterval(loadFeaturedGoldSignals, 60000);
   </script>
   <script>
     updateHeaderAuth();
