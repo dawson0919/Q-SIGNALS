@@ -515,6 +515,8 @@ router.get('/featured-signals/gold', async (req, res) => {
             return {
                 id: s.id,
                 symbol: s.symbol,
+                strategy_id: s.strategy_id,
+                timeframe: s.timeframe || '4h',
                 type: sig.type === 'LONG' ? 'BUY' : (sig.type === 'SHORT' ? 'SELL' : sig.type),
                 entry_price: sig.price || sig.entryPrice || sig.entry_price,
                 roi: sig.roi || sig.pnlPercent || 0,

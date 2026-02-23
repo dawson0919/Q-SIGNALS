@@ -483,8 +483,11 @@
         const time = new Date(sig.entry_time).toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         const isActive = sig.status === 'active';
 
+        const cardHref = sig.source === 'manual'
+          ? `manual-signals.html?symbol=${encodeURIComponent(sig.symbol || 'XAUUSDT')}`
+          : `strategy-detail.html?strategy=${encodeURIComponent(sig.strategy_id || '')}&symbol=${encodeURIComponent(sig.symbol || 'XAUUSDT')}&timeframe=${encodeURIComponent(sig.timeframe || '4h')}`;
         container.innerHTML += `
-          <div class="flex items-start gap-3 bg-white/5 p-3 rounded-xl border ${isActive ? 'border-yellow-500/30' : 'border-white/5'} group hover:border-yellow-500/50 transition-all cursor-pointer shadow-lg" onclick="location.href='manual-signals.html?symbol=XAUUSDT'">
+          <div class="flex items-start gap-3 bg-white/5 p-3 rounded-xl border ${isActive ? 'border-yellow-500/30' : 'border-white/5'} group hover:border-yellow-500/50 transition-all cursor-pointer shadow-lg" onclick="location.href='${cardHref}'">
             <div class="${isActive ? 'bg-yellow-500/10' : 'bg-slate-800/50'} p-2 rounded-lg shrink-0 group-hover:scale-110 transition-transform">
               <span class="material-symbols-outlined ${isActive ? 'text-yellow-500' : 'text-slate-500'} text-lg font-bold">bolt</span>
             </div>
