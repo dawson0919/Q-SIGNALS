@@ -518,16 +518,13 @@ router.get('/featured-signals/gold', async (req, res) => {
             })
             .filter(s => s.entry_price && s.entry_time);
 
-        // Sort by most recent entry first, deduplicate by 1h bucket
+        // Pick one signal per timeframe (most recent entry), always show 1h + 4h
         signals.sort((a, b) => new Date(b.entry_time) - new Date(a.entry_time));
-        const unique = [];
-        const seen = new Set();
-        for (const s of signals) {
-            const key = `${s.type}_${Math.floor(new Date(s.entry_time).getTime() / 3600000)}`;
-            if (!seen.has(key)) { unique.push(s); seen.add(key); }
-        }
+        const best1h = signals.find(s => s.timeframe === '1h');
+        const best4h = signals.find(s => s.timeframe === '4h');
+        const featured = [best1h, best4h].filter(Boolean);
 
-        res.json(unique);
+        res.json(featured);
     } catch (e) {
         console.error('[FeaturedGold] Error:', e.message);
         res.json([]);
