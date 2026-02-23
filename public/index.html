@@ -456,7 +456,8 @@
           if (currentGoldPrice > 0) {
             const current = parseFloat(currentGoldPrice);
             if (entry > 0) {
-              roi = sig.type === 'BUY'
+              const isBuyDir = (sig.type === 'BUY' || sig.type === 'LONG');
+              roi = isBuyDir
                 ? ((current - entry) / entry) * 100
                 : ((entry - current) / entry) * 100;
             }
@@ -477,7 +478,7 @@
 
       // Limit to top 2 signals to keep the layout clean
       signalsWithRoi.slice(0, 2).forEach(sig => {
-        const isBuy = sig.type === 'BUY';
+        const isBuy = (sig.type === 'BUY' || sig.type === 'LONG');
         const roi = sig.calculatedRoi;
         const time = new Date(sig.entry_time).toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         const isActive = sig.status === 'active';

@@ -515,7 +515,7 @@ router.get('/featured-signals/gold', async (req, res) => {
             return {
                 id: s.id,
                 symbol: s.symbol,
-                type: sig.type,
+                type: sig.type === 'LONG' ? 'BUY' : (sig.type === 'SHORT' ? 'SELL' : sig.type),
                 entry_price: sig.price || sig.entryPrice || sig.entry_price,
                 roi: sig.roi || sig.pnlPercent || 0,
                 status: 'active', // Algo signals are generally considered active if in latest_signal
