@@ -632,11 +632,21 @@
         function previewImage(input, previewId) {
             const preview = document.getElementById(previewId);
             if (input.files && input.files[0]) {
+                const file = input.files[0];
+                if (!file.type.startsWith('image/')) {
+                    alert('Only image files are allowed.');
+                    input.value = '';
+                    return;
+                }
                 const reader = new FileReader();
                 reader.onload = function (e) {
-                    preview.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">`;
+                    preview.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.src = e.target.result; // safe: data-URL from FileReader
+                    img.className = 'w-full h-full object-cover';
+                    preview.appendChild(img);
                 };
-                reader.readAsDataURL(input.files[0]);
+                reader.readAsDataURL(file);
             }
         }
 
@@ -720,6 +730,77 @@
             }
         }
 
+        // Safe DOM element builder — avoids innerHTML injection
+        function buildSubCard(sub, signal, displayStratName) {
+            const card = document.createElement('div');
+            card.className = 'bg-surface-dark border border-border-dark p-3 rounded-xl flex items-center justify-between hover:border-primary/20 transition-all cursor-pointer';
+            card.addEventListener('click', () => {
+                window.location.href = `strategy-detail.html?strategy=${encodeURIComponent(sub.strategy_id)}&symbol=${encodeURIComponent(sub.symbol)}&timeframe=${encodeURIComponent(sub.timeframe)}`;
+            });
+
+            // Left side
+            const left = document.createElement('div');
+
+            const nameEl = document.createElement('p');
+            nameEl.className = 'font-bold text-white text-sm leading-tight';
+            nameEl.textContent = displayStratName;
+
+            const assetEl = document.createElement('p');
+            assetEl.className = 'text-[10px] text-slate-500 uppercase mt-0.5 font-bold tracking-wider';
+            const assetName = document.createTextNode(sub.symbol.replace('USDT', '') + ' • ');
+            const tfSpan = document.createElement('span');
+            tfSpan.className = 'text-primary/70';
+            tfSpan.textContent = sub.timeframe;
+            assetEl.appendChild(assetName);
+            assetEl.appendChild(tfSpan);
+
+            left.appendChild(nameEl);
+            left.appendChild(assetEl);
+
+            // Right side — signal info
+            const right = document.createElement('div');
+            right.className = 'text-right';
+
+            if (signal && signal.type) {
+                const isBuy = signal.type === 'LONG';
+                const timeStr = signal.entryTime || signal.time || new Date().toISOString();
+                const time = new Date(timeStr).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+                const priceValue = signal.entryPrice || signal.price || 0;
+                const priceDisplay = typeof priceValue === 'number'
+                    ? priceValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                    : String(priceValue);
+
+                const wrap = document.createElement('div');
+                wrap.className = 'flex flex-col items-end';
+
+                const dirEl = document.createElement('span');
+                dirEl.className = `text-xs font-black italic ${isBuy ? 'text-primary' : 'text-red-500'} mb-0.5`;
+                dirEl.textContent = isBuy ? 'BUY' : 'SELL';
+
+                const priceEl = document.createElement('span');
+                priceEl.className = 'text-sm font-bold text-white tracking-tight leading-none';
+                priceEl.textContent = '$' + priceDisplay;
+
+                const timeEl = document.createElement('span');
+                timeEl.className = 'text-[9px] text-slate-500 mt-0.5';
+                timeEl.textContent = time;
+
+                wrap.appendChild(dirEl);
+                wrap.appendChild(priceEl);
+                wrap.appendChild(timeEl);
+                right.appendChild(wrap);
+            } else {
+                const noSig = document.createElement('div');
+                noSig.className = 'text-[10px] font-bold bg-slate-800 text-slate-400 px-2 py-1 rounded uppercase tracking-tighter';
+                noSig.textContent = 'No Active Signal';
+                right.appendChild(noSig);
+            }
+
+            card.appendChild(left);
+            card.appendChild(right);
+            return card;
+        }
+
         async function loadSubscriptions(token) {
             try {
                 const res = await fetch('/api/subscriptions', {
@@ -728,67 +809,50 @@
                 if (!res.ok) throw new Error('Failed to fetch subscriptions');
 
                 const subs = await res.json();
-                console.log('--- 🚀 SIGNAL DEBUG DATA START ---');
-                console.log('Latest Subscriptions Data:', subs);
-                console.log('--- 🚀 SIGNAL DEBUG DATA END ---');
 
                 const list = document.getElementById('signalList');
                 list.innerHTML = '';
 
                 if (!Array.isArray(subs) || subs.length === 0) {
-                    list.innerHTML = '<p class="text-xs text-slate-500 italic text-center py-4">No active subscriptions found.</p>';
+                    const empty = document.createElement('p');
+                    empty.className = 'text-xs text-slate-500 italic text-center py-4';
+                    empty.textContent = 'No active subscriptions found.';
+                    list.appendChild(empty);
                     return;
                 }
 
+                // Sort by asset (symbol), then by strategy name
+                subs.sort((a, b) => {
+                    const assetA = (a.symbol || '').replace('USDT', '');
+                    const assetB = (b.symbol || '').replace('USDT', '');
+                    if (assetA !== assetB) return assetA.localeCompare(assetB);
+                    return (a.strategy_name || '').localeCompare(b.strategy_name || '');
+                });
+
                 subs.forEach(sub => {
                     let signal = sub.latest_signal;
-                    // Handle case where signal might be a JSON string from DB
                     if (typeof signal === 'string') {
-                        try { signal = JSON.parse(signal); } catch (e) { }
-                    }
-
-                    let signalHtml = '<div class="text-[10px] font-bold bg-slate-800 text-slate-400 px-2 py-1 rounded uppercase tracking-tighter">No Active Signal</div>';
-
-                    if (signal && signal.type) {
-                        const isBuy = signal.type === 'LONG';
-                        const timeStr = signal.entryTime || signal.time || new Date().toISOString();
-                        const time = new Date(timeStr).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
-
-                        const priceValue = signal.entryPrice || signal.price || 0;
-                        const priceDisplay = typeof priceValue === 'number' ? priceValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : priceValue;
-
-                        signalHtml = `
-                        <div class="flex flex-col items-end">
-                            <span class="text-xs font-black italic ${isBuy ? 'text-primary' : 'text-red-500'} mb-0.5">${isBuy ? 'BUY' : 'SELL'}</span>
-                            <span class="text-sm font-bold text-white tracking-tight leading-none">$${priceDisplay}</span>
-                            <span class="text-[9px] text-slate-500 mt-0.5">${time}</span>
-                        </div>
-                    `;
+                        try { signal = JSON.parse(signal); } catch (e) {
+                            console.warn('[Subscriptions] Failed to parse signal JSON:', e.message);
+                            signal = null;
+                        }
                     }
 
                     let displayStratName = sub.strategy_name || sub.strategy_id.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+                    if (sub.strategy_id === 'granville_eth_4h') displayStratName = 'Granville Pro';
 
-                    // Force update for renamed Granville Pro
-                    if (sub.strategy_id === 'granville_eth_4h') {
-                        displayStratName = 'Granville Pro';
-                    }
-
-                    list.innerHTML += `
-                    <div class="bg-surface-dark border border-border-dark p-3 rounded-xl flex items-center justify-between hover:border-primary/20 transition-all cursor-pointer" onclick="window.location.href='strategy-detail.html?strategy=${sub.strategy_id}&symbol=${sub.symbol}&timeframe=${sub.timeframe}'">
-                        <div>
-                            <p class="font-bold text-white text-sm leading-tight">${displayStratName}</p>
-                            <p class="text-[10px] text-slate-500 uppercase mt-0.5 font-bold tracking-wider">${sub.symbol.replace('USDT', '')} • <span class="text-primary/70">${sub.timeframe}</span></p>
-                        </div>
-                        <div class="text-right">
-                             ${signalHtml}
-                        </div>
-                    </div>
-                `;
+                    list.appendChild(buildSubCard(sub, signal, displayStratName));
                 });
             } catch (e) {
-                console.error("Error loading subs:", e);
+                console.error('Error loading subscriptions:', e);
                 const list = document.getElementById('signalList');
-                if (list) list.innerHTML = '<p class="text-xs text-red-500 font-bold py-2 text-center">Unable to load signals currently.</p>';
+                if (list) {
+                    list.innerHTML = '';
+                    const errEl = document.createElement('p');
+                    errEl.className = 'text-xs text-red-500 font-bold py-2 text-center';
+                    errEl.textContent = 'Unable to load signals currently.';
+                    list.appendChild(errEl);
+                }
             }
         }
 

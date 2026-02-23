@@ -349,7 +349,7 @@ async function getAllUsers(token) {
             await adminClient.from('profiles').upsert({
                 id: u.id,
                 email: u.email,
-                role: u.email === 'nbamoment@gmail.com' ? 'admin' : 'standard'
+                role: (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).includes(u.email) ? 'admin' : 'standard'
             }, { onConflict: 'id' });
         }
         console.log(`[DB] Synced ${authUsers?.users?.length || 0} users from auth.users`);

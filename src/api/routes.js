@@ -1,7 +1,36 @@
 // API Routes
 const express = require('express');
 const path = require('path');
+const crypto = require('crypto');
 const router = express.Router();
+const rateLimit = require('express-rate-limit');
+
+// --- Rate Limiters ---
+const generalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 200,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests, please try again later.' }
+});
+
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many auth requests, please try again later.' }
+});
+
+const backtestLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Backtest rate limit exceeded. Please wait a moment.' }
+});
+
+router.use(generalLimiter);
 const Backtester = require('../engine/backtester');
 const { getCandleData } = require('../engine/dataFetcher');
 const { parsePineScript } = require('../engine/pineParser');
@@ -59,13 +88,9 @@ strategies[dualStBreakout.id] = dualStBreakout;
 const donchianTrend = require('../engine/strategies/donchianTrend');
 strategies[donchianTrend.id] = donchianTrend;
 
-// Debug Cache
-router.get('/debug/cache', (req, res) => {
-    res.json({
-        keys: Object.keys(backtestCache),
-        size: Object.keys(backtestCache).length,
-        sample: Object.keys(backtestCache).length > 0 ? backtestCache[Object.keys(backtestCache)[0]].strategy : null
-    });
+// Health Check
+router.get('/health', (req, res) => {
+    res.json({ status: 'ok', uptime: process.uptime() });
 });
 
 // List all strategies
@@ -128,7 +153,9 @@ router.get('/strategies/:id', async (req, res) => {
                     isAdmin = true;
                 }
             }
-        } catch (e) { }
+        } catch (e) {
+            console.warn('[Strategy Detail] Auth check failed:', e.message);
+        }
     }
 
     res.json({
@@ -166,35 +193,7 @@ async function requireAdmin(req, res, next) {
         }
     });
 }
-// --- TEMPORARY DEBUG ENDPOINT (REMOVE AFTER TESTING) ---
-router.get('/debug/db-status', async (req, res) => {
-    try {
-        const { testConnection } = require('../data/database');
-        const status = await testConnection();
-        res.json(status);
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-});
-
-router.get('/debug/subscriptions', async (req, res) => {
-    try {
-        const { data, error } = await getAdminClient().from('subscriptions').select('*');
-        res.json({ count: data?.length || 0, subscriptions: data || [], error: error?.message || null });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-});
-router.get('/debug/users', async (req, res) => {
-    try {
-        const client = getAdminClient();
-        const { data, error } = await client.from('profiles').select('*');
-        console.log('[DEBUG] Profiles query - Error:', error, 'Count:', data?.length);
-        res.json({ count: data?.length || 0, users: data || [], error: error?.message || null });
-    } catch (e) {
-        res.status(500).json({ error: e.message });
-    }
-});
+// (Debug endpoints removed — use admin panel for diagnostics)
 
 // --- Membership & Subscriptions ---
 // --- Membership & Subscriptions ---
@@ -205,7 +204,7 @@ router.get('/profile', requireAuth, async (req, res) => {
         const userEmail = (req.user.email || '').toLowerCase().trim();
         const adminEmails = (process.env.ADMIN_EMAILS || '').split(',');
         const isAdminEmail = adminEmails.some(e => e.toLowerCase().trim() === userEmail);
-        const isSuperAdmin = req.user.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd';
+        const isSuperAdmin = process.env.SUPER_ADMIN_ID && req.user.id === process.env.SUPER_ADMIN_ID;
 
         const targetRole = (isAdminEmail || isSuperAdmin) ? 'admin' : (profile?.role || 'standard');
 
@@ -258,14 +257,30 @@ router.post('/upload-proof', requireAuth, async (req, res) => {
     const { fileName, fileData } = req.body;
     if (!fileName || !fileData) return res.status(400).json({ error: 'Missing file data' });
 
+    // Validate file extension (whitelist only)
+    const ext = fileName.split('.').pop().toLowerCase();
+    const allowedExts = ['png', 'jpg', 'jpeg', 'webp'];
+    if (!allowedExts.includes(ext)) {
+        return res.status(400).json({ error: 'Only PNG, JPG, JPEG, and WEBP files are allowed' });
+    }
+
+    // Validate MIME type from data URL
+    const mimeMatch = fileData.match(/^data:(image\/(?:png|jpeg|webp));base64,/);
+    if (!mimeMatch) {
+        return res.status(400).json({ error: 'Invalid image format. Only PNG, JPG, and WEBP are allowed.' });
+    }
+    const contentType = mimeMatch[1];
+
+    // Check file size (base64 encoded — actual bytes ~= base64len * 0.75)
+    const base64Body = fileData.replace(/^data:image\/\w+;base64,/, '');
+    const approxBytes = base64Body.length * 0.75;
+    if (approxBytes > 5 * 1024 * 1024) { // 5 MB limit
+        return res.status(400).json({ error: 'File too large. Maximum size is 5MB.' });
+    }
+
     try {
         const admin = getAdminClient();
-        // fileData is base64 stripped or full? Let's assume full data-url or just base64
-        const base64Data = fileData.replace(/^data:image\/\w+;base64,/, "");
-        const buffer = Buffer.from(base64Data, 'base64');
-
-        const ext = fileName.split('.').pop().toLowerCase();
-        const contentType = ext === 'png' ? 'image/png' : 'image/jpeg';
+        const buffer = Buffer.from(base64Body, 'base64');
 
         const { data, error } = await admin.storage
             .from('proofs')
@@ -281,7 +296,7 @@ router.post('/upload-proof', requireAuth, async (req, res) => {
     }
 });
 
-router.post('/apply-premium', requireAuth, async (req, res) => {
+router.post('/apply-premium', authLimiter, requireAuth, async (req, res) => {
     const { account, proofUrls } = req.body;
     if (!account) return res.status(400).json({ error: 'Account required' });
     try {
@@ -315,7 +330,8 @@ router.post('/subscribe', requireAuth, async (req, res) => {
         const adminEmails = (process.env.ADMIN_EMAILS || '').split(',');
 
         // Fallback or Override for Admin
-        if (adminEmails.includes(req.user.email) || req.user.id === 'c337aaf8-b161-4d96-a6f4-35597dbdc4dd') {
+        const isSuperAdminUser = process.env.SUPER_ADMIN_ID && req.user.id === process.env.SUPER_ADMIN_ID;
+        if (adminEmails.includes(req.user.email) || isSuperAdminUser) {
             profile = { ...profile, role: 'admin' };
         }
 
@@ -540,7 +556,7 @@ router.get('/manual-signals', requireAuth, async (req, res) => {
         }
 
         const symbol = req.query.symbol;
-        const limit = parseInt(req.query.limit) || 50;
+        const limit = Math.min(Math.max(parseInt(req.query.limit) || 50, 1), 200);
         const signals = await getManualSignals(symbol, limit);
         res.json(signals);
     } catch (e) {
@@ -684,7 +700,7 @@ router.post('/strategies', (req, res) => {
 });
 
 // Run backtest
-router.post('/backtest', async (req, res) => {
+router.post('/backtest', backtestLimiter, async (req, res) => {
     try {
         let { strategyId, symbol = 'BTCUSDT', timeframe = '4h', startTime, endTime } = req.body;
 
@@ -767,7 +783,9 @@ router.post('/backtest', async (req, res) => {
                     if (user && !error) {
                         userId = user.id;
                     }
-                } catch (e) { }
+                } catch (e) {
+                    console.warn('[Backtest] Token verification failed:', e.message);
+                }
             }
         }
 
@@ -799,13 +817,14 @@ router.get('/prices/current', (req, res) => {
 
 // Historical candles from DB
 router.get('/prices/history', async (req, res) => {
-    const { symbol = 'BTCUSDT', timeframe = '4h', limit = 200 } = req.query;
+    const { symbol = 'BTCUSDT', timeframe = '4h' } = req.query;
+    const limit = Math.min(Math.max(parseInt(req.query.limit) || 200, 1), 2000);
     const candles = await getCandles(symbol, timeframe);
     res.json({
         symbol,
         timeframe,
         count: candles.length,
-        candles: candles.slice(-parseInt(limit))
+        candles: candles.slice(-limit)
     });
 });
 
@@ -830,14 +849,18 @@ router.get('/visitor-count', (req, res) => {
             const data = fs.readFileSync(STATS_FILE, 'utf8');
             count = JSON.parse(data).count || 0;
         }
-    } catch (e) { }
+    } catch (e) {
+        console.warn('[VisitorCount] Failed to read stats file:', e.message);
+    }
 
     // Increment
     count++;
 
     try {
         fs.writeFileSync(STATS_FILE, JSON.stringify({ count }), 'utf8');
-    } catch (e) { }
+    } catch (e) {
+        console.warn('[VisitorCount] Failed to write stats file:', e.message);
+    }
 
     res.json({ count });
 });
@@ -846,6 +869,14 @@ router.get('/visitor-count', (req, res) => {
 
 // Webhook endpoint (receives bot updates from Telegram)
 router.post('/telegram/webhook', async (req, res) => {
+    // Verify request is from Telegram using secret token header
+    const secretToken = process.env.TELEGRAM_WEBHOOK_SECRET;
+    if (secretToken) {
+        const provided = req.headers['x-telegram-bot-api-secret-token'];
+        if (!provided || !crypto.timingSafeEqual(Buffer.from(provided), Buffer.from(secretToken))) {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+    }
     try {
         await processUpdate(req.body, { getSupabaseAdmin: getAdminClient });
         res.json({ ok: true });
