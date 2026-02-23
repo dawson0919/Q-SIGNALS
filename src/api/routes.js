@@ -636,6 +636,29 @@ router.post('/admin/approve-application', requireAdmin, async (req, res) => {
     }
 });
 
+// Batch approve all pending applications
+router.post('/admin/approve-all', requireAdmin, async (req, res) => {
+    try {
+        const { getApplications, updateApplicationStatus } = require('../data/database');
+        const apps = await getApplications(req.token);
+        const pending = apps.filter(a => a.status === 'pending');
+
+        let approved = 0;
+        const errors = [];
+        for (const app of pending) {
+            try {
+                await updateApplicationStatus(app.id, app.user_id, 'approved', req.token);
+                approved++;
+            } catch (e) {
+                errors.push({ id: app.id, error: e.message });
+            }
+        }
+        res.json({ success: true, approved, errors });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 router.post('/admin/update-user-role', requireAdmin, async (req, res) => {
     try {
         const { userId, role } = req.body;

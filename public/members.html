@@ -162,6 +162,11 @@
                     <p class="text-[8px] text-slate-600 font-bold uppercase mt-0.5">待審核</p>
                 </div>
             </div>
+            ${pending > 0 ? `
+            <button onclick="approveAllPending()" class="w-full mb-3 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary text-black text-xs font-black uppercase tracking-widest hover:bg-yellow-400 active:scale-95 transition-all shadow-lg">
+                <span class="material-symbols-outlined text-sm">done_all</span>
+                一鍵全部批准 (${pending} 件待審)
+            </button>` : ''}
             <div class="grid grid-cols-3 gap-2 mb-6 text-center">
                 <div class="bg-surface-dark/50 border border-border-dark py-1.5 rounded-lg">
                     <p class="text-xs font-bold text-white">${basic}</p>
@@ -333,6 +338,27 @@
                     initPage(); // Reload
                 } else {
                     alert('Action failed');
+                }
+            } catch (e) { alert(e.message); }
+        };
+
+        window.approveAllPending = async () => {
+            const pending = allApplications.filter(a => a.status === 'pending');
+            if (pending.length === 0) return;
+            if (!confirm(`確認一鍵批准全部 ${pending.length} 件待審申請？`)) return;
+
+            const { token } = await getUser();
+            try {
+                const res = await fetch('/api/admin/approve-all', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(`已成功批准 ${data.approved} 件申請${data.errors?.length ? `，${data.errors.length} 件失敗` : ''}`);
+                    initPage();
+                } else {
+                    alert('批准失敗: ' + (data.error || 'Unknown error'));
                 }
             } catch (e) { alert(e.message); }
         };
