@@ -6,14 +6,17 @@ const router = express.Router();
 const rateLimit = require('express-rate-limit');
 
 // --- Rate Limiters ---
+// General limiter: 600 requests per 15 minutes per real IP
+// (enough for normal page loads which fire ~8-10 API calls at once)
 const generalLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 200,
+    windowMs: 15 * 60 * 1000,
+    max: 600,
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: 'Too many requests, please try again later.' }
 });
 
+// Auth/write-sensitive endpoints: stricter limit
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 30,
@@ -22,8 +25,9 @@ const authLimiter = rateLimit({
     message: { error: 'Too many auth requests, please try again later.' }
 });
 
+// Backtest: CPU-heavy, limit per minute
 const backtestLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
+    windowMs: 60 * 1000,
     max: 10,
     standardHeaders: true,
     legacyHeaders: false,
