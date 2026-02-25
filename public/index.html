@@ -535,13 +535,14 @@
         // Performance map: key = "strategyId_symbol_timeframe"
         const perfMap = perfRes.ok ? await perfRes.json() : {};
 
-        const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'SPXUSDT', 'NASUSDT'];
-        const symbolNames = { BTCUSDT: 'BTC', ETHUSDT: 'ETH', SOLUSDT: 'SOL', XAUUSDT: 'GOLD', SPXUSDT: 'SPX', NASUSDT: 'NAS' };
+        const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT'];
+        const symbolNames = { BTCUSDT: 'BTC', ETHUSDT: 'ETH', SOLUSDT: 'SOL', XAUUSDT: 'GOLD', SPXUSDT: 'SPX', NASUSDT: 'NAS', NQUSDT: 'NQ', ESUSDT: 'ES' };
+        const indexSymbols = ['SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT'];
 
         for (const strat of data.strategies) {
           for (const symbol of symbols) {
-            if ((symbol === 'SPXUSDT' || symbol === 'NASUSDT') && strat.id !== 'turtle_breakout') continue;
-            if (strat.id === 'dual_st_breakout' && (symbol === 'XAUUSDT' || symbol === 'SPXUSDT' || symbol === 'NASUSDT')) continue;
+            if (indexSymbols.includes(symbol) && strat.id !== 'turtle_breakout') continue;
+            if (strat.id === 'dual_st_breakout' && (symbol === 'XAUUSDT' || indexSymbols.includes(symbol))) continue;
 
             if (symbol === 'XAUUSDT' && (strat.id === 'three_style' || strat.id === 'granville_eth_4h')) {
               const tf = (strat.id === 'three_style') ? '1h' : '4h';
@@ -928,6 +929,8 @@
         { symbol: 'XAUUSDT', timeframe: '1h', id: 'three_blade', label: 'GOLD' },
         { symbol: 'SPXUSDT', timeframe: '4h', id: 'turtle_breakout', label: 'SPX' },
         { symbol: 'NASUSDT', timeframe: '4h', id: 'turtle_breakout', label: 'NAS' },
+        { symbol: 'NQUSDT', timeframe: '4h', id: 'turtle_breakout', label: 'NQ' },
+        { symbol: 'ESUSDT', timeframe: '4h', id: 'turtle_breakout', label: 'ES' },
       ];
 
       let itemHtml = '';

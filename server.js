@@ -162,7 +162,7 @@ async function computeStrategyPerformanceCache() {
     // Same symbol × timeframe combinations shown on homepage
     const jobs = [];
     const cryptoSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT'];
-    const indexSymbols  = ['SPXUSDT', 'NASUSDT'];
+    const indexSymbols  = ['SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT'];
 
     for (const s of strategyModules) {
         for (const symbol of cryptoSymbols) {
@@ -186,14 +186,14 @@ async function computeStrategyPerformanceCache() {
     let done = 0;
     for (const { s, symbol, timeframe } of jobs) {
         try {
-            const isIndex = (symbol === 'SPXUSDT' || symbol === 'NASUSDT');
+            const isIndex = ['SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT'].includes(symbol);
             const daysBack = isIndex ? 90 : (timeframe === '1h' ? 45 : 180);
             const candles = await getCandleData(symbol, timeframe, { daysBack });
             if (candles.length < 50) continue;
 
             let params = { ...s.defaultParams, symbol, timeframe };
             if (isIndex && s.id === 'turtle_breakout') {
-                if (symbol === 'NASUSDT') params = { leftBars: 4, rightBars: 5, minHoldBars: 20 };
+                if (symbol === 'NASUSDT' || symbol === 'NQUSDT') params = { leftBars: 4, rightBars: 5, minHoldBars: 20 };
                 else params = { leftBars: 6, rightBars: 5, minHoldBars: 15 };
             }
             const stratFn = s.createStrategy ? s.createStrategy(params) : s.execute;

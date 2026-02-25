@@ -727,7 +727,7 @@ router.post('/backtest', backtestLimiter, async (req, res) => {
             let params = { ...s.defaultParams, symbol, timeframe };
 
             if (isIndex && strategyId === 'turtle_breakout') {
-                if (symbol === 'NASUSDT' && timeframe === '4h') {
+                if ((symbol === 'NASUSDT' || symbol === 'NQUSDT') && timeframe === '4h') {
                     params = { leftBars: 4, rightBars: 5, minHoldBars: 20 };
                 } else if (timeframe === '4h') {
                     params = { leftBars: 6, rightBars: 5, minHoldBars: 15 };
@@ -845,7 +845,7 @@ router.get('/prices/history', async (req, res) => {
 
 // DB stats
 router.get('/stats', async (req, res) => {
-    const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'NQUSDT', 'ESUSDT'];
+    const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT'];
     const stats = {};
     for (const s of symbols) {
         stats[s] = await getCandleCount(s, '4h');

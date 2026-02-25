@@ -177,9 +177,43 @@ function startPriceMonitor() {
         });
     }
 
+    // Poll NQ/ES Futures Prices from Yahoo Finance (15min delay)
+    async function pollYahooFutures() {
+        const yahooMap = { 'NQUSDT': 'NQ=F', 'ESUSDT': 'ES=F' };
+        try {
+            const YahooFinance = require('yahoo-finance2').default;
+            const yahoo = new YahooFinance();
+            for (const [symbol, yahooSymbol] of Object.entries(yahooMap)) {
+                try {
+                    const quote = await yahoo.quote(yahooSymbol);
+                    if (quote && quote.regularMarketPrice > 100) {
+                        currentPrices[symbol] = {
+                            price: quote.regularMarketPrice,
+                            change24h: quote.regularMarketChangePercent || 0,
+                            high24h: quote.regularMarketDayHigh || 0,
+                            low24h: quote.regularMarketDayLow || 0,
+                            volume24h: quote.regularMarketVolume || 0,
+                            timestamp: Date.now(),
+                            source: 'yahoo'
+                        };
+                    }
+                } catch (e) {
+                    console.error(`[PriceMonitor] Yahoo fetch error for ${symbol}:`, e.message);
+                }
+            }
+            if (global.broadcastPrices) {
+                global.broadcastPrices(currentPrices);
+            }
+        } catch (e) {
+            console.error('[PriceMonitor] Yahoo module error:', e.message);
+        }
+    }
+
     // Initial fetch and 60s interval
     pollCoinGecko();
     setInterval(pollCoinGecko, 60000);
+    pollYahooFutures();
+    setInterval(pollYahooFutures, 60000);
 }
 
 function stopPriceMonitor() {

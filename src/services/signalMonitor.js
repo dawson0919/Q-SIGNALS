@@ -5,7 +5,7 @@
  */
 const Backtester = require('../engine/backtester');
 const { getCandleData } = require('../engine/dataFetcher');
-const { sendSignalNotification } = require('./telegramBot');
+const { sendSignalNotification, sendCloseSignalNotification } = require('./telegramBot');
 
 // In-memory cache of last known signals per strategy+symbol
 const lastSignals = {};
@@ -57,13 +57,16 @@ const MONITOR_COMBOS = [
     { symbol: 'XAUUSDT', strategyId: 'donchian_trend', timeframe: '4h' },
     { symbol: 'XAUUSDT', strategyId: 'dual_ema', timeframe: '4h' },
     { symbol: 'XAUUSDT', strategyId: 'granville_eth_4h', timeframe: '4h' },
-    // Indices (Removed duplicates ES/NQ)
+    // Indices
     { symbol: 'SPXUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
     { symbol: 'NASUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
+    // Futures (NQ / ES via Yahoo Finance)
+    { symbol: 'NQUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
+    { symbol: 'ESUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
 ];
 
 /**
- * Run a single backtest and check for new signals
+ * Run a single backtest and check for new signals (entry + close)
  */
 async function checkSignal(combo, strategiesMap) {
     const { symbol, strategyId, timeframe } = combo;
@@ -83,23 +86,22 @@ async function checkSignal(combo, strategiesMap) {
 
         const latest = result.recentTrades[0];
         const signalKey = `${strategyId}_${symbol}_${timeframe}`;
+        const closeKey = `${signalKey}_CLOSE`;
         const oldSignal = lastSignals[signalKey];
+        const oldClose = lastSignals[closeKey];
+        const now = Date.now();
+        const MAX_AGE_MS = 4 * 60 * 60 * 1000; // 4 hours
+        const signals = []; // Collect both entry and close signals
 
-        // Check if this is a NEW signal (different entry time or type)
-        // Use new Date().getTime() to ensure comparison works between string (ISO) and number (timestamp)
+        // ── 1. Check for NEW ENTRY signal ──
         const isNew = !oldSignal ||
             new Date(oldSignal.entryTime).getTime() !== new Date(latest.entryTime).getTime() ||
             oldSignal.type !== latest.type;
 
-        // CRITICAL: Recency Check
-        // Only notify if the signal happened recently (e.g. within last 24 hours)
-        // This prevents re-broadcasting old signals from 2 weeks ago on restart
-        const now = Date.now();
         const signalTime = new Date(latest.entryTime).getTime();
-        const MAX_AGE_MS = 4 * 60 * 60 * 1000; // 4 hours (User requested: no signals older than 4h)
         const isRecent = !isNaN(signalTime) && (now - signalTime) < MAX_AGE_MS;
 
-        // Always update cache
+        // Always update entry cache
         lastSignals[signalKey] = {
             entryTime: latest.entryTime,
             type: latest.type,
@@ -108,7 +110,8 @@ async function checkSignal(combo, strategiesMap) {
         };
 
         if (isNew && isRecent) {
-            return {
+            signals.push({
+                signalType: 'entry',
                 strategyId,
                 strategyName: s.name,
                 symbol,
@@ -117,10 +120,45 @@ async function checkSignal(combo, strategiesMap) {
                 price: latest.entryPrice,
                 rule: latest.rule,
                 entryTime: latest.entryTime
-            };
+            });
         }
 
-        return null;
+        // ── 2. Check for NEW CLOSE signal ──
+        // Find the most recently closed trade (has exitTime and exitPrice)
+        const latestClosed = result.recentTrades.find(t => t.exitTime && t.exitPrice);
+        if (latestClosed) {
+            const isNewClose = !oldClose ||
+                new Date(oldClose.exitTime).getTime() !== new Date(latestClosed.exitTime).getTime();
+            const closeTime = new Date(latestClosed.exitTime).getTime();
+            const isRecentClose = !isNaN(closeTime) && (now - closeTime) < MAX_AGE_MS;
+
+            // Always update close cache
+            lastSignals[closeKey] = {
+                exitTime: latestClosed.exitTime,
+                exitPrice: latestClosed.exitPrice,
+                entryPrice: latestClosed.entryPrice,
+                type: latestClosed.type,
+                pnlPercent: latestClosed.pnlPercent
+            };
+
+            if (isNewClose && isRecentClose) {
+                signals.push({
+                    signalType: 'close',
+                    strategyId,
+                    strategyName: s.name,
+                    symbol,
+                    timeframe,
+                    type: latestClosed.type,
+                    entryPrice: latestClosed.entryPrice,
+                    exitPrice: latestClosed.exitPrice,
+                    entryTime: latestClosed.entryTime,
+                    exitTime: latestClosed.exitTime,
+                    pnlPercent: latestClosed.pnlPercent
+                });
+            }
+        }
+
+        return signals.length > 0 ? signals : null;
     } catch (err) {
         console.error(`[SignalMonitor] Error checking ${strategyId}/${symbol}:`, err.message);
         return null;
@@ -128,7 +166,7 @@ async function checkSignal(combo, strategiesMap) {
 }
 
 /**
- * Notify all subscribers of a new signal via Telegram
+ * Notify all subscribers of a signal (entry or close) via Telegram
  */
 async function notifySubscribers(signal, supabaseAdmin) {
     try {
@@ -158,11 +196,17 @@ async function notifySubscribers(signal, supabaseAdmin) {
 
         let sent = 0;
         for (const profile of profiles) {
-            const result = await sendSignalNotification(profile.telegram_chat_id, signal);
+            let result;
+            if (signal.signalType === 'close') {
+                result = await sendCloseSignalNotification(profile.telegram_chat_id, signal);
+            } else {
+                result = await sendSignalNotification(profile.telegram_chat_id, signal);
+            }
             if (result) sent++;
         }
 
-        console.log(`[SignalMonitor] Notified ${sent}/${profiles.length} users for ${signal.strategyId}/${signal.symbol}`);
+        const label = signal.signalType === 'close' ? '🔓 CLOSE' : '🔔 ENTRY';
+        console.log(`[SignalMonitor] ${label} Notified ${sent}/${profiles.length} users for ${signal.strategyId}/${signal.symbol}`);
         return sent;
     } catch (err) {
         console.error('[SignalMonitor] Notify error:', err.message);
@@ -194,11 +238,31 @@ async function syncLastSignals(supabaseAdmin) {
                     rule: sub.latest_signal.rule
                 };
             }
+            // Also hydrate close cache if available
+            const closeKey = `${key}_CLOSE`;
+            if (!lastSignals[closeKey] && sub.latest_signal && sub.latest_signal.close_time) {
+                lastSignals[closeKey] = {
+                    exitTime: sub.latest_signal.close_time,
+                    exitPrice: sub.latest_signal.close_price,
+                    entryPrice: sub.latest_signal.price,
+                    type: sub.latest_signal.type,
+                    pnlPercent: sub.latest_signal.close_pnl
+                };
+            }
         }
         console.log(`[SignalMonitor] Hydrated cache with ${Object.keys(lastSignals).length} existing signals from DB`);
     } catch (err) {
         console.error('[SignalMonitor] Sync error:', err.message);
     }
+}
+
+/**
+ * Get symbol variations for dedup
+ */
+function getSymbolVariations(symbol) {
+    const variations = [symbol];
+    if (symbol === 'XAUUSDT') variations.push('XAU/USDT', 'GOLD', 'XAUTUSDT', 'Tether Gold');
+    return variations;
 }
 
 /**
@@ -209,73 +273,123 @@ async function runSignalCheck(supabaseAdmin) {
 
     const strategies = getStrategies();
     const startTime = Date.now();
-    let newSignals = 0;
+    let newEntrySignals = 0;
+    let newCloseSignals = 0;
 
     console.log(`[SignalMonitor] Starting signal check (${MONITOR_COMBOS.length} combos)...`);
 
     for (const combo of MONITOR_COMBOS) {
-        const signal = await checkSignal(combo, strategies);
-        if (signal) {
-            const symbolVariations = [signal.symbol];
-            if (signal.symbol === 'XAUUSDT') symbolVariations.push('XAU/USDT', 'GOLD', 'XAUTUSDT', 'Tether Gold');
+        const signals = await checkSignal(combo, strategies);
+        if (!signals || signals.length === 0) continue;
 
-            // ATOMIC RE-CHECK: See if DB already has this signal
-            // This handles multi-instance overlaps where one server already notified
-            try {
-                const { data: existing } = await supabaseAdmin
-                    .from('subscriptions')
-                    .select('latest_signal')
-                    .eq('strategy_id', signal.strategyId)
-                    .in('symbol', symbolVariations)
-                    .not('latest_signal', 'is', null)
-                    .limit(5);
+        for (const signal of signals) {
+            const symbolVariations = getSymbolVariations(signal.symbol);
 
-                const alreadyProcessed = (existing || []).some(sub => {
-                    if (!sub.latest_signal) return false;
-                    const dbTime = new Date(sub.latest_signal.time).getTime();
-                    const signalTime = new Date(signal.entryTime).getTime();
-                    return dbTime === signalTime && sub.latest_signal.type === signal.type;
-                });
+            if (signal.signalType === 'entry') {
+                // ── Entry Signal: DB dedup + notify ──
+                try {
+                    const { data: existing } = await supabaseAdmin
+                        .from('subscriptions')
+                        .select('latest_signal')
+                        .eq('strategy_id', signal.strategyId)
+                        .in('symbol', symbolVariations)
+                        .not('latest_signal', 'is', null)
+                        .limit(5);
 
-                if (alreadyProcessed) {
-                    // console.log(`[SignalMonitor] ⏭️ Skipping: ${signal.strategyId}/${signal.symbol} (Already processed in DB)`);
-                    continue;
+                    const alreadyProcessed = (existing || []).some(sub => {
+                        if (!sub.latest_signal) return false;
+                        const dbTime = new Date(sub.latest_signal.time).getTime();
+                        const sigTime = new Date(signal.entryTime).getTime();
+                        return dbTime === sigTime && sub.latest_signal.type === signal.type;
+                    });
+
+                    if (alreadyProcessed) continue;
+                } catch (err) {
+                    console.warn('[SignalMonitor] Atomic check failed, proceeding:', err.message);
                 }
-            } catch (err) {
-                console.warn('[SignalMonitor] Atomic check failed, proceeding with caution:', err.message);
+
+                newEntrySignals++;
+                console.log(`[SignalMonitor] 🔔 NEW ENTRY: ${signal.type} ${signal.symbol} @ $${signal.price} (${signal.strategyName})`);
+
+                // Update DB
+                try {
+                    await supabaseAdmin
+                        .from('subscriptions')
+                        .update({
+                            latest_signal: {
+                                type: signal.type,
+                                price: signal.price,
+                                time: signal.entryTime,
+                                rule: signal.rule,
+                                strategyName: signal.strategyName,
+                                processed_at: new Date().toISOString()
+                            }
+                        })
+                        .eq('strategy_id', signal.strategyId)
+                        .in('symbol', symbolVariations)
+                        .eq('timeframe', signal.timeframe);
+                } catch (err) {
+                    console.error('[SignalMonitor] DB update error:', err.message);
+                }
+
+                await notifySubscribers(signal, supabaseAdmin);
+
+            } else if (signal.signalType === 'close') {
+                // ── Close Signal: DB dedup + notify ──
+                try {
+                    const { data: existing } = await supabaseAdmin
+                        .from('subscriptions')
+                        .select('latest_signal')
+                        .eq('strategy_id', signal.strategyId)
+                        .in('symbol', symbolVariations)
+                        .not('latest_signal', 'is', null)
+                        .limit(5);
+
+                    const alreadyProcessed = (existing || []).some(sub => {
+                        if (!sub.latest_signal || !sub.latest_signal.close_time) return false;
+                        const dbCloseTime = new Date(sub.latest_signal.close_time).getTime();
+                        const sigCloseTime = new Date(signal.exitTime).getTime();
+                        return dbCloseTime === sigCloseTime;
+                    });
+
+                    if (alreadyProcessed) continue;
+                } catch (err) {
+                    console.warn('[SignalMonitor] Close atomic check failed, proceeding:', err.message);
+                }
+
+                newCloseSignals++;
+                console.log(`[SignalMonitor] 🔓 CLOSE: ${signal.type} ${signal.symbol} @ $${signal.exitPrice} PnL:${signal.pnlPercent.toFixed(2)}% (${signal.strategyName})`);
+
+                // Update DB with close info
+                try {
+                    await supabaseAdmin
+                        .from('subscriptions')
+                        .update({
+                            latest_signal: {
+                                type: signal.type,
+                                price: signal.entryPrice,
+                                time: signal.entryTime,
+                                strategyName: signal.strategyName,
+                                close_price: signal.exitPrice,
+                                close_time: signal.exitTime,
+                                close_pnl: signal.pnlPercent,
+                                processed_at: new Date().toISOString()
+                            }
+                        })
+                        .eq('strategy_id', signal.strategyId)
+                        .in('symbol', symbolVariations)
+                        .eq('timeframe', signal.timeframe);
+                } catch (err) {
+                    console.error('[SignalMonitor] Close DB update error:', err.message);
+                }
+
+                await notifySubscribers(signal, supabaseAdmin);
             }
-
-            newSignals++;
-            console.log(`[SignalMonitor] 🔔 NEW SIGNAL: ${signal.type} ${signal.symbol} @ $${signal.price} (${signal.strategyName})`);
-
-            // First update DB to "mark" it as processed by this combo
-            try {
-                await supabaseAdmin
-                    .from('subscriptions')
-                    .update({
-                        latest_signal: {
-                            type: signal.type,
-                            price: signal.price,
-                            time: signal.entryTime,
-                            rule: signal.rule,
-                            strategyName: signal.strategyName,
-                            processed_at: new Date().toISOString()
-                        }
-                    })
-                    .eq('strategy_id', signal.strategyId)
-                    .in('symbol', symbolVariations)
-                    .eq('timeframe', signal.timeframe);
-            } catch (err) {
-                console.error('[SignalMonitor] DB update error:', err.message);
-            }
-
-            // Then notify users
-            await notifySubscribers(signal, supabaseAdmin);
         }
     }
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
-    console.log(`[SignalMonitor] Check complete: ${newSignals} new signals found (${duration}s)`);
+    console.log(`[SignalMonitor] Check complete: ${newEntrySignals} entry + ${newCloseSignals} close signals (${duration}s)`);
 }
 
 /**

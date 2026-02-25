@@ -272,15 +272,14 @@
         const timeframe = params.get('timeframe') || '4h';
 
         // Update Title dynamically
-        const days = (symbol === 'SPXUSDT' || symbol === 'SPYUSDT') ? 90 : (timeframe === '1h' ? 45 : 180);
+        const isIndexSymbol = ['SPXUSDT', 'SPYUSDT', 'NQUSDT', 'ESUSDT'].includes(symbol);
+        const days = isIndexSymbol ? 90 : (timeframe === '1h' ? 45 : 180);
         const tfLabel = timeframe.toUpperCase();
-        const isSPX = (symbol === 'SPXUSDT' || symbol === 'SPYUSDT');
-
         const titleEl = document.getElementById('equityTitle');
-        if (titleEl) titleEl.textContent = `Equity Curve ${tfLabel} K線 • ${isSPX ? '90天回測' : '最近 ' + days + ' 天'}`;
+        if (titleEl) titleEl.textContent = `Equity Curve ${tfLabel} K線 • ${isIndexSymbol ? '90天回測' : '最近 ' + days + ' 天'}`;
 
         const roiLabelEl = document.getElementById('roiTitlePeriod');
-        if (roiLabelEl) roiLabelEl.textContent = isSPX ? '90天回測' : `${days}d`;
+        if (roiLabelEl) roiLabelEl.textContent = isIndexSymbol ? '90天回測' : `${days}d`;
 
         let userRole = 'standard'; // Track user role
         let strategyCategory = 'Basic'; // Track strategy category
@@ -305,15 +304,13 @@
             const isAdmin = userRole === 'admin';
             const isPlatinum = userRole === 'platinum';
             const isAdvanced = userRole === 'advanced';
-            const isSPX = symbol === 'SPXUSDT';
-
             // Load strategy info
             try {
                 const sHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
                 const sRes = await fetch(`/api/strategies/${strategyId}`, { headers: sHeaders });
                 const strat = await sRes.json();
 
-                const isIndexAsset = (symbol === 'SPXUSDT' || symbol === 'NASUSDT');
+                const isIndexAsset = ['SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT'].includes(symbol);
                 strategyCategory = isIndexAsset ? 'Platinum' : (strat.category || 'Basic');
                 const isPlatinumAsset = strategyCategory === 'Platinum';
 
@@ -336,7 +333,7 @@
                 // Show admin notes (Admin Only UI check + API check)
                 if (isAdmin && strat.adminNotes) {
                     let notes = strat.adminNotes;
-                    const mapping = { 'XAUUSDT': '[XAU / GOLD]', 'SPXUSDT': '[SPX / SPY]', 'SPYUSDT': '[SPX / SPY]', 'NASUSDT': '[NAS / QQQ]' };
+                    const mapping = { 'XAUUSDT': '[XAU / GOLD]', 'SPXUSDT': '[SPX / SPY]', 'SPYUSDT': '[SPX / SPY]', 'NASUSDT': '[NAS / QQQ]', 'NQUSDT': '[NQ / Nasdaq Futures]', 'ESUSDT': '[ES / S&P Futures]' };
                     const header = mapping[symbol];
                     if (header && notes.includes(header)) {
                         const globalHeader = notes.split('[')[0];
@@ -351,7 +348,7 @@
             } catch (e) { }
 
             // Visibility Logic
-            const isIndex = (symbol === 'SPXUSDT' || symbol === 'NASUSDT');
+            const isIndex = ['SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT'].includes(symbol);
             if (isIndex) {
                 if (isAdmin || isPlatinum) {
                     document.getElementById('signalSection').style.display = 'block';
@@ -377,16 +374,22 @@
                 }
             }
 
-            // CoinGecko Data Notice
-            const isNasdaq = symbol === 'NASUSDT';
-            if (isSPX || isNasdaq) {
+            // Data Source Notice for Index/Futures assets
+            const dataSourceNames = {
+                'SPXUSDT': '標普 500 (SPY)',
+                'NASUSDT': '納斯達克 100 (QQQ)',
+                'NQUSDT': '納斯達克 100 期貨 (NQ)',
+                'ESUSDT': '標普 500 期貨 (ES)'
+            };
+            if (dataSourceNames[symbol]) {
+                const assetName = dataSourceNames[symbol];
+                const source = (symbol === 'NQUSDT' || symbol === 'ESUSDT') ? 'Yahoo Finance（延遲 15 分鐘）' : 'CoinGecko';
                 const infoMsg = document.createElement('div');
                 infoMsg.className = 'mx-4 mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl flex items-start gap-2';
-                const assetName = isNasdaq ? '納斯達克 100 (QQQ)' : '標普 500 (SPY)';
                 infoMsg.innerHTML = `
                     <span class="material-symbols-outlined text-blue-400 text-sm mt-0.5">info</span>
                     <div class="text-[11px] text-blue-400/90 leading-tight">
-                        說明：${assetName} 數據源自 CoinGecko。受限於精度上限，回測涵蓋最近 <b>90 天</b> 真實股價數據。
+                        說明：${assetName} 數據源自 ${source}。回測涵蓋最近 <b>90 天</b> 數據。
                     </div>
                 `;
                 document.querySelector('main').insertBefore(infoMsg, document.getElementById('perfGrid').parentNode.nextSibling);
@@ -546,13 +549,12 @@
             document.getElementById('periodLabel').textContent = `${s.period.startDate} → ${s.period.endDate}`;
 
             // Set ROI Period Label based on timeframe
-            const isSPX = (symbol === 'SPXUSDT' || symbol === 'SPYUSDT');
-            const roiDays = isSPX ? 90 : (timeframe === '1h' ? 45 : 180);
+            const roiDays = isIndexSymbol ? 90 : (timeframe === '1h' ? 45 : 180);
             const returnPeriodLabel = document.getElementById('returnPeriodLabel');
-            if (returnPeriodLabel) returnPeriodLabel.textContent = isSPX ? '回測涵蓋最近 90 天績效' : `最近 ${roiDays} 天績效`;
+            if (returnPeriodLabel) returnPeriodLabel.textContent = isIndexSymbol ? '回測涵蓋最近 90 天績效' : `最近 ${roiDays} 天績效`;
 
             const roiTitlePeriod = document.getElementById('roiTitlePeriod');
-            if (roiTitlePeriod) roiTitlePeriod.textContent = isSPX ? '90D' : `${roiDays}d`;
+            if (roiTitlePeriod) roiTitlePeriod.textContent = isIndexSymbol ? '90D' : `${roiDays}d`;
 
             // Show latest signal from recent trades
             if (data.recentTrades && data.recentTrades.length > 0) {
@@ -679,6 +681,7 @@
                 const isProfit = t.pnlPercent > 0;
                 const isLong = t.type === 'LONG';
                 const badgeBg = isLong ? 'bg-primary/20 text-primary' : 'bg-orange-500/20 text-orange-400';
+                const isClosed = !!t.exitPrice;
 
                 // Granville Rules Mapping
                 const ruleMap = {
@@ -690,23 +693,58 @@
                 };
                 const ruleDesc = t.rule ? (ruleMap[t.rule] || t.rule) : '波段策略信號';
 
+                // Price formatting
+                const pricePrecision = (t.entryPrice || 0) < 1 ? 4 : ((t.entryPrice || 0) < 100 ? 2 : 0);
+                const entryFormatted = t.entryPrice?.toLocaleString('en-US', { minimumFractionDigits: pricePrecision, maximumFractionDigits: pricePrecision });
+                const exitFormatted = t.exitPrice?.toLocaleString('en-US', { minimumFractionDigits: pricePrecision, maximumFractionDigits: pricePrecision });
+
+                // Time formatting
+                const fmtTime = (ts) => {
+                    if (!ts) return '--';
+                    return new Date(ts).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+                };
+
+                // Hold duration
+                let holdStr = '';
+                if (t.entryTime && t.exitTime) {
+                    const holdMs = new Date(t.exitTime).getTime() - new Date(t.entryTime).getTime();
+                    const holdHours = Math.floor(holdMs / (1000 * 60 * 60));
+                    const holdDays = Math.floor(holdHours / 24);
+                    const holdRemainder = holdHours % 24;
+                    holdStr = holdDays > 0 ? `${holdDays}d ${holdRemainder}h` : `${holdHours}h`;
+                }
+
+                // Status badge
+                const statusBadge = isClosed
+                    ? `<span class="px-1.5 py-0.5 rounded bg-slate-700 text-slate-300 text-[9px] font-bold">CLOSED 平倉</span>`
+                    : `<span class="px-1.5 py-0.5 rounded bg-primary/20 text-primary text-[9px] font-bold animate-pulse">OPEN 持倉中</span>`;
+
                 const div = document.createElement('div');
-                div.className = 'bg-surface-dark border border-border-dark p-4 rounded-xl flex justify-between items-center hover:border-primary/30 transition-all';
+                div.className = 'bg-surface-dark border border-border-dark p-4 rounded-xl hover:border-primary/30 transition-all';
                 div.innerHTML = `
-                    <div class="flex flex-col gap-1">
+                    <div class="flex justify-between items-start mb-2">
                         <div class="flex items-center gap-2">
                             <span class="px-1.5 py-0.5 rounded ${badgeBg} text-[10px] font-bold">${t.type}</span>
                             <span class="text-sm font-bold text-white">${symbol.replace('USDT', '/USDT')}</span>
+                            ${statusBadge}
                         </div>
-                        <div class="flex items-center gap-1.5 grayscale opacity-70">
-                            <span class="material-symbols-outlined text-[14px]">tune</span>
-                            <span class="text-[11px] text-slate-400 font-medium">${ruleDesc}</span>
-                        </div>
-                    </div>
-                    <div class="text-right">
                         <p class="${isProfit ? 'text-primary' : 'text-red-500'} font-black text-base">${isProfit ? '+' : ''}${t.pnlPercent}%</p>
-                        <p class="text-[10px] text-slate-500 font-medium">@ $${t.entryPrice?.toLocaleString()}</p>
                     </div>
+                    <div class="flex items-center gap-1.5 text-[11px] text-slate-400 mb-1.5">
+                        <span class="material-symbols-outlined text-[14px]">tune</span>
+                        <span class="font-medium">${ruleDesc}</span>
+                    </div>
+                    <div class="flex items-center gap-1 text-[10px] text-slate-500 font-mono">
+                        <span class="text-slate-400">$${entryFormatted}</span>
+                        ${isClosed ? `<span class="material-symbols-outlined text-[12px] text-slate-600">arrow_forward</span>
+                        <span class="${isProfit ? 'text-primary' : 'text-red-400'}">$${exitFormatted}</span>` : ''}
+                    </div>
+                    ${isClosed ? `<div class="flex items-center gap-3 mt-2 text-[10px] text-slate-600">
+                        <span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[11px]">schedule</span>${fmtTime(t.entryTime)} → ${fmtTime(t.exitTime)}</span>
+                        <span class="flex items-center gap-0.5"><span class="material-symbols-outlined text-[11px]">timer</span>${holdStr}</span>
+                    </div>` : `<div class="flex items-center gap-1 mt-2 text-[10px] text-slate-600">
+                        <span class="material-symbols-outlined text-[11px]">schedule</span>${fmtTime(t.entryTime)}
+                    </div>`}
                 `;
                 container.appendChild(div);
             });
