@@ -104,6 +104,10 @@
     .pulse-green {
       animation: pulse-green 2s ease-in-out infinite;
     }
+
+    .glow-indigo {
+      box-shadow: 0 0 20px rgba(79, 70, 229, 0.2);
+    }
   </style>
 </head>
 
@@ -321,66 +325,140 @@
             </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Strategy List -->
-    <div class="p-4 space-y-4">
-      <div class="flex items-center justify-between mb-2">
-        <div class="flex flex-col">
-          <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 leading-none">Trading Signals</h2>
-          <span class="text-[9px] text-slate-600 font-bold uppercase mt-0.5">交易策略信號</span>
+        <!-- NQ Best Performance Card -->
+        <div class="px-4 pt-4">
+          <div
+            class="bg-gradient-to-br from-indigo-600/20 via-card-dark to-card-dark border border-indigo-500/30 rounded-2xl p-6 relative overflow-hidden group shadow-[0_0_30px_rgba(79,70,229,0.05)]">
+            <div
+              class="absolute -right-6 -top-6 opacity-10 group-hover:scale-110 transition-transform duration-[2000ms]">
+              <span class="material-symbols-outlined text-indigo-500 text-[140px]">trending_up</span>
+            </div>
+            <div class="relative z-10">
+              <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center gap-2">
+                  <span class="flex h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                  <span
+                    class="text-[10px] font-black bg-indigo-500/20 text-indigo-500 px-2 py-0.5 rounded uppercase tracking-widest">NQ
+                    Best Strategy</span>
+                  <span class="text-[9px] text-indigo-500/60 font-bold uppercase">納斯達克最佳策略</span>
+                </div>
+                <div class="flex items-center gap-1.5 px-2 py-1 rounded bg-black/40 border border-indigo-500/20">
+                  <span class="material-symbols-outlined text-indigo-500 text-xs">verified</span>
+                  <span class="text-[9px] font-black text-indigo-400 uppercase tracking-tighter">Backtested (6.08%
+                    ROI)</span>
+                </div>
+              </div>
+
+              <div class="flex flex-col md:flex-row justify-between md:items-end gap-6">
+                <div class="flex-1">
+                  <h3 class="text-xs font-bold text-slate-500 uppercase tracking-tight mb-1">Nasdaq 100 Index (NAS/USDT)
+                  </h3>
+                  <div class="flex items-baseline gap-4">
+                    <span id="nqPriceMain"
+                      class="text-4xl md:text-5xl font-black text-white italic tracking-tighter tabular-nums drop-shadow-md">$----.--</span>
+                    <span id="nqChangeMain"
+                      class="text-base font-bold text-slate-500 bg-slate-800/50 px-2 py-0.5 rounded">--%</span>
+                  </div>
+                </div>
+
+                <div class="flex-1 bg-black/30 backdrop-blur-sm rounded-xl p-4 border border-white/5 min-h-[100px]">
+                  <div class="flex items-center justify-between mb-3 text-indigo-400">
+                    <span class="text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
+                      <span class="w-1 h-3 bg-indigo-500 rounded-full"></span>
+                      TURTLE BREAKOUT
+                    </span>
+                    <span class="text-[9px] bg-indigo-500/20 px-1.5 py-0.5 rounded-full font-black">OPTIMIZED</span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                    <div>
+                      <p class="text-[9px] text-slate-500 uppercase font-bold">Win Rate</p>
+                      <p class="text-sm font-black text-white">63.64%</p>
+                    </div>
+                    <div>
+                      <p class="text-[9px] text-slate-500 uppercase font-bold">Profit Factor</p>
+                      <p class="text-sm font-black text-white">3.76</p>
+                    </div>
+                    <div>
+                      <p class="text-[9px] text-slate-500 uppercase font-bold">Total Trades</p>
+                      <p class="text-sm font-black text-white">11</p>
+                    </div>
+                    <div>
+                      <p class="text-[9px] text-slate-500 uppercase font-bold">Parameters</p>
+                      <p class="text-xs font-bold text-indigo-400">L12 / R4 / H2</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <a href="strategy-detail.html?strategy=turtle_breakout&symbol=NASUSDT&timeframe=4h"
+                    class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-black text-sm transition-all flex items-center gap-2 glow-indigo whitespace-nowrap uppercase tracking-wider">
+                    查看詳細海龜信號
+                    <span class="material-symbols-outlined text-base">analytics</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="flex flex-col items-end leading-none">
-          <span class="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold uppercase">LIVE
-            FEED</span>
-          <span class="text-[8px] text-primary/50 font-bold mr-1 mt-0.5 uppercase italic">實時推播</span>
+
+        <!-- Strategy List -->
+        <div class="p-4 space-y-4">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex flex-col">
+              <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 leading-none">Trading Signals</h2>
+              <span class="text-[9px] text-slate-600 font-bold uppercase mt-0.5">交易策略信號</span>
+            </div>
+            <div class="flex flex-col items-end leading-none">
+              <span class="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold uppercase">LIVE
+                FEED</span>
+              <span class="text-[8px] text-primary/50 font-bold mr-1 mt-0.5 uppercase italic">實時推播</span>
+            </div>
+          </div>
+          <div id="strategyList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Strategies loaded dynamically -->
+          </div>
+          <div id="noSearchResults" class="hidden flex-col items-center justify-center py-12 gap-3">
+            <span class="material-symbols-outlined text-slate-700 text-5xl">search_off</span>
+            <p class="text-slate-500 font-bold text-sm">找不到符合的策略</p>
+            <p class="text-slate-600 text-xs">No strategies found. Try a different keyword.</p>
+          </div>
         </div>
-      </div>
-      <div id="strategyList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Strategies loaded dynamically -->
-      </div>
-      <div id="noSearchResults" class="hidden flex-col items-center justify-center py-12 gap-3">
-        <span class="material-symbols-outlined text-slate-700 text-5xl">search_off</span>
-        <p class="text-slate-500 font-bold text-sm">找不到符合的策略</p>
-        <p class="text-slate-600 text-xs">No strategies found. Try a different keyword.</p>
-      </div>
-    </div>
 
-    <!-- Official Partners -->
-    <div class="px-4 pb-6 mt-8">
-      <div class="flex flex-col items-center mb-4">
-        <h2 class="text-xs font-bold uppercase tracking-widest text-slate-500 leading-none text-center">Official
-          Partners - Register for Premium</h2>
-        <span class="text-[9px] text-slate-600 font-bold uppercase mt-1 leading-none">官方合作夥伴 — 註冊以獲得進階權限</span>
-      </div>
-      <div class="grid grid-cols-2 gap-4">
-        <a href="https://reurl.cc/oKAgxg" target="_blank"
-          class="bg-card-dark border border-border-dark hover:border-primary/50 p-4 rounded-xl flex flex-col items-center justify-center gap-2 group transition-all">
-          <img src="https://www.pionex.com/static/img/logo_white.png" alt="Pionex"
-            class="h-8 object-contain opacity-80 group-hover:opacity-100 transition-opacity"
-            onerror="this.onerror=null; this.src='https://placehold.co/120x40/000000/FFFFFF?text=Pionex'">
-          <span
-            class="text-[10px] text-slate-500 uppercase font-bold group-hover:text-primary transition-colors">Register
-            Account &rarr;</span>
-        </a>
-        <a href="https://mytd.cc/py0h" target="_blank"
-          class="bg-card-dark border border-border-dark hover:border-blue-500/50 p-4 rounded-xl flex flex-col items-center justify-center gap-2 group transition-all">
-          <img src="https://www.mitrade.com/assets/public/images/logo/logo-white.svg" alt="MiTRADE"
-            class="h-8 object-contain opacity-80 group-hover:opacity-100 transition-opacity"
-            onerror="this.onerror=null; this.src='https://placehold.co/120x40/000000/FFFFFF?text=MiTRADE'">
-          <span
-            class="text-[10px] text-slate-500 uppercase font-bold group-hover:text-blue-500 transition-colors">Register
-            Account &rarr;</span>
-        </a>
-      </div>
-    </div>
+        <!-- Official Partners -->
+        <div class="px-4 pb-6 mt-8">
+          <div class="flex flex-col items-center mb-4">
+            <h2 class="text-xs font-bold uppercase tracking-widest text-slate-500 leading-none text-center">Official
+              Partners - Register for Premium</h2>
+            <span class="text-[9px] text-slate-600 font-bold uppercase mt-1 leading-none">官方合作夥伴 — 註冊以獲得進階權限</span>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <a href="https://reurl.cc/oKAgxg" target="_blank"
+              class="bg-card-dark border border-border-dark hover:border-primary/50 p-4 rounded-xl flex flex-col items-center justify-center gap-2 group transition-all">
+              <img src="https://www.pionex.com/static/img/logo_white.png" alt="Pionex"
+                class="h-8 object-contain opacity-80 group-hover:opacity-100 transition-opacity"
+                onerror="this.onerror=null; this.src='https://placehold.co/120x40/000000/FFFFFF?text=Pionex'">
+              <span
+                class="text-[10px] text-slate-500 uppercase font-bold group-hover:text-primary transition-colors">Register
+                Account &rarr;</span>
+            </a>
+            <a href="https://mytd.cc/py0h" target="_blank"
+              class="bg-card-dark border border-border-dark hover:border-blue-500/50 p-4 rounded-xl flex flex-col items-center justify-center gap-2 group transition-all">
+              <img src="https://www.mitrade.com/assets/public/images/logo/logo-white.svg" alt="MiTRADE"
+                class="h-8 object-contain opacity-80 group-hover:opacity-100 transition-opacity"
+                onerror="this.onerror=null; this.src='https://placehold.co/120x40/000000/FFFFFF?text=MiTRADE'">
+              <span
+                class="text-[10px] text-slate-500 uppercase font-bold group-hover:text-blue-500 transition-colors">Register
+                Account &rarr;</span>
+            </a>
+          </div>
+        </div>
 
-    <!-- System Update Time -->
-    <div class="px-4 py-4 mt-4 border-t border-border-dark/30">
-      <p class="text-[9px] text-slate-600 text-center uppercase tracking-widest font-medium">Last Deployment Update:
-        2026-02-17 23:50</p>
-    </div>
+        <!-- System Update Time -->
+        <div class="px-4 py-4 mt-4 border-t border-border-dark/30">
+          <p class="text-[9px] text-slate-600 text-center uppercase tracking-widest font-medium">Last Deployment Update:
+            2026-02-17 23:50</p>
+        </div>
   </main>
 
   <!-- Bottom Navigation -->
@@ -912,6 +990,19 @@
           const color = gold.change24h >= 0 ? 'text-primary' : 'text-red-500';
           goldChangeEl.textContent = `${gold.change24h >= 0 ? '+' : ''}${gold.change24h.toFixed(2)}%`;
           goldChangeEl.className = `text-xs font-bold ${color}`;
+        }
+      }
+
+      // Update NQ Highlight
+      const nq = prices['NASUSDT'] || prices['NQUSDT'];
+      if (nq) {
+        const nqPriceEl = document.getElementById('nqPriceMain');
+        const nqChangeEl = document.getElementById('nqChangeMain');
+        if (nqPriceEl) nqPriceEl.textContent = `$${nq.price.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+        if (nqChangeEl) {
+          const color = nq.change24h >= 0 ? 'text-indigo-400' : 'text-red-500';
+          nqChangeEl.textContent = `${nq.change24h >= 0 ? '+' : ''}${nq.change24h.toFixed(2)}%`;
+          nqChangeEl.className = `text-xs font-bold ${color}`;
         }
       }
 
