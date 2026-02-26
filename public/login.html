@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Login - QuantSignal</title>
+    <title>登入 - QuantSignal</title>
     <meta property="og:type" content="website" />
     <meta property="og:title" content="QuantSignal — 量化交易信號平台" />
     <meta property="og:description" content="登入 QuantSignal，獲取專業量化交易信號。" />
@@ -94,7 +94,7 @@
             <div class="text-center mb-8">
                 <div
                     class="inline-flex items-center gap-1.5 bg-yellow-500/10 text-yellow-500 px-3 py-1 rounded-full text-xs font-bold mb-4">
-                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 pulse-gold"></span> LIVE TRADING SIGNALS
+                    <span class="w-1.5 h-1.5 rounded-full bg-yellow-500 pulse-gold"></span> 即時交易信號
                 </div>
                 <h2 class="text-3xl font-extrabold text-white mb-2">歡迎回來</h2>
                 <p class="text-sm text-slate-400">登入 QuantSignal 獲取專業量化交易信號</p>
@@ -130,7 +130,7 @@
                         d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"
                         fill="#EA4335" />
                 </svg>
-                Continue with Google (使用 Google 登入)
+                使用 Google 登入
             </button>
 
             <!-- Divider -->
@@ -144,13 +144,13 @@
             <form id="loginForm" onsubmit="handleEmailLogin(event)" class="space-y-4">
                 <div>
                     <label
-                        class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Email</label>
+                        class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">電子郵件 Email</label>
                     <input type="email" id="email" required placeholder="you@example.com"
                         class="w-full bg-card-dark border border-border-dark rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors" />
                 </div>
                 <div>
                     <label
-                        class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Password</label>
+                        class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">密碼 Password</label>
                     <div class="relative">
                         <input type="password" id="password" required placeholder="••••••••" minlength="6"
                             class="w-full bg-card-dark border border-border-dark rounded-xl px-4 py-3 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30 transition-colors" />
@@ -162,7 +162,7 @@
                 </div>
                 <button type="submit" id="submitBtn"
                     class="w-full py-3 rounded-xl bg-primary text-background-dark font-bold text-sm glow-button hover:bg-primary/90 transition-all flex items-center justify-center gap-2">
-                    <span id="submitText">Sign In</span>
+                    <span id="submitText">登入</span>
                     <span id="submitSpinner"
                         class="hidden material-symbols-outlined text-sm animate-spin">progress_activity</span>
                 </button>
@@ -230,7 +230,7 @@
 
         function setLoading(loading) {
             document.getElementById('submitBtn').disabled = loading;
-            document.getElementById('submitText').textContent = loading ? 'Signing in...' : 'Sign In';
+            document.getElementById('submitText').textContent = loading ? '登入中...' : '登入';
             document.getElementById('submitSpinner').classList.toggle('hidden', !loading);
         }
     </script>

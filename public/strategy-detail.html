@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Strategy Detail - QuantSignal</title>
+    <title>策略詳情 - QuantSignal</title>
     <meta name="description" content="查看策略詳細績效 — 即時回測數據、資金曲線與交易信號。QuantSignal 量化交易信號平台。" />
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -80,8 +80,8 @@
             <a href="index.html"><span
                     class="material-symbols-outlined cursor-pointer text-slate-400">arrow_back</span></a>
             <div class="flex flex-col">
-                <h1 class="font-bold text-lg tracking-tight leading-none">Strategy Detail</h1>
-                <span class="text-[9px] text-slate-500 font-bold uppercase mt-0.5">策略詳情</span>
+                <h1 class="font-bold text-lg tracking-tight leading-none">策略詳情</h1>
+                <span class="text-[9px] text-slate-500 font-bold uppercase mt-0.5">Strategy Detail</span>
             </div>
         </div>
         <div class="flex gap-4">
@@ -99,7 +99,7 @@
                         <span class="material-symbols-outlined text-primary text-3xl">query_stats</span>
                     </div>
                     <div>
-                        <h2 class="text-xl font-bold" id="strategyName">Loading...</h2>
+                        <h2 class="text-xl font-bold" id="strategyName">載入中...</h2>
                         <div class="flex items-center gap-1.5 text-slate-400 text-sm">
                             <span id="strategySymbol">--</span>
                             <span class="material-symbols-outlined text-primary text-xs"
@@ -111,17 +111,17 @@
                 </div>
                 <button id="subBtn" onclick="toggleSubscription()"
                     class="flex flex-col items-center bg-primary text-black font-bold px-5 py-1.5 rounded-lg glow-primary hover:opacity-90 transition-all leading-none">
-                    <span class="text-sm">Subscribe</span>
-                    <span class="text-[8px] font-bold opacity-70">訂閱追蹤</span>
+                    <span class="text-sm">訂閱</span>
+                    <span class="text-[8px] font-bold opacity-70">Subscribe</span>
                 </button>
             </div>
 
             <!-- Performance Grid -->
             <div class="grid grid-cols-2 gap-3" id="perfGrid">
                 <div class="bg-surface-dark border border-border-dark p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1 leading-none">Total
-                        Return (<span id="roiTitlePeriod">--</span>)</p>
-                    <span class="text-[8px] text-slate-600 font-bold uppercase block mb-1">累計回報率</span>
+                    <p class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1 leading-none">總報酬率
+                        (<span id="roiTitlePeriod">--</span>)</p>
+                    <span class="text-[8px] text-slate-600 font-bold uppercase block mb-1">Total Return</span>
                     <p class="text-2xl font-bold text-primary" id="metricReturn">--</p>
                     <p class="text-[10px] text-primary/60 mt-1 flex items-center gap-1"><span
                             class="material-symbols-outlined text-xs">trending_up</span> <span
@@ -130,23 +130,21 @@
                         100%<br>採用複利計算，每筆交易以當前帳戶淨值投入</p>
                 </div>
                 <div class="bg-surface-dark border border-border-dark p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1 leading-none">Max
-                        Drawdown</p>
-                    <span class="text-[8px] text-slate-600 font-bold uppercase block mb-1">最大回撤</span>
+                    <p class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1 leading-none">最大回撤</p>
+                    <span class="text-[8px] text-slate-600 font-bold uppercase block mb-1">Max Drawdown</span>
                     <p class="text-2xl font-bold" id="metricDD">--</p>
                     <p class="text-[10px] text-slate-500 mt-1" id="metricDDLabel">風險評估</p>
                 </div>
                 <div class="bg-surface-dark border border-border-dark p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1 leading-none">Profit
-                        Factor</p>
-                    <span class="text-[8px] text-slate-600 font-bold uppercase block mb-1">盈虧比</span>
+                    <p class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1 leading-none">盈虧比 PF</p>
+                    <span class="text-[8px] text-slate-600 font-bold uppercase block mb-1">Profit Factor</span>
                     <p class="text-2xl font-bold text-white" id="metricPLRatio">--</p>
                     <p class="text-[10px] text-slate-500 mt-1">累積盈利 / 累積虧損</p>
                 </div>
                 <div class="bg-surface-dark border border-border-dark p-4 rounded-xl">
-                    <p class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1 leading-none">Win Rate
+                    <p class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1 leading-none">勝率
                     </p>
-                    <span class="text-[8px] text-slate-600 font-bold uppercase block mb-1">勝率</span>
+                    <span class="text-[8px] text-slate-600 font-bold uppercase block mb-1">Win Rate</span>
                     <p class="text-2xl font-bold text-white" id="metricWinRate">--</p>
                     <p class="text-[10px] text-slate-500 mt-1">歷史平均勝率</p>
                 </div>
@@ -158,7 +156,7 @@
         <!-- Backtest Chart -->
         <section class="p-4">
             <div class="flex items-center justify-between mb-4">
-                <h3 class="font-bold text-base" id="equityTitle">Equity Curve（回測）4H K線 • 最近 180 天</h3>
+                <h3 class="font-bold text-base" id="equityTitle">資金曲線 Equity Curve（回測）4H K線 • 最近 180 天</h3>
                 <div id="periodLabel" class="px-2 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold">--
                 </div>
             </div>
@@ -174,12 +172,11 @@
                 <!-- Premium Overlay (hidden by default) -->
                 <div id="signalPremiumOverlay" class="premium-overlay" style="display:none">
                     <span class="material-symbols-outlined text-primary text-4xl mb-2">lock</span>
-                    <p class="text-white font-bold text-sm mb-1 leading-none">🔒 Premium Feature</p>
-                    <span class="text-[9px] text-slate-500 font-bold uppercase mb-2">進階會員專屬</span>
-                    <p class="text-slate-400 text-xs text-center px-4 mb-3">Upgrade to Advanced to view live signals</p>
+                    <p class="text-white font-bold text-sm mb-1 leading-none">🔒 進階功能</p>
+                    <span class="text-[9px] text-slate-500 font-bold uppercase mb-2">Premium Feature</span>
+                    <p class="text-slate-400 text-xs text-center px-4 mb-3">升級進階會員以查看即時信號</p>
                     <a href="/profile.html"
-                        class="bg-primary text-black px-4 py-2 rounded-lg font-bold text-xs hover:opacity-90 transition-all">UPGRADE
-                        NOW <span class="text-[10px] block opacity-70">立即升級</span></a>
+                        class="bg-primary text-black px-4 py-2 rounded-lg font-bold text-xs hover:opacity-90 transition-all">立即升級 <span class="text-[10px] block opacity-70">UPGRADE NOW</span></a>
                 </div>
                 <!-- Signal Content -->
                 <div id="signalContent">
@@ -190,9 +187,9 @@
                             <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                         </span>
                     </div>
-                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-widest leading-none">Latest Signal
+                    <p class="text-slate-400 text-xs font-semibold uppercase tracking-widest leading-none">最新信號
                     </p>
-                    <span class="text-[9px] text-slate-600 font-bold uppercase">最新交易信號</span>
+                    <span class="text-[9px] text-slate-600 font-bold uppercase">Latest Signal</span>
                     <div class="flex items-baseline gap-2 mt-2">
                         <span class="text-3xl font-black italic" id="signalType">--</span>
                         <span class="text-xl font-bold text-white" id="signalPrice">--</span>
@@ -206,31 +203,27 @@
 
         <!-- Quant Metrics -->
         <section class="p-4">
-            <h3 class="font-bold text-base leading-none">Quant Metrics</h3>
-            <span class="text-[9px] text-slate-600 font-bold uppercase">量化績效指標表</span>
+            <h3 class="font-bold text-base leading-none">量化指標</h3>
+            <span class="text-[9px] text-slate-600 font-bold uppercase">Quant Metrics</span>
             <div class="bg-surface-dark border border-border-dark rounded-xl divide-y divide-border-dark mt-3"
                 id="quantMetrics">
-                <div class="flex justify-between items-center p-4"><span class="text-slate-400 text-sm">Profit
-                        Factor</span><span class="font-bold text-white" id="metricPF">--</span></div>
+                <div class="flex justify-between items-center p-4"><span class="text-slate-400 text-sm">盈虧比 PF</span><span class="font-bold text-white" id="metricPF">--</span></div>
                 <div class="flex justify-between items-center p-4"><span class="text-slate-400 text-sm">盈虧比例</span><span
                         class="font-bold text-white" id="metricRF">--</span></div>
                 <div class="flex justify-between items-center p-4"><span
-                        class="text-slate-400 text-sm">Expectancy</span><span class="font-bold text-white"
+                        class="text-slate-400 text-sm">期望值</span><span class="font-bold text-white"
                         id="metricExp">--</span></div>
-                <div class="flex justify-between items-center p-4"><span class="text-slate-400 text-sm">Avg. Hold
-                        Time</span><span class="font-bold text-white" id="metricHold">--</span></div>
-                <div class="flex justify-between items-center p-4"><span class="text-slate-400 text-sm">Total
-                        Trades</span><span class="font-bold text-white" id="metricTotalTrades">--</span></div>
-                <div class="flex justify-between items-center p-4"><span class="text-slate-400 text-sm">Winning /
-                        Losing</span><span class="font-bold text-white" id="metricWL">--</span></div>
+                <div class="flex justify-between items-center p-4"><span class="text-slate-400 text-sm">平均持倉天數</span><span class="font-bold text-white" id="metricHold">--</span></div>
+                <div class="flex justify-between items-center p-4"><span class="text-slate-400 text-sm">總交易次數</span><span class="font-bold text-white" id="metricTotalTrades">--</span></div>
+                <div class="flex justify-between items-center p-4"><span class="text-slate-400 text-sm">獲利 / 虧損</span><span class="font-bold text-white" id="metricWL">--</span></div>
             </div>
         </section>
 
         <!-- Recent Trades -->
         <section class="p-4">
             <div class="flex flex-col items-start mb-2">
-                <h3 class="font-bold text-base leading-none">Recent Trades</h3>
-                <span class="text-[9px] text-slate-600 font-bold uppercase mt-0.5">近期交易紀錄</span>
+                <h3 class="font-bold text-base leading-none">近期交易</h3>
+                <span class="text-[9px] text-slate-600 font-bold uppercase mt-0.5">Recent Trades</span>
             </div>
             <div class="bg-slate-800/50 border border-slate-700/50 rounded-lg px-3 py-2 mb-4">
                 <p class="text-[10px] text-slate-500 leading-relaxed flex items-start gap-1.5">
@@ -249,18 +242,18 @@
         class="fixed bottom-0 left-0 right-0 bg-background-dark/95 backdrop-blur-md border-t border-border-dark px-6 pb-6 pt-3 flex justify-between items-center z-50">
         <a href="index.html" class="flex flex-col items-center gap-1 text-slate-500">
             <span class="material-symbols-outlined">home</span>
-            <span class="text-[10px] font-black leading-none">HOME</span>
-            <span class="text-[8px] font-bold opacity-60">首頁</span>
+            <span class="text-[10px] font-black leading-none">首頁</span>
+            <span class="text-[8px] font-bold opacity-60">HOME</span>
         </a>
         <a id="adminNavLink" href="admin.html" class="hidden flex-col items-center gap-1 text-slate-500">
             <span class="material-symbols-outlined">terminal</span>
-            <span class="text-[10px] font-black leading-none">ADMIN</span>
-            <span class="text-[8px] font-bold opacity-60">管理端</span>
+            <span class="text-[10px] font-black leading-none">管理端</span>
+            <span class="text-[8px] font-bold opacity-60">ADMIN</span>
         </a>
         <a href="profile.html" class="flex flex-col items-center gap-1 text-slate-500">
             <span class="material-symbols-outlined">person</span>
-            <span class="text-[10px] font-black leading-none">PROFILE</span>
-            <span class="text-[8px] font-bold opacity-60">個人資料</span>
+            <span class="text-[10px] font-black leading-none">個人資料</span>
+            <span class="text-[8px] font-bold opacity-60">PROFILE</span>
         </a>
     </nav>
 
@@ -276,7 +269,7 @@
         const days = isIndexSymbol ? 90 : (timeframe === '1h' ? 45 : 180);
         const tfLabel = timeframe.toUpperCase();
         const titleEl = document.getElementById('equityTitle');
-        if (titleEl) titleEl.textContent = `Equity Curve ${tfLabel} K線 • ${isIndexSymbol ? '90天回測' : '最近 ' + days + ' 天'}`;
+        if (titleEl) titleEl.textContent = `資金曲線 Equity Curve ${tfLabel} K線 • ${isIndexSymbol ? '90天回測' : '最近 ' + days + ' 天'}`;
 
         const roiLabelEl = document.getElementById('roiTitlePeriod');
         if (roiLabelEl) roiLabelEl.textContent = isIndexSymbol ? '90天回測' : `${days}d`;
@@ -443,10 +436,10 @@
 
                 const btn = document.getElementById('subBtn');
                 if (isSubscribed) {
-                    btn.textContent = 'Unsubscribe';
+                    btn.textContent = '取消訂閱';
                     btn.className = 'bg-slate-700 text-slate-300 font-bold px-5 py-2 rounded-lg hover:bg-slate-600 transition-all text-sm';
                 } else {
-                    btn.textContent = 'Subscribe';
+                    btn.textContent = '訂閱';
                     btn.className = 'bg-primary text-black font-bold px-5 py-2 rounded-lg glow-primary hover:opacity-90 transition-all text-sm';
                 }
             } catch (e) {
@@ -462,7 +455,7 @@
             const originalText = btn.textContent;
 
             // 1. Visual Feedback immediately
-            btn.textContent = 'Processing...';
+            btn.textContent = '處理中...';
             btn.disabled = true;
             btn.classList.add('opacity-50', 'cursor-not-allowed');
 
@@ -477,7 +470,7 @@
 
                 const { user, token } = await getUser();
                 if (!user) {
-                    if (confirm('Please login to subscribe. Go to login page?')) {
+                    if (confirm('請先登入才能訂閱。前往登入頁面？')) {
                         window.location.href = '/login.html';
                         return;
                     }
@@ -488,7 +481,7 @@
                     return;
                 }
 
-                const isSubscribed = originalText === 'Unsubscribe'; // Use text content as source of truth
+                const isSubscribed = originalText === '取消訂閱'; // Use text content as source of truth
                 const endpoint = isSubscribed ? '/api/unsubscribe' : '/api/subscribe';
                 console.log(`[Subscribe] Sending request to ${endpoint}`);
 
@@ -508,13 +501,13 @@
                 } else {
                     const data = await res.json();
                     console.error('[Subscribe] Error:', data);
-                    alert(data.error || 'Operation failed');
+                    alert(data.error || '操作失敗');
                     // Revert button on error
                     btn.textContent = originalText;
                 }
             } catch (e) {
                 console.error('[Subscribe] Exception:', e);
-                alert('Request failed: ' + e.message);
+                alert('請求失敗：' + e.message);
                 btn.textContent = originalText;
             } finally {
                 btn.disabled = false;
@@ -536,13 +529,13 @@
             const s = data.summary;
             document.getElementById('metricReturn').textContent = `${s.totalReturn > 0 ? '+' : ''}${s.totalReturn}%`;
             document.getElementById('metricDD').textContent = `-${s.maxDrawdown}%`;
-            document.getElementById('metricDDLabel').textContent = s.maxDrawdown < 15 ? 'Low Risk Profile' : s.maxDrawdown < 30 ? 'Medium Risk' : 'High Risk';
+            document.getElementById('metricDDLabel').textContent = s.maxDrawdown < 15 ? '低風險' : s.maxDrawdown < 30 ? '中風險' : '高風險';
             document.getElementById('metricPLRatio').textContent = s.plRatio ? s.plRatio.toFixed(2) : '--';
             document.getElementById('metricWinRate').textContent = `${s.winRate}%`;
             document.getElementById('metricPF').textContent = s.profitFactor;
             document.getElementById('metricRF').textContent = s.plRatio ? s.plRatio.toFixed(2) : '--';
-            document.getElementById('metricExp').textContent = `${s.expectancy}% / trade`;
-            document.getElementById('metricHold').textContent = `${s.avgHoldDays} Days`;
+            document.getElementById('metricExp').textContent = `${s.expectancy}% / 筆`;
+            document.getElementById('metricHold').textContent = `${s.avgHoldDays} 天`;
             document.getElementById('metricTotalTrades').textContent = s.totalTrades;
             document.getElementById('metricWL').textContent = `${s.winningTrades} / ${s.losingTrades}`;
             document.getElementById('periodLabel').textContent = `${s.period.startDate} → ${s.period.endDate}`;
@@ -571,7 +564,7 @@
                 document.getElementById('signalPrice').textContent = `@ $${price.toLocaleString('en-US', { minimumFractionDigits: precision, maximumFractionDigits: precision })}`;
                 const entryDate = new Date(latest.entryTime);
                 const timeStr = entryDate.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
-                document.getElementById('signalTime').querySelector('span:last-child').textContent = `Signal Time: ${timeStr}`;
+                document.getElementById('signalTime').querySelector('span:last-child').textContent = `信號時間：${timeStr}`;
 
                 // Apply blur for non-premium users ONLY on Premium/Platinum strategies
                 const isPremiumStrategy = strategyCategory === 'Premium' || strategyCategory === 'Platinum';
@@ -668,10 +661,10 @@
                 notice.innerHTML = `
                     <div class="flex items-center justify-center gap-2 mb-2">
                         <span class="material-symbols-outlined text-primary text-xl">lock</span>
-                        <p class="text-white font-bold text-sm">2 Most Recent Trades Hidden</p>
+                        <p class="text-white font-bold text-sm">最近 2 筆交易已隱藏</p>
                     </div>
-                    <p class="text-slate-400 text-xs mb-3">Upgrade to Advanced to view all recent trades</p>
-                    <a href="/profile.html" class="inline-block bg-primary text-black px-4 py-2 rounded-lg font-bold text-xs hover:opacity-90 transition-all">UPGRADE NOW</a>
+                    <p class="text-slate-400 text-xs mb-3">升級進階會員以查看所有近期交易</p>
+                    <a href="/profile.html" class="inline-block bg-primary text-black px-4 py-2 rounded-lg font-bold text-xs hover:opacity-90 transition-all">立即升級</a>
                 `;
                 container.appendChild(notice);
             }

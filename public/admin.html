@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Q-Signal Admin - Center of Operations</title>
+    <title>Q-Signal 管理中心</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono&display=swap"
@@ -88,11 +88,10 @@
                     <span class="material-symbols-outlined">terminal</span>
                 </a>
                 <div>
-                    <h1 class="text-xl font-black text-white leading-none tracking-tight">Q-Signal Admin</h1>
+                    <h1 class="text-xl font-black text-white leading-none tracking-tight">Q-Signal 管理中心</h1>
                     <div class="flex items-center gap-1.5 mt-1.5">
                         <span class="size-1.5 rounded-full bg-primary animate-pulse"></span>
-                        <span class="text-[10px] uppercase tracking-widest text-slate-500 font-black">Center of
-                            Operations</span>
+                        <span class="text-[10px] uppercase tracking-widest text-slate-500 font-black">營運指揮中心</span>
                     </div>
                 </div>
             </div>
@@ -115,11 +114,11 @@
         <div class="max-w-6xl mx-auto flex">
             <button onclick="switchMainTab('manual')" id="tabManual"
                 class="tab-btn px-6 py-3 text-xs font-black uppercase tracking-widest border-b-2 border-transparent transition-all flex items-center gap-2 active">
-                <span class="material-symbols-outlined text-sm">psychology</span> Manual Alpha
+                <span class="material-symbols-outlined text-sm">psychology</span> 人工信號 Alpha
             </button>
             <button onclick="switchMainTab('builder')" id="tabBuilder"
                 class="tab-btn px-6 py-3 text-xs font-black uppercase tracking-widest border-b-2 border-transparent transition-all flex items-center gap-2 text-slate-500">
-                <span class="material-symbols-outlined text-sm">bolt</span> Strategy Builder
+                <span class="material-symbols-outlined text-sm">bolt</span> 策略建構器
             </button>
         </div>
     </header>
@@ -139,15 +138,14 @@
                     <span
                         class="material-symbols-outlined text-indigo-400 bg-indigo-400/10 p-2 rounded-xl">add_circle</span>
                     <div>
-                        <p class="leading-none flex items-center gap-2">發布新的人工信號 <span
+                        <p class="leading-none flex items-center gap-2">發布新的人工 Alpha 信號 <span
                                 class="bg-indigo-500/20 text-indigo-400 text-[8px] px-1 rounded">v1.5</span></p>
-                        <p class="text-[10px] text-slate-500 font-bold uppercase mt-1">Deploy New Manual Alpha Signal
-                        </p>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase mt-1">Deploy New Manual Alpha Signal</p>
                     </div>
                 </h2>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div class="flex flex-col gap-2">
-                        <label class="text-[10px] font-black text-slate-500 uppercase ml-1">交易對 Pair</label>
+                        <label class="text-[10px] font-black text-slate-500 uppercase ml-1">交易對</label>
                         <select id="sigSymbol"
                             class="bg-background-dark border border-border-dark rounded-xl px-4 py-3 text-sm focus:border-indigo-500 outline-none transition-all">
                             <option value="BTCUSDT">BTCUSDT</option>
@@ -159,7 +157,7 @@
                         </select>
                     </div>
                     <div class="flex flex-col gap-2">
-                        <label class="text-[10px] font-black text-slate-500 uppercase ml-1">交易方向 Type</label>
+                        <label class="text-[10px] font-black text-slate-500 uppercase ml-1">交易方向</label>
                         <select id="sigType"
                             class="bg-background-dark border border-border-dark rounded-xl px-4 py-3 text-sm focus:border-indigo-500 outline-none transition-all">
                             <option value="BUY">BUY (做多)</option>
@@ -169,25 +167,25 @@
                     <div class="flex flex-col gap-2">
                         <label
                             class="text-[10px] font-black text-slate-500 uppercase ml-1 flex items-center justify-between">
-                            進場價格 Entry
+                            進場價格
                             <button onclick="updateEntryPrice()" id="syncBtn"
                                 class="hover:text-indigo-400 transition-colors flex items-center gap-1 bg-indigo-500/10 px-2 py-0.5 rounded">
                                 <span class="material-symbols-outlined text-[10px]" id="syncIcon">sync</span>
-                                <span class="text-[8px] font-bold" id="syncText">SYNC</span>
+                                <span class="text-[8px] font-bold" id="syncText">同步</span>
                             </button>
                         </label>
-                        <input id="sigEntry" type="number" step="any" placeholder="Entry Price"
+                        <input id="sigEntry" type="number" step="any" placeholder="進場價格"
                             class="bg-background-dark border border-border-dark rounded-xl px-4 py-3 text-sm focus:border-indigo-500 outline-none transition-all font-mono">
                     </div>
                     <div class="flex flex-col gap-2">
-                        <label class="text-[10px] font-black text-slate-500 uppercase ml-1">策略備註 Comment</label>
-                        <input id="sigComment" type="text" placeholder="Logic breakdown..."
+                        <label class="text-[10px] font-black text-slate-500 uppercase ml-1">策略備註</label>
+                        <input id="sigComment" type="text" placeholder="策略邏輯說明..."
                             class="bg-background-dark border border-border-dark rounded-xl px-4 py-3 text-sm focus:border-indigo-500 outline-none transition-all placeholder:text-slate-700">
                     </div>
                 </div>
                 <button onclick="publishSignal()" id="publishBtn"
                     class="w-full mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-indigo-600/20 active:scale-[0.98]">
-                    <span class="material-symbols-outlined">send</span> 打入市場信號 (PUBLISH SIGNAL)
+                    <span class="material-symbols-outlined">send</span> 打入市場信號（發布信號）
                 </button>
             </div>
 
@@ -198,8 +196,7 @@
                         <h2 class="text-2xl font-black text-white flex items-center gap-2">
                             <span class="material-symbols-outlined text-primary">data_usage</span> 信號管理 (MANAGEMENT)
                         </h2>
-                        <p class="text-[10px] text-slate-500 font-bold uppercase mt-1">Filter and manage manual
-                            subscriptions</p>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase mt-1">篩選與管理手動信號訂閱</p>
                     </div>
                     <!-- Symbol Tabs -->
                     <div class="flex flex-wrap gap-2 bg-surface-dark border border-border-dark p-1.5 rounded-2xl">
@@ -255,19 +252,19 @@
                                     <tr>
                                         <th
                                             class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                            Symbol</th>
+                                            交易對</th>
                                         <th
                                             class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                            Type</th>
+                                            方向</th>
                                         <th
                                             class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">
                                             ROI</th>
                                         <th
                                             class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                            Entry Time</th>
+                                            進場時間</th>
                                         <th
                                             class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">
-                                            Action</th>
+                                            操作</th>
                                     </tr>
                                 </thead>
                                 <tbody id="historyList" class="divide-y divide-border-dark/30">
@@ -294,15 +291,14 @@
                         </h2>
                         <div class="space-y-5">
                             <div>
-                                <label class="text-[10px] font-black text-slate-500 uppercase ml-1 block mb-2">Strategy
-                                    Name</label>
+                                <label class="text-[10px] font-black text-slate-500 uppercase ml-1 block mb-2">策略名稱</label>
                                 <input id="stratName"
                                     class="w-full bg-background-dark border border-border-dark rounded-xl px-4 py-3 text-sm focus:border-primary outline-none transition-all placeholder:text-slate-700"
                                     placeholder="e.g. SMA_CROSS_1H" value="20 SMA Crossover">
                             </div>
                             <div>
                                 <label
-                                    class="text-[10px] font-black text-slate-500 uppercase ml-1 block mb-2">Category</label>
+                                    class="text-[10px] font-black text-slate-500 uppercase ml-1 block mb-2">分類</label>
                                 <div class="flex bg-background-dark border border-border-dark rounded-xl p-1">
                                     <button id="catBasic"
                                         class="flex-1 py-2 text-[10px] font-black uppercase rounded-lg bg-primary text-black transition-all"
@@ -318,12 +314,11 @@
                     <div class="bg-surface-dark border border-border-dark rounded-3xl p-6 shadow-lg">
                         <h2
                             class="text-sm font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-                            <span class="material-symbols-outlined text-primary text-sm">bolt</span> Backtest Params
+                            <span class="material-symbols-outlined text-primary text-sm">bolt</span> 回測參數
                         </h2>
                         <div class="space-y-5">
                             <div>
-                                <label class="text-[10px] font-black text-slate-500 uppercase ml-1 block mb-3">Target
-                                    Asset</label>
+                                <label class="text-[10px] font-black text-slate-500 uppercase ml-1 block mb-3">目標資產</label>
                                 <div class="grid grid-cols-3 gap-2">
                                     <button
                                         class="pair-btn px-2 py-2 rounded-lg border border-primary bg-primary/10 text-primary text-[10px] font-black"
@@ -338,7 +333,7 @@
                             </div>
                             <button onclick="runBacktest()" id="runBtn"
                                 class="w-full bg-primary hover:bg-white text-black font-black py-4 rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
-                                <span class="material-symbols-outlined text-lg">bolt</span> RUN & DEPLOY
+                                <span class="material-symbols-outlined text-lg">bolt</span> 執行回測 & 部署
                             </button>
                         </div>
                     </div>
@@ -359,8 +354,7 @@
                                 class="text-[10px] text-slate-500 font-black uppercase tracking-widest ml-2">pinescript_engine.v5</span>
                         </div>
                         <button onclick="loadDefaultStrategy()"
-                            class="text-[9px] font-black uppercase text-slate-500 hover:text-primary transition-all">Restore
-                            Default</button>
+                            class="text-[9px] font-black uppercase text-slate-500 hover:text-primary transition-all">恢復預設</button>
                     </div>
                     <textarea id="codeEditor"
                         class="flex-1 bg-transparent text-slate-300 font-mono text-[13px] p-6 outline-none resize-none custom-scrollbar border-none focus:ring-0"
@@ -384,7 +378,7 @@ if short
                     <h2 class="text-xl font-black text-white flex items-center gap-3">
                         <span
                             class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-xl">monitoring</span>
-                        Backtest Results
+                        回測結果
                     </h2>
                 </div>
                 <div id="resultGrid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -407,7 +401,7 @@ if short
                     <span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-xl">database</span>
                     <div>
                         <p class="leading-none">系統策略管理</p>
-                        <p class="text-[10px] text-slate-500 font-bold uppercase mt-1">Automated Strategy Registry</p>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase mt-1">自動策略列表</p>
                     </div>
                 </h2>
                 <div class="bg-surface-dark border border-border-dark rounded-3xl overflow-hidden shadow-2xl">
@@ -415,12 +409,12 @@ if short
                         <thead class="bg-background-dark border-b border-border-dark">
                             <tr>
                                 <th class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                    Strategy Name</th>
+                                    策略名稱</th>
                                 <th class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                                    Category</th>
+                                    分類</th>
                                 <th
                                     class="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">
-                                    Visibility</th>
+                                    可見性</th>
                             </tr>
                         </thead>
                         <tbody id="stratMgmtList" class="divide-y divide-border-dark/30">
@@ -527,7 +521,7 @@ if short
 
                 // Update close button text with live price
                 if (closeBtn && !closeBtn.disabled) {
-                    closeBtn.querySelector('span:not(.material-symbols-outlined)').textContent = `CLOSE AT $${currentPrice.toLocaleString()}`;
+                    closeBtn.querySelector('span:not(.material-symbols-outlined)').textContent = `平倉 @ $${currentPrice.toLocaleString()}`;
                 }
 
                 // Auto-fill exit price input if it exists
@@ -618,11 +612,11 @@ if short
                                 </div>
                                 <div class="bg-background-dark/50 p-3 rounded-xl mb-4 border border-border-dark/30">
                                     <div class="flex justify-between items-center mb-1">
-                                        <span class="text-[8px] text-slate-500 font-black tracking-tighter">ENTRY</span>
+                                        <span class="text-[8px] text-slate-500 font-black tracking-tighter">進場</span>
                                         <span class="font-mono text-xs text-white underline decoration-white/10">$${parseFloat(s.entry_price).toFixed(2)}</span>
                                     </div>
                                     <div class="flex justify-between items-center mb-1">
-                                        <span class="text-[8px] text-slate-500 font-black tracking-tighter">LIVE PRICE</span>
+                                        <span class="text-[8px] text-slate-500 font-black tracking-tighter">即時價格</span>
                                         <span class="font-mono text-xs text-indigo-300" id="live-price-${s.id}">$---</span>
                                     </div>
                                     <div class="flex justify-between items-center pt-2 mt-2 border-t border-border-dark/20">
@@ -631,10 +625,10 @@ if short
                                     </div>
                                     <div class="flex flex-col gap-1 mt-4 pt-3 border-t border-indigo-500/10">
                                         <div class="flex justify-between items-center mb-1">
-                                            <span class="text-[8px] text-indigo-400 font-black uppercase tracking-tighter">Manual Exit Price</span>
+                                            <span class="text-[8px] text-indigo-400 font-black uppercase tracking-tighter">手動平倉價</span>
                                             <div class="flex items-center gap-1">
                                                 <span class="size-1 rounded-full bg-indigo-500 animate-pulse"></span>
-                                                <span class="text-[7px] text-slate-500 font-bold uppercase">Live Sync</span>
+                                                <span class="text-[7px] text-slate-500 font-bold uppercase">即時同步</span>
                                             </div>
                                         </div>
                                         <input type="number" step="any" id="exit-price-${s.id}" oninput="this.dataset.modified='true'" placeholder="Exit Price..." class="w-full bg-background-dark border border-border-dark rounded-lg px-3 py-2.5 text-xs font-mono font-bold text-white outline-none focus:border-indigo-500 transition-all">
@@ -700,10 +694,10 @@ if short
             const entry_price = document.getElementById('sigEntry').value;
             const comment = document.getElementById('sigComment').value;
 
-            if (!symbol || !entry_price) return alert('Symbol and Entry Price required');
+            if (!symbol || !entry_price) return alert('請填入交易對與進場價格');
 
             btn.disabled = true;
-            btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> PUBLISHING ALPHA...';
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> 發布中...';
 
             try {
                 const { session } = await getSession();
@@ -726,7 +720,7 @@ if short
             } catch (err) { alert('Connection error'); }
             finally {
                 btn.disabled = false;
-                btn.innerHTML = '<span class="material-symbols-outlined">send</span> 打入市場信號 (PUBLISH SIGNAL)';
+                btn.innerHTML = '<span class="material-symbols-outlined">send</span> 打入市場信號（發布信號）';
             }
         }
 
@@ -741,14 +735,14 @@ if short
             console.log('[Admin] Updating entry price for:', symbol);
 
             if (syncIcon) syncIcon.classList.add('animate-spin');
-            if (syncText) syncText.textContent = 'SYNCING...';
+            if (syncText) syncText.textContent = '同步中...';
 
             // Check global cache
             if (adminLivePrices && adminLivePrices[symbol]) {
                 console.log('[Admin] Using cached price:', adminLivePrices[symbol].price);
                 entryInput.value = adminLivePrices[symbol].price;
                 if (syncIcon) syncIcon.classList.remove('animate-spin');
-                if (syncText) syncText.textContent = 'SYNC';
+                if (syncText) syncText.textContent = '同步';
                 return;
             }
 
@@ -764,13 +758,13 @@ if short
                 console.warn('[Admin] Failed to fetch real-time price:', err);
             } finally {
                 if (syncIcon) syncIcon.classList.remove('animate-spin');
-                if (syncText) syncText.textContent = 'SYNC';
+                if (syncText) syncText.textContent = '同步';
             }
         }
 
         async function closeSignal(id) {
             const exit_price = document.getElementById(`exit-price-${id}`).value;
-            if (!exit_price) return alert('Please enter exit price');
+            if (!exit_price) return alert('請輸入平倉價格');
 
             try {
                 const { session } = await getSession();
@@ -780,12 +774,12 @@ if short
                     body: JSON.stringify({ exit_price })
                 });
                 if (res.ok) loadSignals();
-                else alert('Failed to close signal');
+                else alert('平倉失敗');
             } catch (err) { console.error(err); }
         }
 
         async function deleteSignal(id) {
-            if (!confirm('Are you sure you want to delete this signal?')) return;
+            if (!confirm('確定要刪除此信號？')) return;
             try {
                 const { session } = await getSession();
                 const res = await fetch(`/api/admin/manual-signals/${id}`, {
@@ -820,7 +814,7 @@ if short
             const code = document.getElementById('codeEditor').value;
             const name = document.getElementById('stratName').value;
             btn.disabled = true;
-            btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> RUNNING...';
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin text-sm">progress_activity</span> 執行中...';
 
             try {
                 const { session } = await getSession();
@@ -845,7 +839,7 @@ if short
             } catch (err) { alert('Internal Error'); }
             finally {
                 btn.disabled = false;
-                btn.innerHTML = '<span class="material-symbols-outlined text-lg">bolt</span> RUN & DEPLOY';
+                btn.innerHTML = '<span class="material-symbols-outlined text-lg">bolt</span> 執行回測 & 部署';
             }
         }
 
@@ -856,31 +850,31 @@ if short
             const s = data.summary;
             document.getElementById('resultGrid').innerHTML = `
                 <div class="bg-surface-dark border border-border-dark p-5 rounded-2xl">
-                    <p class="text-[10px] text-slate-500 font-black uppercase mb-1 tracking-widest">Total Return</p>
+                    <p class="text-[10px] text-slate-500 font-black uppercase mb-1 tracking-widest">總報酬率</p>
                     <p class="text-2xl font-black ${s.totalReturn >= 0 ? 'text-primary' : 'text-red-500'}">${s.totalReturn > 0 ? '+' : ''}${s.totalReturn}%</p>
                 </div>
                 <div class="bg-surface-dark border border-border-dark p-5 rounded-2xl">
-                    <p class="text-[10px] text-slate-500 font-black uppercase mb-1 tracking-widest">Drawdown</p>
+                    <p class="text-[10px] text-slate-500 font-black uppercase mb-1 tracking-widest">最大回撤</p>
                     <p class="text-2xl font-black text-white">-${s.maxDrawdown}%</p>
                 </div>
                 <div class="bg-surface-dark border border-border-dark p-5 rounded-2xl">
-                    <p class="text-[10px] text-slate-500 font-black uppercase mb-1 tracking-widest">Win Rate</p>
+                    <p class="text-[10px] text-slate-500 font-black uppercase mb-1 tracking-widest">勝率</p>
                     <p class="text-2xl font-black text-white">${s.winRate}%</p>
                 </div>
                 <div class="bg-surface-dark border border-border-dark p-5 rounded-2xl">
-                    <p class="text-[10px] text-slate-500 font-black uppercase mb-1 tracking-widest">Trades</p>
+                    <p class="text-[10px] text-slate-500 font-black uppercase mb-1 tracking-widest">交易次數</p>
                     <p class="text-2xl font-black text-white">${s.totalTrades}</p>
                 </div>
             `;
 
             const metrics = document.getElementById('resultMetrics');
             metrics.innerHTML = `
-                <div class="flex justify-between py-2 border-b border-white/5"><span class="text-slate-500 text-xs font-bold uppercase">Profit Factor</span><span class="font-mono text-white">${s.profitFactor}</span></div>
-                <div class="flex justify-between py-2 border-b border-white/5"><span class="text-slate-500 text-xs font-bold uppercase">Sharpe Ratio</span><span class="font-mono text-white">${s.sharpeRatio}</span></div>
-                <div class="flex justify-between py-2 border-b border-white/5"><span class="text-slate-500 text-xs font-bold uppercase">Expectancy</span><span class="font-mono text-white">${s.expectancy}%</span></div>
-                <div class="flex justify-between py-2 border-b border-white/5"><span class="text-slate-500 text-xs font-bold uppercase">Avg Hold Time</span><span class="font-mono text-white">${s.avgHoldDays}D</span></div>
-                <div class="flex justify-between py-2 border-b border-white/5"><span class="text-slate-500 text-xs font-bold uppercase">Initial Cap</span><span class="font-mono text-white">$${s.initialCapital.toLocaleString()}</span></div>
-                <div class="flex justify-between py-2"><span class="text-slate-500 text-xs font-bold uppercase">Final Equity</span><span class="font-mono text-primary">$${s.finalEquity.toLocaleString()}</span></div>
+                <div class="flex justify-between py-2 border-b border-white/5"><span class="text-slate-500 text-xs font-bold uppercase">盈虧比</span><span class="font-mono text-white">${s.profitFactor}</span></div>
+                <div class="flex justify-between py-2 border-b border-white/5"><span class="text-slate-500 text-xs font-bold uppercase">夏普比率</span><span class="font-mono text-white">${s.sharpeRatio}</span></div>
+                <div class="flex justify-between py-2 border-b border-white/5"><span class="text-slate-500 text-xs font-bold uppercase">期望值</span><span class="font-mono text-white">${s.expectancy}%</span></div>
+                <div class="flex justify-between py-2 border-b border-white/5"><span class="text-slate-500 text-xs font-bold uppercase">平均持倉</span><span class="font-mono text-white">${s.avgHoldDays}D</span></div>
+                <div class="flex justify-between py-2 border-b border-white/5"><span class="text-slate-500 text-xs font-bold uppercase">初始資金</span><span class="font-mono text-white">$${s.initialCapital.toLocaleString()}</span></div>
+                <div class="flex justify-between py-2"><span class="text-slate-500 text-xs font-bold uppercase">最終淨值</span><span class="font-mono text-primary">$${s.finalEquity.toLocaleString()}</span></div>
             `;
 
             const ctx = document.getElementById('resultChart').getContext('2d');
@@ -927,7 +921,7 @@ if short
 
                 list.innerHTML = '';
                 if (!data.strategies || data.strategies.length === 0) {
-                    list.innerHTML = '<tr><td colspan="3" class="px-6 py-4 text-center text-slate-600">No automated strategies found.</td></tr>';
+                    list.innerHTML = '<tr><td colspan="3" class="px-6 py-4 text-center text-slate-600">找不到自動策略。</td></tr>';
                     return;
                 }
 
@@ -941,7 +935,7 @@ if short
                             </td>
                             <td class="px-6 py-4 text-right">
                                 <button onclick="toggleStratVisibility('${s.id}', ${!isVisible})" class="px-3 py-1.5 rounded-xl text-[9px] font-black uppercase transition-all ${isVisible ? 'bg-primary/10 text-primary hover:bg-red-500/20 hover:text-red-500' : 'bg-slate-800 text-slate-600 hover:text-white'}">
-                                    ${isVisible ? 'Visible' : 'Hidden'}
+                                    ${isVisible ? '顯示' : '隱藏'}
                                 </button>
                             </td>
                         </tr>

@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Profile - QuantSignal</title>
+    <title>個人資料 - QuantSignal</title>
     <meta property="og:type" content="website" />
     <meta property="og:title" content="QuantSignal — 量化交易信號平台" />
     <meta property="og:description" content="專業量化策略回測、即時交易信號與績效追蹤。" />
@@ -49,15 +49,15 @@
             <a href="index.html"><span
                     class="material-symbols-outlined cursor-pointer text-slate-400">arrow_back</span></a>
             <div class="flex flex-col">
-                <h1 class="font-bold text-lg tracking-tight leading-none">Profile</h1>
-                <span class="text-[9px] text-slate-500 font-bold uppercase mt-0.5">個人資料</span>
+                <h1 class="font-bold text-lg tracking-tight leading-none">個人資料</h1>
+                <span class="text-[9px] text-slate-500 font-bold uppercase mt-0.5">Profile</span>
             </div>
         </div>
         <button onclick="handleSignOut()" class="flex flex-col items-end leading-none">
             <div class="flex items-center gap-1 text-red-500 text-sm font-bold hover:text-red-400">
-                <span class="material-symbols-outlined text-sm">logout</span> Sign Out
+                <span class="material-symbols-outlined text-sm">logout</span> 登出
             </div>
-            <span class="text-[8px] text-slate-600 font-bold mt-1">退出登錄</span>
+            <span class="text-[8px] text-slate-600 font-bold mt-1">Sign Out</span>
         </button>
     </header>
 
@@ -79,20 +79,19 @@
                     </div>
                     <div id="adminBadge"
                         class="hidden absolute -bottom-1 -right-1 bg-primary text-background-dark text-[9px] font-extrabold px-2 py-0.5 rounded-full border-2 border-background-dark z-10">
-                        ADMIN</div>
+                        管理員</div>
                     <div id="advancedBadge"
                         class="hidden absolute -bottom-1 -right-1 bg-primary text-background-dark text-[9px] font-extrabold px-2 py-0.5 rounded-full border-2 border-background-dark z-10">
-                        ADVANCED</div>
+                        進階</div>
                     <div id="platinumBadge"
                         class="hidden absolute -bottom-1 -right-1 bg-purple-500 text-white text-[9px] font-extrabold px-2 py-0.5 rounded-full border-2 border-background-dark z-10">
-                        PLATINUM</div>
+                        白金</div>
                 </div>
                 <h2 class="text-2xl font-extrabold text-white" id="userName">--</h2>
                 <p class="text-sm text-slate-400 mt-1" id="userEmail">--</p>
                 <div class="flex items-center gap-2 mt-2">
                     <span id="userTier"
-                        class="text-[10px] font-bold bg-primary/10 text-primary px-2.5 py-0.5 rounded-full uppercase">Standard
-                        Member</span>
+                        class="text-[10px] font-bold bg-primary/10 text-primary px-2.5 py-0.5 rounded-full uppercase">標準會員</span>
                     <span id="userProvider"
                         class="text-[10px] font-bold bg-slate-800 text-slate-400 px-2.5 py-0.5 rounded-full"></span>
                 </div>
@@ -103,27 +102,27 @@
                 <div class="grid grid-cols-3 gap-3">
                     <div class="bg-surface-dark border border-border-dark rounded-xl p-4 text-center">
                         <p class="text-2xl font-bold text-primary leading-none" id="statStrategies">0</p>
-                        <p class="text-[10px] text-slate-500 uppercase font-black mt-2">Strategies</p>
-                        <p class="text-[8px] text-slate-600 font-bold">訂閱策略</p>
+                        <p class="text-[10px] text-slate-500 uppercase font-black mt-2">訂閱策略</p>
+                        <p class="text-[8px] text-slate-600 font-bold">Strategies</p>
                     </div>
                     <div class="bg-surface-dark border border-border-dark rounded-xl p-4 text-center">
                         <p class="text-2xl font-bold text-white leading-none" id="statBacktests">0</p>
-                        <p class="text-[10px] text-slate-500 uppercase font-black mt-2">Backtests</p>
-                        <p class="text-[8px] text-slate-600 font-bold">回測次數</p>
+                        <p class="text-[10px] text-slate-500 uppercase font-black mt-2">回測次數</p>
+                        <p class="text-[8px] text-slate-600 font-bold">Backtests</p>
                     </div>
                     <div class="bg-surface-dark border border-border-dark rounded-xl p-4 text-center">
                         <p class="text-2xl font-bold text-white leading-none" id="statDays">0</p>
-                        <p class="text-[10px] text-slate-500 uppercase font-black mt-2">Days Active</p>
-                        <p class="text-[8px] text-slate-600 font-bold">活躍天數</p>
+                        <p class="text-[10px] text-slate-500 uppercase font-black mt-2">活躍天數</p>
+                        <p class="text-[8px] text-slate-600 font-bold">Days Active</p>
                     </div>
                 </div>
             </section>
 
             <!-- Subscription Signals (Visible for Advanced Members) -->
             <section id="signalsSection" class="hidden px-4 mb-4">
-                <h3 class="font-bold text-xs text-slate-400 uppercase tracking-widest leading-none">Subscribed Signals
+                <h3 class="font-bold text-xs text-slate-400 uppercase tracking-widest leading-none">訂閱中的信號
                 </h3>
-                <span class="text-[9px] text-slate-600 font-bold uppercase">已訂閱之交易信號</span>
+                <span class="text-[9px] text-slate-600 font-bold uppercase">Subscribed Signals</span>
                 <div id="signalList" class="space-y-3 mt-3">
                     <!-- Signals populated here -->
                 </div>
@@ -134,15 +133,15 @@
                 <div
                     class="bg-primary/5 border border-primary/20 rounded-2xl p-8 text-center bg-gradient-to-b from-primary/10 to-transparent">
                     <span class="material-symbols-outlined text-primary text-5xl mb-4">workspace_premium</span>
-                    <h3 class="text-2xl font-black text-white mb-2 tracking-tight">UPGRADE TO ADVANCED</h3>
-                    <p class="text-slate-400 mb-6 text-sm">Unlock live strategy signals and automated alerts.</p>
+                    <h3 class="text-2xl font-black text-white mb-2 tracking-tight">升級進階會員</h3>
+                    <p class="text-slate-400 mb-6 text-sm">解鎖即時策略信號與自動提醒。</p>
 
                     <!-- Step 1: Register -->
                     <div class="mb-8 text-left max-w-sm mx-auto">
                         <p
                             class="text-[10px] font-bold text-slate-500 uppercase leading-none border-l-2 border-primary pl-2 mb-1">
-                            Step 1. Register with a Partner</p>
-                        <span class="block text-[8px] text-slate-600 font-bold mb-4 uppercase ml-2">第一步：在合作夥伴平台註冊</span>
+                            步驟一：註冊合作平台</p>
+                        <span class="block text-[8px] text-slate-600 font-bold mb-4 uppercase ml-2">Step 1. Register with a Partner</span>
 
                         <div class="grid grid-cols-2 gap-3 mb-4">
                             <a href="https://reurl.cc/oKAgxg" target="_blank"
@@ -150,9 +149,9 @@
                                 <img src="https://assets.pionex.com/fe-static/images/common/logo_white.svg" alt="Pionex"
                                     class="h-6 object-contain opacity-80 group-hover:opacity-100 transition-opacity">
                                 <span
-                                    class="text-[9px] text-slate-500 uppercase font-bold group-hover:text-primary transition-colors leading-none">Register</span>
+                                    class="text-[9px] text-slate-500 uppercase font-bold group-hover:text-primary transition-colors leading-none">立即註冊</span>
                                 <span
-                                    class="text-[7px] text-slate-600 font-bold group-hover:text-primary/70 uppercase">立即註冊</span>
+                                    class="text-[7px] text-slate-600 font-bold group-hover:text-primary/70 uppercase">Register</span>
                             </a>
                             <a href="https://mytd.cc/py0h" target="_blank"
                                 class="bg-black/20 border border-border-dark hover:border-blue-500/50 p-4 rounded-xl flex flex-col items-center justify-center gap-1 group transition-all">
@@ -160,16 +159,16 @@
                                     alt="MiTRADE"
                                     class="h-6 object-contain opacity-80 group-hover:opacity-100 transition-opacity">
                                 <span
-                                    class="text-[9px] text-slate-500 uppercase font-bold group-hover:text-blue-500 transition-colors leading-none">Register</span>
+                                    class="text-[9px] text-slate-500 uppercase font-bold group-hover:text-blue-500 transition-colors leading-none">立即註冊</span>
                                 <span
-                                    class="text-[7px] text-slate-600 font-bold group-hover:text-blue-500/70 uppercase">立即註冊</span>
+                                    class="text-[7px] text-slate-600 font-bold group-hover:text-blue-500/70 uppercase">Register</span>
                             </a>
                         </div>
                     </div>
 
                     <!-- Step 2: KYC & Contact -->
                     <div class="bg-surface-dark/50 border border-border-dark rounded-xl p-6 mb-2 max-w-sm mx-auto">
-                        <p class="text-primary font-extrabold text-lg mb-1 leading-tight">Step 2. 完成 KYC 認證後聯繫小編</p>
+                        <p class="text-primary font-extrabold text-lg mb-1 leading-tight">步驟二：完成 KYC 認證後聯繫小編解鎖</p>
                         <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-6 leading-relaxed">
                             Complete KYC & Contact Editor to Unlock</p>
 
@@ -187,35 +186,35 @@
 
             <!-- Account Info -->
             <section class="p-4">
-                <h3 class="font-bold text-xs text-slate-400 uppercase tracking-widest leading-none">Account Information
+                <h3 class="font-bold text-xs text-slate-400 uppercase tracking-widest leading-none">帳號資訊
                 </h3>
-                <span class="text-[9px] text-slate-600 font-bold uppercase">帳戶詳細資訊</span>
+                <span class="text-[9px] text-slate-600 font-bold uppercase">Account Information</span>
                 <div class="bg-surface-dark border border-border-dark rounded-xl divide-y divide-border-dark mt-3">
                     <div class="flex justify-between items-center p-4">
                         <div class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-slate-500 text-lg">email</span>
-                            <span class="text-sm text-slate-300">Email</span>
+                            <span class="text-sm text-slate-300">電子郵件</span>
                         </div>
                         <span class="text-sm text-white font-medium" id="infoEmail">--</span>
                     </div>
                     <div class="flex justify-between items-center p-4">
                         <div class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-slate-500 text-lg">account_circle</span>
-                            <span class="text-sm text-slate-300">Account ID</span>
+                            <span class="text-sm text-slate-300">帳號 ID</span>
                         </div>
                         <span class="text-[10px] text-slate-500 font-mono" id="infoId">--</span>
                     </div>
                     <div class="flex justify-between items-center p-4">
                         <div class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-slate-500 text-lg">login</span>
-                            <span class="text-sm text-slate-300">Provider</span>
+                            <span class="text-sm text-slate-300">登入方式</span>
                         </div>
                         <span class="text-sm text-white font-medium" id="infoProvider">--</span>
                     </div>
                     <div class="flex justify-between items-center p-4">
                         <div class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-slate-500 text-lg">calendar_today</span>
-                            <span class="text-sm text-slate-300">Joined</span>
+                            <span class="text-sm text-slate-300">加入日期</span>
                         </div>
                         <span class="text-sm text-white font-medium" id="infoJoined">--</span>
                     </div>
@@ -224,9 +223,8 @@
 
             <!-- Telegram Notifications -->
             <section class="px-4 mb-4">
-                <h3 class="font-bold text-xs text-slate-400 uppercase tracking-widest leading-none">Telegram
-                    Notifications</h3>
-                <span class="text-[9px] text-slate-600 font-bold uppercase">Telegram 推播通知</span>
+                <h3 class="font-bold text-xs text-slate-400 uppercase tracking-widest leading-none">Telegram 通知設定</h3>
+                <span class="text-[9px] text-slate-600 font-bold uppercase">Telegram Notifications</span>
 
                 <div id="telegramSection" class="mt-3">
                     <!-- Not Linked State -->
@@ -240,8 +238,7 @@
                             </svg>
                         </div>
                         <h4 class="text-white font-bold text-sm mb-1">連結 Telegram 帳號</h4>
-                        <p class="text-slate-500 text-xs mb-4">Get real-time signal notifications on
-                            Telegram<br>即時接收交易信號推播</p>
+                        <p class="text-slate-500 text-xs mb-4">透過 Telegram 接收即時交易信號通知</p>
 
                         <button id="telegramLinkBtn" onclick="generateTelegramCode()"
                             class="bg-blue-500 hover:bg-blue-600 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all flex items-center gap-2 mx-auto">
@@ -249,13 +246,13 @@
                                 <path
                                     d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z" />
                             </svg>
-                            Link Telegram
+                            綁定 Telegram
                         </button>
 
                         <!-- Code Display Area (hidden initially) -->
                         <div id="telegramCodeArea" class="hidden mt-4">
                             <div class="bg-card-dark border border-blue-500/30 rounded-xl p-4">
-                                <p class="text-[11px] text-slate-400 mb-2">Your link code (expires in 10 min):</p>
+                                <p class="text-[11px] text-slate-400 mb-2">您的綁定代碼（10 分鐘內有效）：</p>
                                 <p id="telegramCode"
                                     class="text-2xl font-black text-blue-400 tracking-[0.3em] select-all">------</p>
                                 <div class="mt-3 text-left space-y-1.5">
@@ -286,18 +283,18 @@
                                 class="text-[10px] text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-1.5 mx-auto w-full py-1 group">
                                 <span
                                     class="material-symbols-outlined text-sm group-hover:text-blue-400 transition-colors">help</span>
-                                如何綁定？(Setup Guide)
+                                如何綁定？（設定指南）
                             </button>
                             <div id="telegramGuide"
                                 class="hidden mt-3 text-left bg-black/20 rounded-xl p-4 border border-border-dark/50 transition-all">
                                 <h5
                                     class="text-[10px] font-bold text-slate-300 mb-3 uppercase tracking-wider flex items-center gap-2">
                                     <span class="w-1 h-3 bg-blue-500 rounded-full"></span>
-                                    綁定步驟 Instructions
+                                    操作說明 Instructions
                                 </h5>
                                 <ol class="list-decimal pl-3 space-y-3">
                                     <li class="text-[10px] text-slate-400 pl-1">
-                                        點擊上方藍色 <span class="text-blue-400 font-bold">Link Telegram</span> 按鈕，取得您的專屬綁定碼。
+                                        點擊上方藍色 <span class="text-blue-400 font-bold">綁定 Telegram</span> 按鈕，取得您的專屬綁定碼。
                                     </li>
                                     <li class="text-[10px] text-slate-400 pl-1">
                                         開啟 Telegram，搜尋官方機器人：
@@ -335,19 +332,18 @@
                             <div class="flex-1">
                                 <p class="text-white font-bold text-sm flex items-center gap-1.5">
                                     <span class="w-2 h-2 rounded-full bg-green-500 inline-block"></span>
-                                    Connected
+                                    已連線
                                 </p>
                                 <p class="text-slate-500 text-xs" id="telegramUsername">@username</p>
                             </div>
                             <span
-                                class="text-[9px] font-bold bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full uppercase">Active</span>
+                                class="text-[9px] font-bold bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full uppercase">啟用中</span>
                         </div>
-                        <p class="text-[11px] text-slate-500 mb-3">🔔 You will receive trading signal alerts on
-                            Telegram.
+                        <p class="text-[11px] text-slate-500 mb-3">🔔 您將透過 Telegram 接收交易信號提醒。
                         </p>
                         <button onclick="unlinkTelegram()"
                             class="w-full py-2 rounded-lg border border-slate-700 text-slate-400 text-xs font-bold hover:border-red-500/50 hover:text-red-400 transition-colors">
-                            Disconnect Telegram
+                            解除 Telegram 綁定
                         </button>
                     </div>
                 </div>
@@ -355,16 +351,16 @@
 
             <!-- Quick Links -->
             <section class="p-4">
-                <h3 class="font-bold text-xs text-slate-400 uppercase tracking-widest leading-none">Quick Links</h3>
-                <span class="text-[9px] text-slate-600 font-bold uppercase">快速連結</span>
+                <h3 class="font-bold text-xs text-slate-400 uppercase tracking-widest leading-none">快速連結</h3>
+                <span class="text-[9px] text-slate-600 font-bold uppercase">Quick Links</span>
                 <div class="space-y-2 mt-3">
                     <a href="index.html"
                         class="bg-surface-dark border border-border-dark rounded-xl p-4 flex items-center justify-between hover:border-primary/30 transition-colors block">
                         <div class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-primary text-lg">explore</span>
                             <div class="flex flex-col">
-                                <span class="text-sm font-medium text-white leading-none">Strategy Marketplace</span>
-                                <span class="text-[9px] text-slate-500 mt-0.5">策略市場</span>
+                                <span class="text-sm font-medium text-white leading-none">策略市場</span>
+                                <span class="text-[9px] text-slate-500 mt-0.5">Strategy Marketplace</span>
                             </div>
                         </div>
                         <span class="material-symbols-outlined text-slate-600 text-sm">chevron_right</span>
@@ -374,8 +370,8 @@
                         <div class="flex items-center gap-3">
                             <span class="material-symbols-outlined text-primary text-lg">terminal</span>
                             <div class="flex flex-col">
-                                <span class="text-sm font-bold text-primary leading-none">Admin Panel</span>
-                                <span class="text-[9px] text-primary/60 mt-0.5">管理員面板</span>
+                                <span class="text-sm font-bold text-primary leading-none">管理後台</span>
+                                <span class="text-[9px] text-primary/60 mt-0.5">Admin Panel</span>
                             </div>
                         </div>
                         <span class="material-symbols-outlined text-primary text-sm">chevron_right</span>
@@ -387,7 +383,7 @@
             <section class="p-4 mt-2 mb-8">
                 <button onclick="handleSignOut()"
                     class="w-full py-3 rounded-xl border border-red-500/30 text-red-400 font-bold text-sm hover:bg-red-500/10 transition-colors flex items-center justify-center gap-2">
-                    <span class="material-symbols-outlined text-sm">logout</span> Sign Out
+                    <span class="material-symbols-outlined text-sm">logout</span> 登出
                 </button>
             </section>
         </div>
@@ -398,20 +394,20 @@
         class="fixed bottom-0 left-0 right-0 bg-background-dark/95 backdrop-blur-md border-t border-border-dark px-6 pb-6 pt-3 flex justify-between items-center z-50">
         <a class="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300" href="index.html">
             <span class="material-symbols-outlined">home</span>
-            <span class="text-[10px] font-bold uppercase tracking-tighter leading-none">Home</span>
-            <span class="text-[8px] text-slate-600 font-medium">首頁</span>
+            <span class="text-[10px] font-bold uppercase tracking-tighter leading-none">首頁</span>
+            <span class="text-[8px] text-slate-600 font-medium">Home</span>
         </a>
         <a id="adminNavLink" class="hidden flex-col items-center gap-1 text-slate-500 hover:text-slate-300"
             href="admin.html">
             <span class="material-symbols-outlined">terminal</span>
-            <span class="text-[10px] font-bold uppercase tracking-tighter leading-none">Admin</span>
-            <span class="text-[8px] text-slate-600 font-medium">管理端</span>
+            <span class="text-[10px] font-bold uppercase tracking-tighter leading-none">管理端</span>
+            <span class="text-[8px] text-slate-600 font-medium">Admin</span>
         </a>
         <a class="flex flex-col items-center gap-1" href="profile.html">
             <span class="material-symbols-outlined text-primary font-bold"
                 style="font-variation-settings: 'FILL' 1">person</span>
-            <span class="text-[10px] font-bold text-primary uppercase tracking-tighter leading-none">Profile</span>
-            <span class="text-[8px] text-primary/60 font-medium">個人資料</span>
+            <span class="text-[10px] font-bold text-primary uppercase tracking-tighter leading-none">個人資料</span>
+            <span class="text-[8px] text-primary/60 font-medium">Profile</span>
         </a>
     </nav>
 
@@ -453,12 +449,12 @@
                     // Set Tier Label
                     const tierEl = document.getElementById('userTier');
                     const tierMap = {
-                        'admin': 'Administrator',
-                        'platinum': 'Platinum Member',
-                        'advanced': 'Advanced Member',
-                        'standard': 'Standard Member'
+                        'admin': '管理員',
+                        'platinum': '白金會員',
+                        'advanced': '進階會員',
+                        'standard': '標準會員'
                     };
-                    const roleLabel = tierMap[role] || 'Standard Member';
+                    const roleLabel = tierMap[role] || '標準會員';
                     tierEl.textContent = roleLabel;
 
                     // Update Badge Visibility & Class
@@ -614,7 +610,7 @@
             } else {
                 const noSig = document.createElement('div');
                 noSig.className = 'text-[10px] font-bold bg-slate-800 text-slate-400 px-2 py-1 rounded uppercase tracking-tighter';
-                noSig.textContent = 'No Active Signal';
+                noSig.textContent = '目前無信號';
                 right.appendChild(noSig);
             }
 
@@ -638,7 +634,7 @@
                 if (!Array.isArray(subs) || subs.length === 0) {
                     const empty = document.createElement('p');
                     empty.className = 'text-xs text-slate-500 italic text-center py-4';
-                    empty.textContent = 'No active subscriptions found.';
+                    empty.textContent = '尚無訂閱中的策略。';
                     list.appendChild(empty);
                     return;
                 }
@@ -672,7 +668,7 @@
                     list.innerHTML = '';
                     const errEl = document.createElement('p');
                     errEl.className = 'text-xs text-red-500 font-bold py-2 text-center';
-                    errEl.textContent = 'Unable to load signals currently.';
+                    errEl.textContent = '目前無法載入信號。';
                     list.appendChild(errEl);
                 }
             }
@@ -696,7 +692,7 @@
                 if (data.linked) {
                     document.getElementById('telegramNotLinked').classList.add('hidden');
                     document.getElementById('telegramLinked').classList.remove('hidden');
-                    document.getElementById('telegramUsername').textContent = data.username ? `@${data.username}` : 'Telegram Connected';
+                    document.getElementById('telegramUsername').textContent = data.username ? `@${data.username}` : 'Telegram 已連線';
                 } else {
                     document.getElementById('telegramNotLinked').classList.remove('hidden');
                     document.getElementById('telegramLinked').classList.add('hidden');
@@ -708,13 +704,13 @@
 
         async function generateTelegramCode() {
             const btn = document.getElementById('telegramLinkBtn');
-            btn.textContent = 'Generating...';
+            btn.textContent = '產生中...';
             btn.disabled = true;
 
             try {
                 const { user, token } = await getUser();
                 if (!user || !token) {
-                    alert('Please login first');
+                    alert('請先登入');
                     return;
                 }
 
@@ -728,18 +724,18 @@
                     document.getElementById('telegramCode').textContent = data.code;
                     document.getElementById('codeInStep').textContent = data.code;
                     document.getElementById('telegramCodeArea').classList.remove('hidden');
-                    btn.textContent = 'Regenerate Code';
+                    btn.textContent = '重新產生代碼';
                     btn.disabled = false;
                 }
             } catch (e) {
-                alert('Failed to generate code. Please try again.');
-                btn.textContent = 'Link Telegram';
+                alert('產生代碼失敗，請重試。');
+                btn.textContent = '綁定 Telegram';
                 btn.disabled = false;
             }
         }
 
         async function unlinkTelegram() {
-            if (!confirm('Disconnect Telegram? You will stop receiving signal notifications.')) return;
+            if (!confirm('確定解除 Telegram 綁定？您將停止接收信號通知。')) return;
 
             try {
                 const { user, token } = await getUser();
@@ -752,7 +748,7 @@
                 document.getElementById('telegramLinked').classList.add('hidden');
                 document.getElementById('telegramCodeArea').classList.add('hidden');
             } catch (e) {
-                alert('Failed to unlink. Please try again.');
+                alert('解除綁定失敗，請重試。');
             }
         }
 

@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Members - QuantSignal</title>
+    <title>會員管理 - QuantSignal</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
@@ -29,8 +29,8 @@
         <div class="flex items-center gap-3">
             <a href="admin.html"><span class="material-symbols-outlined text-slate-400">arrow_back</span></a>
             <div class="flex flex-col">
-                <h1 class="font-bold text-lg leading-none">Member Audit</h1>
-                <span class="text-[9px] text-slate-500 font-bold uppercase mt-0.5">會員審核中心</span>
+                <h1 class="font-bold text-lg leading-none">會員審核</h1>
+                <span class="text-[9px] text-slate-500 font-bold uppercase mt-0.5">Member Audit</span>
             </div>
         </div>
         <div class="flex items-center gap-2">
@@ -48,7 +48,7 @@
                     class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">search</span>
                 <input
                     class="w-full bg-surface-dark border border-border-dark rounded-lg py-3 pl-10 pr-4 text-sm placeholder:text-slate-500 focus:border-primary focus:ring-0 outline-none"
-                    placeholder="Search members..." type="text" id="searchInput" />
+                    placeholder="搜尋會員..." type="text" id="searchInput" />
             </div>
             <div class="flex gap-2 mt-3 overflow-x-auto pb-2" id="filterButtons">
                 <!-- Filters populated by JS -->
@@ -57,7 +57,7 @@
 
         <section class="px-4 space-y-2" id="memberList">
             <!-- Members populated by JS -->
-            <div class="text-center py-8 text-slate-500">Loading members...</div>
+            <div class="text-center py-8 text-slate-500">載入會員資料...</div>
         </section>
     </main>
 
@@ -65,23 +65,23 @@
         class="fixed bottom-0 left-0 right-0 bg-background-dark/95 backdrop-blur-md border-t border-border-dark px-6 pb-6 pt-3 flex justify-between items-center z-50">
         <a href="index.html" class="flex flex-col items-center gap-1 text-slate-500">
             <span class="material-symbols-outlined">home</span>
-            <span class="text-[10px] font-black leading-none">HOME</span>
-            <span class="text-[8px] font-bold opacity-60">首頁</span>
+            <span class="text-[10px] font-black leading-none">首頁</span>
+            <span class="text-[8px] font-bold opacity-60">HOME</span>
         </a>
         <a href="admin.html" class="flex flex-col items-center gap-1 text-slate-500">
             <span class="material-symbols-outlined">terminal</span>
-            <span class="text-[10px] font-black leading-none">ADMIN</span>
-            <span class="text-[8px] font-bold opacity-60">管理端</span>
+            <span class="text-[10px] font-black leading-none">管理端</span>
+            <span class="text-[8px] font-bold opacity-60">ADMIN</span>
         </a>
         <a href="members.html" class="flex flex-col items-center gap-1 text-primary">
             <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1">group</span>
-            <span class="text-[10px] font-black leading-none text-primary">MEMBERS</span>
-            <span class="text-[8px] font-bold opacity-80 text-primary/60">成員審核</span>
+            <span class="text-[10px] font-black leading-none text-primary">會員</span>
+            <span class="text-[8px] font-bold opacity-80 text-primary/60">MEMBERS</span>
         </a>
         <a href="profile.html" class="flex flex-col items-center gap-1 text-slate-500">
             <span class="material-symbols-outlined">person</span>
-            <span class="text-[10px] font-black leading-none">PROFILE</span>
-            <span class="text-[8px] font-bold opacity-60">個人資料</span>
+            <span class="text-[10px] font-black leading-none">個人資料</span>
+            <span class="text-[8px] font-bold opacity-60">PROFILE</span>
         </a>
     </nav>
 
@@ -148,18 +148,18 @@
             <div class="grid grid-cols-3 gap-2 mb-3">
                 <div class="bg-surface-dark border border-border-dark p-3 rounded-xl text-center">
                     <p class="text-white text-xl font-bold leading-none">${total}</p>
-                    <p class="text-[10px] text-slate-500 uppercase font-black tracking-widest mt-2">Total</p>
-                    <p class="text-[8px] text-slate-600 font-bold uppercase mt-0.5">總會員數</p>
+                    <p class="text-[10px] text-slate-500 uppercase font-black tracking-widest mt-2">總計</p>
+                    <p class="text-[8px] text-slate-600 font-bold uppercase mt-0.5">Total</p>
                 </div>
                 <div class="bg-primary/5 border border-primary/20 p-3 rounded-xl text-center">
                     <p class="text-primary text-xl font-bold leading-none">${onlineCount}</p>
-                    <p class="text-[10px] text-primary/60 uppercase font-black tracking-widest mt-2">Online</p>
-                    <p class="text-[8px] text-primary/40 font-bold uppercase mt-0.5">在線人數</p>
+                    <p class="text-[10px] text-primary/60 uppercase font-black tracking-widest mt-2">在線</p>
+                    <p class="text-[8px] text-primary/40 font-bold uppercase mt-0.5">Online</p>
                 </div>
                 <div class="bg-surface-dark border border-border-dark p-3 rounded-xl text-center">
                     <p class="text-yellow-500 text-xl font-bold leading-none">${pending}</p>
-                    <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest mt-2">Pending</p>
-                    <p class="text-[8px] text-slate-600 font-bold uppercase mt-0.5">待審核</p>
+                    <p class="text-[10px] text-slate-400 uppercase font-black tracking-widest mt-2">待審核</p>
+                    <p class="text-[8px] text-slate-600 font-bold uppercase mt-0.5">Pending</p>
                 </div>
             </div>
             ${pending > 0 ? `
@@ -170,15 +170,15 @@
             <div class="grid grid-cols-3 gap-2 mb-6 text-center">
                 <div class="bg-surface-dark/50 border border-border-dark py-1.5 rounded-lg">
                     <p class="text-xs font-bold text-white">${basic}</p>
-                    <p class="text-[8px] text-slate-500 uppercase">Basic</p>
+                    <p class="text-[8px] text-slate-500 uppercase">基礎 Basic</p>
                 </div>
                 <div class="bg-surface-dark/50 border border-border-dark py-1.5 rounded-lg">
                     <p class="text-xs font-bold text-primary">${premium}</p>
-                    <p class="text-[8px] text-slate-500 uppercase">Advanced</p>
+                    <p class="text-[8px] text-slate-500 uppercase">進階 Advanced</p>
                 </div>
                 <div class="bg-surface-dark/50 border border-border-dark py-1.5 rounded-lg">
                     <p class="text-xs font-bold text-purple-400">${platinum}</p>
-                    <p class="text-[8px] text-slate-500 uppercase">Platinum</p>
+                    <p class="text-[8px] text-slate-500 uppercase">白金 Platinum</p>
                 </div>
             </div>`;
             document.getElementById('statsSection').innerHTML = statsHtml;
@@ -186,11 +186,11 @@
 
         function renderFilters() {
             const filters = [
-                { id: 'all', label: 'All', zh: '全部' },
-                { id: 'platinum', label: 'Platinum', zh: '白金' },
-                { id: 'premium', label: 'Advanced', zh: '進階' },
-                { id: 'basic', label: 'Basic', zh: '基礎' },
-                { id: 'pending', label: 'Pending', zh: '待審' }
+                { id: 'all', label: '全部', zh: 'All' },
+                { id: 'platinum', label: '白金', zh: 'Platinum' },
+                { id: 'premium', label: '進階', zh: 'Advanced' },
+                { id: 'basic', label: '基礎', zh: 'Basic' },
+                { id: 'pending', label: '待審核', zh: 'Pending' }
             ];
 
             const html = filters.map(f => `
@@ -229,7 +229,7 @@
             });
 
             if (filtered.length === 0) {
-                list.innerHTML = `<div class="text-center py-12 text-slate-500 text-sm">No members found.</div>`;
+                list.innerHTML = `<div class="text-center py-12 text-slate-500 text-sm">找不到會員。</div>`;
                 return;
             }
 
@@ -252,15 +252,15 @@
                                     ${displayName}
                                     ${isPremium ? '<span class="material-symbols-outlined text-primary text-xs" style="font-variation-settings:\'FILL\' 1">verified</span>' : ''}
                                 </p>
-                                <p class="text-[11px] text-slate-500 truncate">${m.email || 'No Email'}</p>
+                                <p class="text-[11px] text-slate-500 truncate">${m.email || '無電子郵件'}</p>
                                 <div class="mt-2 flex items-center gap-2">
-                                    <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Role:</span>
+                                    <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">身份：</span>
                                     <select onchange="updateUserRole('${m.id}', this.value)" 
                                         class="bg-background-dark border border-border-dark rounded px-2 py-0.5 text-[10px] text-slate-300 outline-none focus:border-primary">
-                                        <option value="standard" ${role === 'standard' ? 'selected' : ''}>Standard</option>
-                                        <option value="advanced" ${role === 'advanced' ? 'selected' : ''}>Advanced</option>
-                                        <option value="platinum" ${role === 'platinum' ? 'selected' : ''}>Platinum</option>
-                                        <option value="admin" ${role === 'admin' ? 'selected' : ''}>Admin</option>
+                                        <option value="standard" ${role === 'standard' ? 'selected' : ''}>標準 Standard</option>
+                                        <option value="advanced" ${role === 'advanced' ? 'selected' : ''}>進階 Advanced</option>
+                                        <option value="platinum" ${role === 'platinum' ? 'selected' : ''}>白金 Platinum</option>
+                                        <option value="admin" ${role === 'admin' ? 'selected' : ''}>管理員 Admin</option>
                                     </select>
                                 </div>
                             </div>
@@ -275,12 +275,12 @@
                         <div class="flex flex-col gap-3">
                              <div class="flex justify-between items-start">
                                 <div>
-                                    <p class="text-[10px] font-bold text-primary uppercase tracking-wider mb-1">Application Pending</p>
-                                    <p class="text-xs text-slate-300">Account: <span class="font-mono text-white">${app.trading_account}</span></p>
+                                    <p class="text-[10px] font-bold text-primary uppercase tracking-wider mb-1">申請待審核</p>
+                                    <p class="text-xs text-slate-300">帳號：<span class="font-mono text-white">${app.trading_account}</span></p>
                                 </div>
                                 <div class="flex gap-2">
-                                    <button onclick="processApp('${app.id}', '${m.id}', 'rejected')" class="px-2 py-1 text-[10px] bg-slate-800 text-slate-400 font-bold rounded hover:bg-slate-700">REJECT</button>
-                                    <button onclick="processApp('${app.id}', '${m.id}', 'approved')" class="px-2 py-1 text-[10px] bg-primary text-black font-bold rounded hover:bg-green-400">APPROVE</button>
+                                    <button onclick="processApp('${app.id}', '${m.id}', 'rejected')" class="px-2 py-1 text-[10px] bg-slate-800 text-slate-400 font-bold rounded hover:bg-slate-700">拒絕</button>
+                                    <button onclick="processApp('${app.id}', '${m.id}', 'approved')" class="px-2 py-1 text-[10px] bg-primary text-black font-bold rounded hover:bg-green-400">批准</button>
                                 </div>
                             </div>
                             ${app.proof_urls && app.proof_urls.length > 0 ? `
@@ -320,7 +320,7 @@
                     renderStats();
                     renderMembers();
                 } else {
-                    alert('Update failed');
+                    alert('更新失敗');
                 }
             } catch (e) { alert(e.message); }
         };
@@ -337,7 +337,7 @@
                 if (res.ok) {
                     initPage(); // Reload
                 } else {
-                    alert('Action failed');
+                    alert('操作失敗');
                 }
             } catch (e) { alert(e.message); }
         };
@@ -358,14 +358,14 @@
                     alert(`已成功批准 ${data.approved} 件申請${data.errors?.length ? `，${data.errors.length} 件失敗` : ''}`);
                     initPage();
                 } else {
-                    alert('批准失敗: ' + (data.error || 'Unknown error'));
+                    alert('批准失敗: ' + (data.error || '未知錯誤'));
                 }
             } catch (e) { alert(e.message); }
         };
 
         window.deleteMember = async (userId) => {
             const { token } = await getUser();
-            if (!confirm('Delete this user? This action cannot be undone.')) return;
+            if (!confirm('確定刪除此用戶？此操作無法復原。')) return;
 
             try {
                 const res = await fetch(`/api/admin/users/${userId}`, {
@@ -375,7 +375,7 @@
                 if (res.ok) {
                     initPage(); // Reload
                 } else {
-                    alert('Delete failed');
+                    alert('刪除失敗');
                 }
             } catch (e) { alert(e.message); }
         }
