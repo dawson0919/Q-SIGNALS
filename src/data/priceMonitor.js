@@ -2,7 +2,7 @@
 const WebSocket = require('ws');
 const { insertCandles, getLatestClosePrice } = require('./database');
 
-const SPOT_SYMBOLS = ['btcusdt', 'ethusdt', 'solusdt'];
+const SPOT_SYMBOLS = ['btcusdt', 'ethusdt', 'solusdt', 'paxgusdt'];
 // CRITIAL FIX: Do NOT subscribe to SPXUSDT/NASUSDT on Binance WebSocket.
 // Binance SPXUSDT is an old/delisted pair stuck at ~$0.32, causing massive errors.
 // Gold (XAUUSDT) is fine on Binance Futures. Use DB/CoinGecko for indices.

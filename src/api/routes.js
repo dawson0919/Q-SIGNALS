@@ -499,7 +499,7 @@ router.get('/featured-signals/gold', async (req, res) => {
         const allPerf = await getAllStrategyPerformance();
 
         const signals = allPerf
-            .filter(p => p.symbol === 'XAUUSDT' && p.latest_signal)
+            .filter(p => (p.symbol === 'XAUUSDT' || p.symbol === 'PAXGUSDT') && p.latest_signal)
             .map(p => {
                 const sig = p.latest_signal;
                 return {

@@ -117,6 +117,62 @@ async function sendSignalNotification(chatId, signal) {
     return sendMessage(chatId, message);
 }
 
+// ── Send Close Signal Notification ───────────────────
+async function sendCloseSignalNotification(chatId, signal) {
+    const { strategyName, symbol, type, entryPrice, exitPrice, pnlPercent, timeframe, entryTime, exitTime } = signal;
+    const symbolClean = symbol.replace('USDT', '/USDT');
+    const pnlEmoji = pnlPercent >= 0 ? '✅' : '❌';
+    const pnlSign = pnlPercent >= 0 ? '+' : '';
+    const precision = exitPrice < 1 ? 4 : (exitPrice < 100 ? 2 : 0);
+
+    // Calculate hold duration
+    const holdMs = new Date(exitTime).getTime() - new Date(entryTime).getTime();
+    const holdHours = Math.floor(holdMs / (1000 * 60 * 60));
+    const holdDays = Math.floor(holdHours / 24);
+    const holdRemainder = holdHours % 24;
+    const holdStr = holdDays > 0 ? `${holdDays}d ${holdRemainder}h` : `${holdHours}h`;
+
+    // Format time to Asia/Taipei
+    const closeDate = new Date(exitTime || Date.now());
+    let timeStr = closeDate.toLocaleString('en-US', {
+        timeZone: 'Asia/Taipei',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+
+    if (timeStr.includes(' 24:')) {
+        const nextDay = new Date(closeDate.getTime() + 60 * 60 * 1000);
+        timeStr = nextDay.toLocaleString('en-US', {
+            timeZone: 'Asia/Taipei',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        }).replace(/\b24:/, '00:');
+    }
+
+    const message = [
+        `🔓 <b>CLOSE SIGNAL — EXIT ${type}</b>`,
+        ``,
+        `📊 <b>${strategyName}</b>`,
+        `💰 ${symbolClean} • ${timeframe}`,
+        `📈 Entry: <b>$${Number(entryPrice).toLocaleString('en-US', { minimumFractionDigits: precision, maximumFractionDigits: precision })}</b>  →  Exit: <b>$${Number(exitPrice).toLocaleString('en-US', { minimumFractionDigits: precision, maximumFractionDigits: precision })}</b>`,
+        `${pnlEmoji} P&L: <b>${pnlSign}${Number(pnlPercent).toFixed(2)}%</b>`,
+        `⏱ Hold: ${holdStr}`,
+        `⏰ <b>${timeStr} (UTC+8)</b>`,
+        ``,
+        `🔗 <a href="${SITE_URL}/strategy-detail.html?strategy=${signal.strategyId}&symbol=${symbol}&timeframe=${timeframe}">View Details</a>`,
+        ``,
+        `<pre>v2.2-stable</pre>`
+    ].filter(Boolean).join('\n');
+
+    return sendMessage(chatId, message);
+}
+
 // ── Generate Linking Code ───────────────────────
 function generateLinkCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -408,6 +464,7 @@ function stopPolling() {
 module.exports = {
     sendMessage,
     sendSignalNotification,
+    sendCloseSignalNotification,
     createLinkCode,
     consumeLinkCode,
     processUpdate,

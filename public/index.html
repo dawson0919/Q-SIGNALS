@@ -281,7 +281,7 @@
 
           <div class="flex flex-col md:flex-row justify-between md:items-end gap-6">
             <div class="flex-1">
-              <h3 class="text-xs font-bold text-slate-500 uppercase tracking-tight mb-1">Tether Gold (XAU/USDT)</h3>
+              <h3 class="text-xs font-bold text-slate-500 uppercase tracking-tight mb-1">Pax Gold (PAXG/USDT)</h3>
               <div class="flex items-baseline gap-4">
                 <span id="goldPriceMain"
                   class="text-4xl md:text-5xl font-black text-white italic tracking-tighter tabular-nums drop-shadow-md">$----.--</span>
@@ -306,7 +306,8 @@
                     <span class="material-symbols-outlined text-yellow-500/50 text-xl">bolt</span>
                   </div>
                   <div>
-                    <p class="text-[11px] text-slate-600 font-medium italic">Scanning market for XAU opportunities...
+                    <p class="text-[11px] text-slate-600 font-medium italic">Scanning market for Gold (PAXG)
+                      opportunities...
                     </p>
                   </div>
                 </div>
@@ -977,8 +978,8 @@
 
     let lastTickerUpdate = 0;
     function updatePriceTicker(prices) {
-      // Update Main Gold Highlight (Immediate)
-      const gold = prices['XAUUSDT'];
+      // Update Main Gold Highlight (Immediate) - Prioritize PAXG
+      const gold = prices['PAXGUSDT'] || prices['XAUUSDT'];
       if (gold) {
         currentGoldPrice = gold.price; // Store for featured signals
         renderFeaturedGoldSignals(); // Refresh featured UI with new price

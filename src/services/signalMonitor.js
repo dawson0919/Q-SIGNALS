@@ -57,6 +57,14 @@ const MONITOR_COMBOS = [
     { symbol: 'XAUUSDT', strategyId: 'donchian_trend', timeframe: '4h' },
     { symbol: 'XAUUSDT', strategyId: 'dual_ema', timeframe: '4h' },
     { symbol: 'XAUUSDT', strategyId: 'granville_eth_4h', timeframe: '4h' },
+    // PAXG (Spot Gold)
+    { symbol: 'PAXGUSDT', strategyId: 'three_style', timeframe: '1h' },
+    { symbol: 'PAXGUSDT', strategyId: 'three_style', timeframe: '4h' },
+    { symbol: 'PAXGUSDT', strategyId: 'donchian_trend', timeframe: '4h' },
+    { symbol: 'PAXGUSDT', strategyId: 'dual_ema', timeframe: '4h' },
+    { symbol: 'PAXGUSDT', strategyId: 'granville_eth_4h', timeframe: '4h' },
+    { symbol: 'PAXGUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
+    { symbol: 'PAXGUSDT', strategyId: 'ma60', timeframe: '4h' },
     // Indices
     { symbol: 'SPXUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
     { symbol: 'NASUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
@@ -261,7 +269,9 @@ async function syncLastSignals(supabaseAdmin) {
  */
 function getSymbolVariations(symbol) {
     const variations = [symbol];
-    if (symbol === 'XAUUSDT') variations.push('XAU/USDT', 'GOLD', 'XAUTUSDT', 'Tether Gold');
+    if (symbol === 'XAUUSDT' || symbol === 'PAXGUSDT') {
+        variations.push('XAU/USDT', 'GOLD', 'XAUTUSDT', 'Tether Gold', 'PAXGUSDT', 'Pax Gold');
+    }
     return variations;
 }
 

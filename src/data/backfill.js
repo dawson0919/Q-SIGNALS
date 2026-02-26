@@ -3,7 +3,7 @@ const yahoo = new YahooFinance();
 const { insertCandles, getLatestCandleTime, getCandleCount } = require('./database');
 
 // Yahoo Finance Info: NQ=F (Nasdaq 100 Futures), ES=F (S&P 500 Futures) - 15m delay
-const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT'];
+const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'PAXGUSDT', 'XAUUSDT', 'SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT'];
 const CG_ID_MAP = {
     'SPXUSDT': 'spdr-s-p-500-etf-ondo-tokenized-etf',
     'NASUSDT': 'invesco-qqq-etf-ondo-tokenized-etf'
