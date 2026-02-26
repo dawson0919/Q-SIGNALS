@@ -370,7 +370,7 @@ router.post('/subscribe', requireAuth, async (req, res) => {
         console.log(`[Subscribe] User: ${req.user.email} (${req.user.id}), Role: ${role}, Strategy: ${s.name} (${s.category}), Symbol: ${symbol}`);
 
         // Index Restrictions (SPX/NAS)
-        const isIndex = (symbol === 'SPXUSDT' || symbol === 'NASUSDT' || symbol === 'NQUSDT' || symbol === 'ESUSDT');
+        const isIndex = ['SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT', 'SPX', 'NAS', 'NQ', 'ES'].includes(symbol);
         // RELAXED: Allow Advanced users to subscribe for now
         if (isIndex && !['admin', 'platinum', 'advanced'].includes(role)) {
             console.log(`[Subscribe] DENIED: ${symbol} requiring Advanced+.`);
@@ -491,43 +491,39 @@ router.get('/manual-signals/performance', async (req, res) => {
     }
 });
 
-// Public Featured Gold Signals — sourced from strategy_performance (refreshed every 4h)
+// Public Featured Gold Signals — best PAXG strategies from strategy_performance
 router.get('/featured-signals/gold', async (req, res) => {
     try {
-        // Read from strategy_performance table (always fresh — background task updates every 4h)
         const { getAllStrategyPerformance } = require('../data/database');
         const allPerf = await getAllStrategyPerformance();
 
-        const signals = allPerf
-            .filter(p => (p.symbol === 'XAUUSDT' || p.symbol === 'PAXGUSDT') && p.latest_signal)
-            .sort((a, b) => {
-                if (a.symbol === 'PAXGUSDT' && b.symbol !== 'PAXGUSDT') return -1;
-                if (a.symbol !== 'PAXGUSDT' && b.symbol === 'PAXGUSDT') return 1;
-                return 0;
-            })
-            .map(p => {
-                const sig = p.latest_signal;
-                return {
-                    id: `perf_${p.strategy_id}_${p.timeframe}`,
-                    symbol: p.symbol,
-                    strategy_id: p.strategy_id,
-                    timeframe: p.timeframe,
-                    type: sig.type === 'LONG' ? 'BUY' : (sig.type === 'SHORT' ? 'SELL' : sig.type),
-                    entry_price: sig.entryPrice || sig.price || sig.entry_price,
-                    roi: sig.pnlPercent || sig.roi || 0,
-                    status: 'active',
-                    entry_time: sig.entryTime || sig.entryDate || sig.time,
-                    comment: `Strategy: ${p.strategy_id.replace(/_/g, ' ').toUpperCase()}`,
-                    source: 'algo'
-                };
-            })
-            .filter(s => s.entry_price && s.entry_time);
+        // Filter PAXG strategies with valid data, sorted by best total_return
+        const paxgPerf = allPerf
+            .filter(p => p.symbol === 'PAXGUSDT' && p.latest_signal && p.total_return != null)
+            .sort((a, b) => (parseFloat(b.total_return) || 0) - (parseFloat(a.total_return) || 0));
 
-        // Pick one signal per timeframe (most recent entry), always show 1h + 4h
-        signals.sort((a, b) => new Date(b.entry_time) - new Date(a.entry_time));
-        const best1h = signals.find(s => s.timeframe === '1h');
-        const best4h = signals.find(s => s.timeframe === '4h');
-        const featured = [best1h, best4h].filter(Boolean);
+        // Pick best 1h and best 4h by total_return
+        const best1h = paxgPerf.find(p => p.timeframe === '1h');
+        const best4h = paxgPerf.find(p => p.timeframe === '4h');
+
+        const featured = [best1h, best4h].filter(Boolean).map(p => {
+            const sig = p.latest_signal;
+            return {
+                id: `perf_${p.strategy_id}_${p.timeframe}`,
+                symbol: p.symbol,
+                strategy_id: p.strategy_id,
+                timeframe: p.timeframe,
+                type: sig.type === 'LONG' ? 'BUY' : (sig.type === 'SHORT' ? 'SELL' : sig.type),
+                entry_price: sig.entryPrice || sig.price || sig.entry_price,
+                roi: sig.pnlPercent || sig.roi || 0,
+                total_return: parseFloat(p.total_return) || 0,
+                win_rate: parseFloat(p.win_rate) || 0,
+                status: 'active',
+                entry_time: sig.entryTime || sig.entryDate || sig.time,
+                comment: `Strategy: ${p.strategy_id.replace(/_/g, ' ').toUpperCase()}`,
+                source: 'algo'
+            };
+        }).filter(s => s.entry_price && s.entry_time);
 
         res.json(featured);
     } catch (e) {
@@ -725,15 +721,15 @@ router.post('/backtest', backtestLimiter, async (req, res) => {
         let strategyFn;
         let strategyName;
 
-        const isIndex = (symbol === 'SPXUSDT' || symbol === 'NASUSDT' || symbol === 'NQUSDT' || symbol === 'ESUSDT');
+        const isIndex = ['SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT', 'SPX', 'NAS', 'NQ', 'ES'].includes(symbol);
 
         if (strategyId && strategies[strategyId]) {
             const s = strategies[strategyId];
             let params = { ...s.defaultParams, symbol, timeframe };
 
             if (isIndex && strategyId === 'turtle_breakout') {
-                if ((symbol === 'NASUSDT' || symbol === 'NQUSDT') && timeframe === '4h') {
-                    params = { leftBars: 4, rightBars: 5, minHoldBars: 20 };
+                if (['NASUSDT', 'NQUSDT', 'NAS', 'NQ'].includes(symbol) && timeframe === '4h') {
+                    params = { leftBars: 12, rightBars: 4, minHoldBars: 2 };
                 } else if (timeframe === '4h') {
                     params = { leftBars: 6, rightBars: 5, minHoldBars: 15 };
                 } else if (timeframe === '1h') {
