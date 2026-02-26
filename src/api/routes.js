@@ -1,6 +1,5 @@
 // API Routes
 const express = require('express');
-const path = require('path');
 const crypto = require('crypto');
 const router = express.Router();
 const rateLimit = require('express-rate-limit');
@@ -61,7 +60,9 @@ const {
     closeManualSignal,
     deleteManualSignal,
     getAllStrategyPerformance,
-    upsertStrategyPerformance
+    upsertStrategyPerformance,
+    getVisitorCount,
+    incrementVisitorCount
 } = require('../data/database');
 const indicators = require('../engine/indicators');
 
@@ -854,31 +855,29 @@ router.get('/stats', async (req, res) => {
     res.json({ candleCounts: stats, strategies: Object.keys(strategies).length });
 });
 
-// Visitor Counter
-const fs = require('fs');
-const STATS_FILE = path.join(__dirname, '../../../visitor_stats.json');
+// Visitor Counter (Supabase-backed, IP-deduped per day)
+const seenVisitorIPs = new Map(); // IP → date string (YYYY-MM-DD)
 
-router.get('/visitor-count', (req, res) => {
-    let count = 0;
+router.get('/visitor-count', async (req, res) => {
     try {
-        if (fs.existsSync(STATS_FILE)) {
-            const data = fs.readFileSync(STATS_FILE, 'utf8');
-            count = JSON.parse(data).count || 0;
+        const ip = req.ip || req.headers['x-forwarded-for']?.split(',')[0]?.trim() || 'unknown';
+        const today = new Date().toISOString().split('T')[0];
+        const lastSeen = seenVisitorIPs.get(ip);
+
+        if (lastSeen !== today) {
+            // New unique visitor today — increment and record
+            seenVisitorIPs.set(ip, today);
+            const count = await incrementVisitorCount();
+            return res.json({ count });
         }
+
+        // Already counted today — just return current count
+        const count = await getVisitorCount();
+        res.json({ count });
     } catch (e) {
-        console.warn('[VisitorCount] Failed to read stats file:', e.message);
+        console.warn('[VisitorCount] Error:', e.message);
+        res.json({ count: 0 });
     }
-
-    // Increment
-    count++;
-
-    try {
-        fs.writeFileSync(STATS_FILE, JSON.stringify({ count }), 'utf8');
-    } catch (e) {
-        console.warn('[VisitorCount] Failed to write stats file:', e.message);
-    }
-
-    res.json({ count });
 });
 
 // ── Telegram Bot Routes ────────────────────────

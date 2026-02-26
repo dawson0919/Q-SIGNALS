@@ -484,6 +484,34 @@ async function upsertStrategyPerformance(strategyId, symbol, timeframe, summary,
     }
 }
 
+// ── Visitor Counter (Supabase-backed, IP-deduped per day) ──
+
+async function getVisitorCount() {
+    const { data, error } = await getAdminClient()
+        .from('site_stats')
+        .select('value')
+        .eq('key', 'visitor_count')
+        .single();
+    if (error) throw error;
+    return data?.value || 0;
+}
+
+async function incrementVisitorCount() {
+    const admin = getAdminClient();
+    // Read current value
+    const { data: row } = await admin
+        .from('site_stats')
+        .select('value')
+        .eq('key', 'visitor_count')
+        .single();
+
+    const newCount = (row?.value || 0) + 1;
+    await admin
+        .from('site_stats')
+        .upsert({ key: 'visitor_count', value: newCount, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+    return newCount;
+}
+
 module.exports = {
     initSupabase,
     getSupabase,
@@ -515,5 +543,8 @@ module.exports = {
     deleteManualSignal,
     // Strategy Performance Cache
     getAllStrategyPerformance,
-    upsertStrategyPerformance
+    upsertStrategyPerformance,
+    // Visitor Counter
+    getVisitorCount,
+    incrementVisitorCount
 };
