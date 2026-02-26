@@ -555,8 +555,8 @@
 
       container.innerHTML = '';
 
-      // Limit to top 2 signals to keep the layout clean
-      signalsWithRoi.slice(0, 2).forEach(sig => {
+      // Limit to top 3 signals as requested
+      signalsWithRoi.slice(0, 3).forEach(sig => {
         const isBuy = (sig.type === 'BUY' || sig.type === 'LONG');
         const roi = sig.calculatedRoi;
         const time = new Date(sig.entry_time).toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -614,8 +614,8 @@
         // Performance map: key = "strategyId_symbol_timeframe"
         const perfMap = perfRes.ok ? await perfRes.json() : {};
 
-        const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT'];
-        const symbolNames = { BTCUSDT: 'BTC', ETHUSDT: 'ETH', SOLUSDT: 'SOL', XAUUSDT: 'GOLD', SPXUSDT: 'SPX', NASUSDT: 'NAS', NQUSDT: 'NQ', ESUSDT: 'ES' };
+        const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'PAXGUSDT', 'XAUUSDT', 'SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT'];
+        const symbolNames = { BTCUSDT: 'BTC', ETHUSDT: 'ETH', SOLUSDT: 'SOL', PAXGUSDT: 'GOLD', XAUUSDT: 'XAU-F', SPXUSDT: 'SPX', NASUSDT: 'NAS', NQUSDT: 'NQ', ESUSDT: 'ES' };
         const indexSymbols = ['SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT'];
 
         for (const strat of data.strategies) {
@@ -623,7 +623,7 @@
             if (indexSymbols.includes(symbol) && strat.id !== 'turtle_breakout') continue;
             if (strat.id === 'dual_st_breakout' && (symbol === 'XAUUSDT' || indexSymbols.includes(symbol))) continue;
 
-            if (symbol === 'XAUUSDT' && (strat.id === 'three_style' || strat.id === 'granville_eth_4h')) {
+            if ((symbol === 'XAUUSDT' || symbol === 'PAXGUSDT') && (strat.id === 'three_style' || strat.id === 'granville_eth_4h')) {
               const tf = (strat.id === 'three_style') ? '1h' : '4h';
               const card = createStrategyCard(strat, symbol, symbolNames[symbol], tf);
               strategyList.appendChild(card);
@@ -1017,8 +1017,8 @@
         { symbol: 'BTCUSDT', timeframe: '4h', id: 'granville_eth_4h', label: 'BTC' },
         { symbol: 'ETHUSDT', timeframe: '4h', id: 'granville_eth_4h', label: 'ETH' },
         { symbol: 'SOLUSDT', timeframe: '4h', id: 'granville_eth_4h', label: 'SOL' },
-        { symbol: 'XAUUSDT', timeframe: '4h', id: 'granville_eth_4h', label: 'GOLD' },
-        { symbol: 'XAUUSDT', timeframe: '1h', id: 'three_blade', label: 'GOLD' },
+        { symbol: 'PAXGUSDT', timeframe: '4h', id: 'granville_eth_4h', label: 'GOLD' },
+        { symbol: 'PAXGUSDT', timeframe: '1h', id: 'three_blade', label: 'GOLD' },
         { symbol: 'SPXUSDT', timeframe: '4h', id: 'turtle_breakout', label: 'SPX' },
         { symbol: 'NASUSDT', timeframe: '4h', id: 'turtle_breakout', label: 'NAS' },
         { symbol: 'NQUSDT', timeframe: '4h', id: 'turtle_breakout', label: 'NQ' },
