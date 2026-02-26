@@ -109,6 +109,10 @@ async function checkSignal(combo, strategiesMap) {
         const signalTime = new Date(latest.entryTime).getTime();
         const isRecent = !isNaN(signalTime) && (now - signalTime) < MAX_AGE_MS;
 
+        // Skip entry if trade already closed on the same candle (open+close = noise)
+        const tradeAlreadyClosed = latest.exitTime &&
+            (now - new Date(latest.exitTime).getTime()) < MAX_AGE_MS;
+
         // Always update entry cache
         lastSignals[signalKey] = {
             entryTime: latest.entryTime,
@@ -117,7 +121,7 @@ async function checkSignal(combo, strategiesMap) {
             rule: latest.rule
         };
 
-        if (isNew && isRecent) {
+        if (isNew && isRecent && !tradeAlreadyClosed) {
             signals.push({
                 signalType: 'entry',
                 strategyId,
@@ -135,6 +139,11 @@ async function checkSignal(combo, strategiesMap) {
         // Find the most recently closed trade (has exitTime and exitPrice)
         const latestClosed = result.recentTrades.find(t => t.exitTime && t.exitPrice);
         if (latestClosed) {
+            // Skip zero-hold, zero-P&L trades (same-candle open+close = noise)
+            const holdMs = new Date(latestClosed.exitTime).getTime() - new Date(latestClosed.entryTime).getTime();
+            const intervalMs = (timeframe === '1h' ? 1 : 4) * 60 * 60 * 1000;
+            const isZeroHold = holdMs <= intervalMs && Math.abs(latestClosed.pnlPercent || 0) < 0.01;
+
             const isNewClose = !oldClose ||
                 new Date(oldClose.exitTime).getTime() !== new Date(latestClosed.exitTime).getTime();
             const closeTime = new Date(latestClosed.exitTime).getTime();
@@ -149,7 +158,7 @@ async function checkSignal(combo, strategiesMap) {
                 pnlPercent: latestClosed.pnlPercent
             };
 
-            if (isNewClose && isRecentClose) {
+            if (isNewClose && isRecentClose && !isZeroHold) {
                 signals.push({
                     signalType: 'close',
                     strategyId,
