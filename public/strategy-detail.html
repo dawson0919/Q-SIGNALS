@@ -554,17 +554,39 @@
                 document.getElementById('signalSection').style.display = 'block';
                 const signalType = document.getElementById('signalType');
 
-                // Simplified: Signal is the type of the last entry
-                const isBuy = latest.type === 'LONG';
-                signalType.textContent = isBuy ? 'BUY' : 'SELL';
-                signalType.className = `text-3xl font-black italic ${isBuy ? 'text-primary' : 'text-red-500'}`;
+                // Check if position is still active or already closed
+                // If exitDate matches data end date → backtester force-closed = still holding
+                // If exitDate is earlier → strategy closed the position = flat (已平倉)
+                const exitDay = latest.exitDate ? latest.exitDate.split('T')[0] : '';
+                const endDay = data.summary?.period?.endDate || '';
+                const isStillHolding = exitDay === endDay;
 
-                const price = latest.entryPrice;
-                const precision = price < 1 ? 4 : 2;
-                document.getElementById('signalPrice').textContent = `@ $${price.toLocaleString('en-US', { minimumFractionDigits: precision, maximumFractionDigits: precision })}`;
-                const entryDate = new Date(latest.entryTime);
-                const timeStr = entryDate.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
-                document.getElementById('signalTime').querySelector('span:last-child').textContent = `信號時間：${timeStr}`;
+                if (isStillHolding) {
+                    // Position still active — show BUY/SELL
+                    const isBuy = latest.type === 'LONG';
+                    signalType.textContent = isBuy ? 'BUY' : 'SELL';
+                    signalType.className = `text-3xl font-black italic ${isBuy ? 'text-primary' : 'text-red-500'}`;
+
+                    const price = latest.entryPrice;
+                    const precision = price < 1 ? 4 : 2;
+                    document.getElementById('signalPrice').textContent = `@ $${price.toLocaleString('en-US', { minimumFractionDigits: precision, maximumFractionDigits: precision })}`;
+                    const entryDate = new Date(latest.entryTime);
+                    const timeStr = entryDate.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+                    document.getElementById('signalTime').querySelector('span:last-child').textContent = `信號時間：${timeStr}`;
+                } else {
+                    // Position closed — show 已平倉
+                    signalType.textContent = '已平倉';
+                    signalType.className = 'text-3xl font-black italic text-slate-500';
+
+                    const exitPrice = latest.exitPrice;
+                    const precision = exitPrice < 1 ? 4 : 2;
+                    const pnl = latest.pnlPercent || 0;
+                    const pnlColor = pnl >= 0 ? 'text-primary' : 'text-red-500';
+                    document.getElementById('signalPrice').innerHTML = `<span class="text-slate-500">@ $${exitPrice.toLocaleString('en-US', { minimumFractionDigits: precision, maximumFractionDigits: precision })}</span> <span class="${pnlColor} text-base">${pnl > 0 ? '+' : ''}${pnl.toFixed(2)}%</span>`;
+                    const exitDate = new Date(latest.exitDate || latest.exitTime);
+                    const timeStr = exitDate.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+                    document.getElementById('signalTime').querySelector('span:last-child').textContent = `平倉時間：${timeStr}`;
+                }
 
                 // Apply blur for non-premium users ONLY on Premium/Platinum strategies
                 const isPremiumStrategy = strategyCategory === 'Premium' || strategyCategory === 'Platinum';
