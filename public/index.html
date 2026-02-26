@@ -327,81 +327,7 @@
           </div>
         </div>
 
-        <!-- NQ Best Performance Card -->
-        <div class="px-4 pt-4">
-          <div
-            class="bg-gradient-to-br from-indigo-600/20 via-card-dark to-card-dark border border-indigo-500/30 rounded-2xl p-6 relative overflow-hidden group shadow-[0_0_30px_rgba(79,70,229,0.05)]">
-            <div
-              class="absolute -right-6 -top-6 opacity-10 group-hover:scale-110 transition-transform duration-[2000ms]">
-              <span class="material-symbols-outlined text-indigo-500 text-[140px]">trending_up</span>
-            </div>
-            <div class="relative z-10">
-              <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center gap-2">
-                  <span class="flex h-2 w-2 rounded-full bg-indigo-500 animate-pulse"></span>
-                  <span
-                    class="text-[10px] font-black bg-indigo-500/20 text-indigo-500 px-2 py-0.5 rounded uppercase tracking-widest">NQ
-                    Best Strategy</span>
-                  <span class="text-[9px] text-indigo-500/60 font-bold uppercase">納斯達克最佳策略</span>
-                </div>
-                <div class="flex items-center gap-1.5 px-2 py-1 rounded bg-black/40 border border-indigo-500/20">
-                  <span class="material-symbols-outlined text-indigo-500 text-xs">verified</span>
-                  <span class="text-[9px] font-black text-indigo-400 uppercase tracking-tighter">Backtested (6.08%
-                    ROI)</span>
-                </div>
-              </div>
 
-              <div class="flex flex-col md:flex-row justify-between md:items-end gap-6">
-                <div class="flex-1">
-                  <h3 class="text-xs font-bold text-slate-500 uppercase tracking-tight mb-1">Nasdaq 100 Index (NAS/USDT)
-                  </h3>
-                  <div class="flex items-baseline gap-4">
-                    <span id="nqPriceMain"
-                      class="text-4xl md:text-5xl font-black text-white italic tracking-tighter tabular-nums drop-shadow-md">$----.--</span>
-                    <span id="nqChangeMain"
-                      class="text-base font-bold text-slate-500 bg-slate-800/50 px-2 py-0.5 rounded">--%</span>
-                  </div>
-                </div>
-
-                <div class="flex-1 bg-black/30 backdrop-blur-sm rounded-xl p-4 border border-white/5 min-h-[100px]">
-                  <div class="flex items-center justify-between mb-3 text-indigo-400">
-                    <span class="text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
-                      <span class="w-1 h-3 bg-indigo-500 rounded-full"></span>
-                      TURTLE BREAKOUT
-                    </span>
-                    <span class="text-[9px] bg-indigo-500/20 px-1.5 py-0.5 rounded-full font-black">OPTIMIZED</span>
-                  </div>
-                  <div class="grid grid-cols-2 gap-x-4 gap-y-2">
-                    <div>
-                      <p class="text-[9px] text-slate-500 uppercase font-bold">Win Rate</p>
-                      <p class="text-sm font-black text-white">63.64%</p>
-                    </div>
-                    <div>
-                      <p class="text-[9px] text-slate-500 uppercase font-bold">Profit Factor</p>
-                      <p class="text-sm font-black text-white">3.76</p>
-                    </div>
-                    <div>
-                      <p class="text-[9px] text-slate-500 uppercase font-bold">Total Trades</p>
-                      <p class="text-sm font-black text-white">11</p>
-                    </div>
-                    <div>
-                      <p class="text-[9px] text-slate-500 uppercase font-bold">Parameters</p>
-                      <p class="text-xs font-bold text-indigo-400">L12 / R4 / H2</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="flex items-center gap-3">
-                  <a href="strategy-detail.html?strategy=turtle_breakout&symbol=NASUSDT&timeframe=4h"
-                    class="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-black text-sm transition-all flex items-center gap-2 glow-indigo whitespace-nowrap uppercase tracking-wider">
-                    查看詳細海龜信號
-                    <span class="material-symbols-outlined text-base">analytics</span>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
 
         <!-- Strategy List -->
         <div class="p-4 space-y-4">
@@ -563,8 +489,8 @@
         const isActive = sig.status === 'active';
 
         const cardHref = sig.source === 'manual'
-          ? `manual-signals.html?symbol=${encodeURIComponent(sig.symbol || 'XAUUSDT')}`
-          : `strategy-detail.html?strategy=${encodeURIComponent(sig.strategy_id || '')}&symbol=${encodeURIComponent(sig.symbol || 'XAUUSDT')}&timeframe=${encodeURIComponent(sig.timeframe || '4h')}`;
+          ? `manual-signals.html?symbol=${encodeURIComponent(sig.symbol || 'PAXGUSDT')}`
+          : `strategy-detail.html?strategy=${encodeURIComponent(sig.strategy_id || '')}&symbol=${encodeURIComponent(sig.symbol || 'PAXGUSDT')}&timeframe=${encodeURIComponent(sig.timeframe || '4h')}`;
         container.innerHTML += `
           <div class="flex items-start gap-3 bg-white/5 p-3 rounded-xl border ${isActive ? 'border-yellow-500/30' : 'border-white/5'} group hover:border-yellow-500/50 transition-all cursor-pointer shadow-lg" onclick="location.href='${cardHref}'">
             <div class="${isActive ? 'bg-yellow-500/10' : 'bg-slate-800/50'} p-2 rounded-lg shrink-0 group-hover:scale-110 transition-transform">

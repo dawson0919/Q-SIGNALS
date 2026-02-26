@@ -500,6 +500,11 @@ router.get('/featured-signals/gold', async (req, res) => {
 
         const signals = allPerf
             .filter(p => (p.symbol === 'XAUUSDT' || p.symbol === 'PAXGUSDT') && p.latest_signal)
+            .sort((a, b) => {
+                if (a.symbol === 'PAXGUSDT' && b.symbol !== 'PAXGUSDT') return -1;
+                if (a.symbol !== 'PAXGUSDT' && b.symbol === 'PAXGUSDT') return 1;
+                return 0;
+            })
             .map(p => {
                 const sig = p.latest_signal;
                 return {
@@ -512,7 +517,7 @@ router.get('/featured-signals/gold', async (req, res) => {
                     roi: sig.pnlPercent || sig.roi || 0,
                     status: 'active',
                     entry_time: sig.entryTime || sig.entryDate || sig.time,
-                    comment: `Strategy: 趨勢突破信號`,
+                    comment: `Strategy: ${p.strategy_id.replace(/_/g, ' ').toUpperCase()}`,
                     source: 'algo'
                 };
             })
