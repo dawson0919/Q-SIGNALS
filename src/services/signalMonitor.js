@@ -408,18 +408,25 @@ function startSignalMonitor(supabaseAdmin) {
         stopSignalMonitor();
     }
 
-    // Initial check after 30 seconds (let data load first)
+    // Aligned check: start at the next top of the hour + 30 seconds
+    const now = new Date();
+    const nextHour = new Date(now);
+    nextHour.setHours(now.getHours() + 1, 0, 30, 0);
+    const msUntilNext = nextHour.getTime() - now.getTime();
+
+    console.log(`[SignalMonitor] Initial check scheduled in ${(msUntilNext / 1000 / 60).toFixed(1)} mins (aligned to ${nextHour.toLocaleTimeString()})`);
+
+    // First aligned check
     setTimeout(() => {
         runSignalCheck(supabaseAdmin);
-    }, 30000);
 
-    // Then check every 15 minutes
-    // (4h candle closes at :00:00, but we check more often to catch 1h candles too)
-    monitorInterval = setInterval(() => {
-        runSignalCheck(supabaseAdmin);
-    }, 15 * 60 * 1000);
+        // Then check every 1 hour (exactly 3,600,000 ms)
+        monitorInterval = setInterval(() => {
+            runSignalCheck(supabaseAdmin);
+        }, 60 * 60 * 1000);
 
-    console.log('[SignalMonitor] Started (checking every 15 min)');
+        console.log('[SignalMonitor] Interval started (checking every 60 min)');
+    }, msUntilNext);
 }
 
 function stopSignalMonitor() {
