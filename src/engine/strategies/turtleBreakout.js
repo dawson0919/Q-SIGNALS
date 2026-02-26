@@ -46,10 +46,10 @@ function createStrategy(params = {}) {
         }
     }
 
-    // Apply Optimized Parameters for NAS (Nasdaq 100 / QQQ)
-    if (params.symbol === 'NASUSDT') {
+    // Apply Optimized Parameters for NAS (Nasdaq 100 / QQQ) and NQ (Futures)
+    if (params.symbol === 'NASUSDT' || params.symbol === 'NQUSDT') {
         if (params.timeframe === '4h') {
-            LEFT = 4; RIGHT = 5; MIN_HOLD_BARS = 20;
+            LEFT = 12; RIGHT = 4; MIN_HOLD_BARS = 2;
         }
     }
 
@@ -131,7 +131,7 @@ module.exports = {
     description: '海龜突破策略：利用 Pivot High/Low 判斷市場結構，具有極佳的趨勢捕捉能力。已針對黃金 (15/2/4)、標普 500 (6/5/15) 及主流加密貨幣完成參數優化調校。',
     category: 'Premium',
     author: 'QuantSignal',
-    adminNotes: '[Optimization Report]\n\n[XAU / GOLD]\n4H (180d): L15, R2, Hold4 -> Return +15.51%\n1H (45d): L8, R2, Hold2 -> Return +1.57%\n\n[SPX / SPY]\n4H (90d): L6, R5, Hold15 -> Return +2.12%\n1H (90d): L20, R2, Hold40 -> Return +1.38%\n\n[NAS / QQQ]\n4H (180d): L4, R5, Hold20 -> Return +3.01%\n1H (90d): Recommendation 4H only (Noise)',
+    adminNotes: '[Optimization Report]\n\n[XAU / GOLD]\n4H (180d): L15, R2, Hold4 -> Return +15.51%\n1H (45d): L8, R2, Hold2 -> Return +1.57%\n\n[SPX / SPY]\n4H (90d): L6, R5, Hold15 -> Return +2.12%\n1H (90d): L20, R2, Hold40 -> Return +1.38%\n\n[NAS / QQQ / NQ]\n4H (90d): L12, R4, Hold2 -> Return +6.08%, WinRate: 63.64%, PF: 3.76\n1H (90d): Recommendation 4H only (Noise)',
     pineScript,
     createStrategy,
     execute: createStrategy({ leftBars: LEFT, rightBars: RIGHT, minHoldBars: MIN_HOLD_BARS }), // Optimized default

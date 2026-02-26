@@ -162,7 +162,9 @@ async function computeStrategyPerformanceCache() {
     // Same symbol × timeframe combinations shown on homepage
     const jobs = [];
     const cryptoSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT'];
-    const indexSymbols  = ['SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT'];
+    const indexSymbols = ['SPXUSDT', 'NQUSDT', 'ESUSDT'];
+    // Gold-specific strategies shown on homepage for PAXGUSDT
+    const allowedGoldStrats = ['three_style', 'granville_eth_4h', 'turtle_breakout', 'dual_st_breakout', 'donchian_trend'];
 
     for (const s of strategyModules) {
         for (const symbol of cryptoSymbols) {
@@ -175,8 +177,19 @@ async function computeStrategyPerformanceCache() {
                 jobs.push({ s, symbol, timeframe: '4h' });
             }
         }
-        // Only turtle_breakout runs on index symbols
-        if (s.id === 'turtle_breakout') {
+
+        // PAXGUSDT: only selected gold strategies
+        if (allowedGoldStrats.includes(s.id)) {
+            if (s.id === 'three_style') {
+                jobs.push({ s, symbol: 'PAXGUSDT', timeframe: '1h' });
+                jobs.push({ s, symbol: 'PAXGUSDT', timeframe: '4h' });
+            } else {
+                jobs.push({ s, symbol: 'PAXGUSDT', timeframe: '4h' });
+            }
+        }
+
+        // All index/futures symbols use donchian_trend (optimized per-symbol)
+        if (s.id === 'donchian_trend') {
             for (const symbol of indexSymbols) {
                 jobs.push({ s, symbol, timeframe: '4h' });
             }
@@ -186,14 +199,14 @@ async function computeStrategyPerformanceCache() {
     let done = 0;
     for (const { s, symbol, timeframe } of jobs) {
         try {
-            const isIndex = ['SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT'].includes(symbol);
+            const isIndex = ['SPXUSDT', 'NQUSDT', 'ESUSDT'].includes(symbol);
             const daysBack = isIndex ? 90 : (timeframe === '1h' ? 45 : 180);
             const candles = await getCandleData(symbol, timeframe, { daysBack });
             if (candles.length < 50) continue;
 
             let params = { ...s.defaultParams, symbol, timeframe };
             if (isIndex && s.id === 'turtle_breakout') {
-                if (symbol === 'NASUSDT' || symbol === 'NQUSDT') params = { leftBars: 4, rightBars: 5, minHoldBars: 20 };
+                if (['NQUSDT', 'NQ'].includes(symbol)) params = { leftBars: 12, rightBars: 4, minHoldBars: 2 };
                 else params = { leftBars: 6, rightBars: 5, minHoldBars: 15 };
             }
             const stratFn = s.createStrategy ? s.createStrategy(params) : s.execute;

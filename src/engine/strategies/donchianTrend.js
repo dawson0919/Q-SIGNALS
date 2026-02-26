@@ -42,6 +42,20 @@ function createStrategy(params = {}) {
         SL_MULT = 2.0;
     }
 
+    // Index/Futures — optimized per-symbol via param sweep
+    if (params.symbol === 'NQUSDT') {
+        DC_PERIOD = 10; ADX_THRESHOLD = 25; SL_MULT = 1.5; TP_MULT = 4.0;
+        console.log(`[DonchianTrend] Init NQUSDT Optimized: P=${DC_PERIOD} ADX>${ADX_THRESHOLD} SL=${SL_MULT}x TP=${TP_MULT}x`);
+    }
+    if (params.symbol === 'SPXUSDT') {
+        DC_PERIOD = 25; ADX_THRESHOLD = 25; SL_MULT = 1.0; TP_MULT = 3.0;
+        console.log(`[DonchianTrend] Init SPXUSDT Optimized: P=${DC_PERIOD} ADX>${ADX_THRESHOLD} SL=${SL_MULT}x TP=${TP_MULT}x`);
+    }
+    if (params.symbol === 'ESUSDT') {
+        DC_PERIOD = 15; ADX_THRESHOLD = 30; SL_MULT = 1.0; TP_MULT = 4.0;
+        console.log(`[DonchianTrend] Init ESUSDT Optimized: P=${DC_PERIOD} ADX>${ADX_THRESHOLD} SL=${SL_MULT}x TP=${TP_MULT}x`);
+    }
+
     return function execute(candles, indicatorData, i, indicators) {
         // Minimum bars for indicators
         if (i < Math.max(DC_PERIOD, VOL_PERIOD, 30)) return null;
@@ -95,7 +109,7 @@ module.exports = {
     description: '唐奇安通道動量策略：結合通道突破、ADX 趨勢強度與成交量過濾器。在 1H 與 4H 時框表現極其穩定，是趨勢追蹤的首選。',
     category: 'Premium',
     author: 'QuantSignal',
-    adminNotes: '[Optimization Report]\n4H: Period=40, ADX>20, SL=2.5x, TP=8.0x\n1H: Period=30, ADX>20, SL=2.0x, TP=8.0x\nVolatility Filter: 1.1x Volume SMA(20)',
+    adminNotes: '[Optimization Report]\n4H: Period=40, ADX>20, SL=2.5x, TP=8.0x\n1H: Period=30, ADX>20, SL=2.0x, TP=8.0x\nNQUSDT: P=10, ADX>25, SL=1.5x, TP=4.0x\nSPXUSDT: P=25, ADX>25, SL=1.0x, TP=3.0x\nESUSDT: P=15, ADX>30, SL=1.0x, TP=4.0x',
     pineScript,
     createStrategy,
     execute: createStrategy({}), // Default (4H optimized)

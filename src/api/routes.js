@@ -370,7 +370,7 @@ router.post('/subscribe', requireAuth, async (req, res) => {
         console.log(`[Subscribe] User: ${req.user.email} (${req.user.id}), Role: ${role}, Strategy: ${s.name} (${s.category}), Symbol: ${symbol}`);
 
         // Index Restrictions (SPX/NAS)
-        const isIndex = ['SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT', 'SPX', 'NAS', 'NQ', 'ES'].includes(symbol);
+        const isIndex = ['SPXUSDT', 'NQUSDT', 'ESUSDT', 'SPX', 'NQ', 'ES'].includes(symbol);
         // RELAXED: Allow Advanced users to subscribe for now
         if (isIndex && !['admin', 'platinum', 'advanced'].includes(role)) {
             console.log(`[Subscribe] DENIED: ${symbol} requiring Advanced+.`);
@@ -721,14 +721,14 @@ router.post('/backtest', backtestLimiter, async (req, res) => {
         let strategyFn;
         let strategyName;
 
-        const isIndex = ['SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT', 'SPX', 'NAS', 'NQ', 'ES'].includes(symbol);
+        const isIndex = ['SPXUSDT', 'NQUSDT', 'ESUSDT', 'SPX', 'NQ', 'ES'].includes(symbol);
 
         if (strategyId && strategies[strategyId]) {
             const s = strategies[strategyId];
             let params = { ...s.defaultParams, symbol, timeframe };
 
             if (isIndex && strategyId === 'turtle_breakout') {
-                if (['NASUSDT', 'NQUSDT', 'NAS', 'NQ'].includes(symbol) && timeframe === '4h') {
+                if (['NQUSDT', 'NQ'].includes(symbol) && timeframe === '4h') {
                     params = { leftBars: 12, rightBars: 4, minHoldBars: 2 };
                 } else if (timeframe === '4h') {
                     params = { leftBars: 6, rightBars: 5, minHoldBars: 15 };
@@ -846,7 +846,7 @@ router.get('/prices/history', async (req, res) => {
 
 // DB stats
 router.get('/stats', async (req, res) => {
-    const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT'];
+    const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'PAXGUSDT', 'SPXUSDT', 'NQUSDT', 'ESUSDT'];
     const stats = {};
     for (const s of symbols) {
         stats[s] = await getCandleCount(s, '4h');

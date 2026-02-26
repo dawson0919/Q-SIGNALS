@@ -4,6 +4,7 @@
 // 2. Buy Condition: Fast > Medium > Slow (Full Bullish Alignment)
 // 3. Sell Condition: Fast < Medium < Slow (Full Bearish Alignment)
 // 4. Exit: When alignment breaks
+// Optimized: PAXGUSDT adds ADX filter, ATR SL/TP, RSI filter
 
 const pineScript = `
 //@version=5
@@ -40,6 +41,13 @@ function createStrategy(params = {}) {
     let mid = params.mid || 50;
     let slow = params.slow || 200;
 
+    // Filter configuration (0 = disabled)
+    let adxThreshold = params.adxThreshold || 0;
+    let slMultiplier = params.slMultiplier || 0;
+    let tpMultiplier = params.tpMultiplier || 0;
+    let rsiOverbought = params.rsiOverbought || 0;
+    let rsiOversold = params.rsiOversold || 0;
+
     // Apply Optimized Parameters for Gold
     if (params.symbol === 'XAUUSDT') {
         if (params.timeframe === '1h') {
@@ -48,6 +56,27 @@ function createStrategy(params = {}) {
         } else if (params.timeframe === '4h') {
             fast = 20; mid = 60; slow = 120;
             console.log(`[ThreeStyle] Init XAUUSDT 4H Optimized: ${fast}/${mid}/${slow}`);
+        }
+    }
+
+    // Apply Optimized Parameters for PAXG (Tokenized Gold)
+    if (params.symbol === 'PAXGUSDT') {
+        if (params.timeframe === '1h') {
+            fast = 8; mid = 15; slow = 30;
+            adxThreshold = 20;
+            slMultiplier = 2.0;
+            tpMultiplier = 5.0;
+            rsiOverbought = 75;
+            rsiOversold = 25;
+            console.log(`[ThreeStyle] Init PAXGUSDT 1H Optimized: ${fast}/${mid}/${slow} ADX>${adxThreshold} SL=${slMultiplier}x TP=${tpMultiplier}x`);
+        } else if (params.timeframe === '4h') {
+            fast = 10; mid = 35; slow = 90;
+            adxThreshold = 18;
+            slMultiplier = 2.5;
+            tpMultiplier = 6.0;
+            rsiOverbought = 75;
+            rsiOversold = 25;
+            console.log(`[ThreeStyle] Init PAXGUSDT 4H Optimized: ${fast}/${mid}/${slow} ADX>${adxThreshold} SL=${slMultiplier}x TP=${tpMultiplier}x`);
         }
     }
 
@@ -63,54 +92,65 @@ function createStrategy(params = {}) {
         const m = emaMid[i];
         const s = emaSlow[i];
 
-        // Bullish Alignment
+        // ── 1. ADX Trend Filter ──
+        if (adxThreshold > 0) {
+            const adx = indicatorData.adx ? indicatorData.adx[i] : null;
+            if (adx === null || adx < adxThreshold) {
+                // Low-trend: only allow exits, no new entries
+                if (f < m) return 'CLOSE_LONG';
+                if (f > m) return 'CLOSE_SHORT';
+                return null;
+            }
+        }
+
+        // ── 2. RSI values (read once) ──
+        let rsiVal = null;
+        if (rsiOverbought > 0 || rsiOversold > 0) {
+            rsiVal = indicatorData.rsi && indicatorData.rsi[14] ? indicatorData.rsi[14][i] : null;
+        }
+
+        // ── 3. Entry: Full Bullish Alignment ──
         if (f > m && m > s) {
+            // Skip BUY if RSI overbought
+            if (rsiOverbought > 0 && rsiVal !== null && rsiVal > rsiOverbought) {
+                return null;
+            }
+            // Return with ATR-based SL/TP if configured
+            if (slMultiplier > 0 || tpMultiplier > 0) {
+                const atrVal = indicatorData.atr ? indicatorData.atr[i] : null;
+                if (atrVal && atrVal > 0) {
+                    const close = indicatorData.close[i];
+                    return {
+                        signal: 'BUY',
+                        sl: slMultiplier > 0 ? close - atrVal * slMultiplier : null,
+                        tp: tpMultiplier > 0 ? close + atrVal * tpMultiplier : null
+                    };
+                }
+            }
             return 'BUY';
         }
 
-        // Bearish Alignment
+        // ── 4. Entry: Full Bearish Alignment ──
         if (f < m && m < s) {
+            // Skip SELL if RSI oversold
+            if (rsiOversold > 0 && rsiVal !== null && rsiVal < rsiOversold) {
+                return null;
+            }
+            if (slMultiplier > 0 || tpMultiplier > 0) {
+                const atrVal = indicatorData.atr ? indicatorData.atr[i] : null;
+                if (atrVal && atrVal > 0) {
+                    const close = indicatorData.close[i];
+                    return {
+                        signal: 'SELL',
+                        sl: slMultiplier > 0 ? close + atrVal * slMultiplier : null,
+                        tp: tpMultiplier > 0 ? close - atrVal * tpMultiplier : null
+                    };
+                }
+            }
             return 'SELL';
         }
 
-        // Close Long if alignment breaks
-        // Note: The backtester handles 'BUY' as hold/entry. 
-        // We need explicit close logic if we want to exit when alignment is lost.
-        // But our simple backtester might toggle. 
-        // For consistent trend following, 'BUY' holds the position.
-        // If we want to exit on loss of alignment:
-
-        // This is a "State" strategy.
-        // If current state is NOT Bullish, we should probably close LONG.
-        // If current state is NOT Bearish, we should probably close SHORT.
-
-        // Let's refine:
-        // Return 'BUY' keeps/opens Long.
-        // Return 'SELL' keeps/opens Short.
-        // Return null does nothing (holds previous).
-
-        // However, to mimic "Close when alignment breaks":
-        // We need to check current position state from backtester? 
-        // The simple execute fn doesn't know current position.
-        // BUT, we can return 'CLOSE_LONG' if we want to exit long.
-
-        // Refined Logic:
-        // If was bullish and now NOT bullish -> Close Long
-        // If was bearish and now NOT bearish -> Close Short
-
-        // But we don't have "was bullish".
-        // Simpler:
-        // Always return BUY if bullish.
-        // Always return SELL if bearish.
-        // If neither, return 'CLOSE_LONG' | 'CLOSE_SHORT' ? 
-        // If we return CLOSE_LONG while short, it does nothing. Safe.
-
-        if (f > m && m > s) return 'BUY';
-        if (f < m && m < s) return 'SELL';
-
-        // Exit conditions: Alignment breaks
-        // If we were long (f > m > s), but now f < m, exit long.
-        // If we were short (f < m < s), but now f > m, exit short.
+        // ── 5. Exit: Alignment breaks ──
         if (f < m) return 'CLOSE_LONG';
         if (f > m) return 'CLOSE_SHORT';
 
@@ -121,15 +161,21 @@ function createStrategy(params = {}) {
 module.exports = {
     id: 'three_style',
     name: '均線三刀流 (Triple MA)',
-    description: '三刀流趨勢策略：利用三條不同週期的 EMA 形成的多空排列捕捉趨勢。已針對黃金 1H (8/15/30) 與 4H (20/60/120) 以及主流幣完成優化。',
+    description: '三刀流趨勢策略：利用三條不同週期的 EMA 形成的多空排列捕捉趨勢。已針對黃金 1H (8/15/30) 與 4H (20/60/120)、PAXG 1H (8/15/30) 與 4H (10/35/90) 以及主流幣完成優化。PAXG 版本含 ADX 趨勢過濾與 ATR 動態停損停利。',
     category: 'Premium',
     author: 'QuantSignal',
+    adminNotes: '[Optimization Report]\n\n[XAUUSDT]\n1H: 8/15/30\n4H: 20/60/120\n\n[PAXGUSDT]\n1H: 8/15/30, ADX>20, SL=2.0x ATR, TP=5.0x ATR, RSI 25/75\n4H: 10/35/90, ADX>18, SL=2.5x ATR, TP=6.0x ATR, RSI 25/75',
     pineScript,
     createStrategy,
     execute: createStrategy({ fast: 20, mid: 50, slow: 200 }),
     defaultParams: {
         fast: 20,
         mid: 50,
-        slow: 200
+        slow: 200,
+        adxThreshold: 0,
+        slMultiplier: 0,
+        tpMultiplier: 0,
+        rsiOverbought: 0,
+        rsiOversold: 0
     }
 };

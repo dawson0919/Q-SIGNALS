@@ -310,7 +310,7 @@
                 const sRes = await fetch(`/api/strategies/${strategyId}`, { headers: sHeaders });
                 const strat = await sRes.json();
 
-                const isIndexAsset = ['SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT'].includes(symbol);
+                const isIndexAsset = ['SPXUSDT', 'NQUSDT', 'ESUSDT'].includes(symbol);
                 strategyCategory = isIndexAsset ? 'Platinum' : (strat.category || 'Basic');
                 const isPlatinumAsset = strategyCategory === 'Platinum';
 
@@ -333,7 +333,7 @@
                 // Show admin notes (Admin Only UI check + API check)
                 if (isAdmin && strat.adminNotes) {
                     let notes = strat.adminNotes;
-                    const mapping = { 'XAUUSDT': '[XAU / GOLD]', 'SPXUSDT': '[SPX / SPY]', 'SPYUSDT': '[SPX / SPY]', 'NASUSDT': '[NAS / QQQ]', 'NQUSDT': '[NQ / Nasdaq Futures]', 'ESUSDT': '[ES / S&P Futures]' };
+                    const mapping = { 'XAUUSDT': '[XAU / GOLD]', 'SPXUSDT': '[SPX / SPY]', 'SPYUSDT': '[SPX / SPY]', 'NQUSDT': '[NQ / Nasdaq Futures]', 'ESUSDT': '[ES / S&P Futures]' };
                     const header = mapping[symbol];
                     if (header && notes.includes(header)) {
                         const globalHeader = notes.split('[')[0];
@@ -348,7 +348,7 @@
             } catch (e) { }
 
             // Visibility Logic
-            const isIndex = ['SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT'].includes(symbol);
+            const isIndex = ['SPXUSDT', 'NQUSDT', 'ESUSDT'].includes(symbol);
             if (isIndex) {
                 if (isAdmin || isPlatinum) {
                     document.getElementById('signalSection').style.display = 'block';
@@ -377,7 +377,6 @@
             // Data Source Notice for Index/Futures assets
             const dataSourceNames = {
                 'SPXUSDT': '標普 500 (SPY)',
-                'NASUSDT': '納斯達克 100 (QQQ)',
                 'NQUSDT': '納斯達克 100 期貨 (NQ)',
                 'ESUSDT': '標普 500 期貨 (ES)'
             };
