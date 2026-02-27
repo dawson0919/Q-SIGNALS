@@ -173,6 +173,39 @@ async function sendCloseSignalNotification(chatId, signal) {
     return sendMessage(chatId, message);
 }
 
+// ── Send Holding Signal Notification ───────────────────
+async function sendHoldingSignalNotification(chatId, signal) {
+    const { strategyName, symbol, type, entryPrice, currentPrice, pnlPercent, timeframe, entryTime } = signal;
+    const symbolClean = symbol.replace('USDT', '/USDT');
+    const pnlEmoji = pnlPercent >= 0 ? '📈' : '📉';
+    const pnlSign = pnlPercent >= 0 ? '+' : '';
+    const precision = currentPrice < 1 ? 4 : (currentPrice < 100 ? 2 : 0);
+
+    // Calculate hold duration
+    const holdMs = Date.now() - new Date(entryTime).getTime();
+    const holdHours = Math.floor(holdMs / (1000 * 60 * 60));
+    const holdDays = Math.floor(holdHours / 24);
+    const holdRemainder = holdHours % 24;
+    const holdStr = holdDays > 0 ? `${holdDays}d ${holdRemainder}h` : `${holdHours}h`;
+
+    const message = [
+        `⏳ <b>POSITION HOLDING — ${type}</b>`,
+        ``,
+        `📊 <b>${strategyName}</b>`,
+        `💰 ${symbolClean} • ${timeframe}`,
+        `📍 Entry: <b>$${Number(entryPrice).toLocaleString('en-US', { minimumFractionDigits: precision, maximumFractionDigits: precision })}</b>`,
+        `🕒 Current: <b>$${Number(currentPrice).toLocaleString('en-US', { minimumFractionDigits: precision, maximumFractionDigits: precision })}</b>`,
+        `${pnlEmoji} Unr. P&L: <b>${pnlSign}${Number(pnlPercent).toFixed(2)}%</b>`,
+        `⏱ Hold: ${holdStr}`,
+        ``,
+        `🔗 <a href="${SITE_URL}/strategy-detail.html?strategy=${signal.strategyId}&symbol=${symbol}&timeframe=${timeframe}">View Details</a>`,
+        ``,
+        `<pre>v2.2-stable</pre>`
+    ].filter(Boolean).join('\n');
+
+    return sendMessage(chatId, message);
+}
+
 // ── Generate Linking Code ───────────────────────
 function generateLinkCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -465,6 +498,7 @@ module.exports = {
     sendMessage,
     sendSignalNotification,
     sendCloseSignalNotification,
+    sendHoldingSignalNotification,
     createLinkCode,
     consumeLinkCode,
     processUpdate,

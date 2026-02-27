@@ -5,7 +5,7 @@
  */
 const Backtester = require('../engine/backtester');
 const { getCandleData } = require('../engine/dataFetcher');
-const { sendSignalNotification, sendCloseSignalNotification } = require('./telegramBot');
+const { sendSignalNotification, sendCloseSignalNotification, sendHoldingSignalNotification } = require('./telegramBot');
 
 // In-memory cache of last known signals per strategy+symbol
 const lastSignals = {};
@@ -134,10 +134,20 @@ async function checkSignal(combo, strategiesMap) {
         }
 
         // ── 2. Check for NEW CLOSE signal ──
-        // Find the most recently closed trade (has exitTime and exitPrice)
-        const latestClosed = result.recentTrades.find(t => t.exitTime && t.exitPrice);
+        // Important: result.recentTrades may contain a trade that the backtester "closed" 
+        // at the very last candle just for reporting. We must filter these out.
+        const lastCandle = candles[candles.length - 1];
+        const lastCandleTime = new Date(lastCandle.open_time || lastCandle.openTime).getTime();
+
+        const latestClosed = result.recentTrades.find(t => {
+            if (!t.exitTime || !t.exitPrice) return false;
+            // Real exit: exit time is BEFORE the latest candle open time
+            // Or if it's the exact same time, but it's a known strategy signal (not a forced close)
+            return new Date(t.exitTime).getTime() < lastCandleTime;
+        });
+
         if (latestClosed) {
-            // Skip zero-hold, zero-P&L trades (same-candle open+close = noise)
+            // ... (rest of close logic)
             const holdMs = new Date(latestClosed.exitTime).getTime() - new Date(latestClosed.entryTime).getTime();
             const intervalMs = (timeframe === '1h' ? 1 : 4) * 60 * 60 * 1000;
             const isZeroHold = holdMs <= intervalMs && Math.abs(latestClosed.pnlPercent || 0) < 0.01;
@@ -169,6 +179,36 @@ async function checkSignal(combo, strategiesMap) {
                     entryTime: latestClosed.entryTime,
                     exitTime: latestClosed.exitTime,
                     pnlPercent: latestClosed.pnlPercent
+                });
+            }
+        }
+
+        // ── 3. Check for HOLDING status (requested update) ──
+        // If the latest trade is NOT in latestClosed, it's currently open
+        const currentlyOpen = result.recentTrades.find(t => {
+            if (!t.exitTime) return true; // Truly open
+            return new Date(t.exitTime).getTime() >= lastCandleTime; // Forced close at last candle
+        });
+
+        if (currentlyOpen) {
+            // We report this as 'holding' every interval
+            // To prevent spamming, we can use a cache key for the holding status per hour
+            const hourKey = new Date().toISOString().substring(0, 13); // e.g. "2024-02-28T06"
+            const holdNotifyKey = `${signalKey}_HOLD_${hourKey}`;
+
+            if (!lastSignals[holdNotifyKey]) {
+                lastSignals[holdNotifyKey] = true; // Mark as notified for this hour
+                signals.push({
+                    signalType: 'holding',
+                    strategyId,
+                    strategyName: s.name,
+                    symbol,
+                    timeframe,
+                    type: currentlyOpen.type,
+                    entryPrice: currentlyOpen.entryPrice,
+                    currentPrice: lastCandle.close,
+                    entryTime: currentlyOpen.entryTime,
+                    pnlPercent: ((lastCandle.close - currentlyOpen.entryPrice) / currentlyOpen.entryPrice) * (currentlyOpen.type === 'LONG' ? 100 : -100)
                 });
             }
         }
@@ -214,13 +254,16 @@ async function notifySubscribers(signal, supabaseAdmin) {
             let result;
             if (signal.signalType === 'close') {
                 result = await sendCloseSignalNotification(profile.telegram_chat_id, signal);
+            } else if (signal.signalType === 'holding') {
+                result = await sendHoldingSignalNotification(profile.telegram_chat_id, signal);
             } else {
                 result = await sendSignalNotification(profile.telegram_chat_id, signal);
             }
             if (result) sent++;
         }
 
-        const label = signal.signalType === 'close' ? '🔓 CLOSE' : '🔔 ENTRY';
+        const label = signal.signalType === 'close' ? '🔓 CLOSE' :
+            signal.signalType === 'holding' ? '⏳ HOLDING' : '🔔 ENTRY';
         console.log(`[SignalMonitor] ${label} Notified ${sent}/${profiles.length} users for ${signal.strategyId}/${signal.symbol}`);
         return sent;
     } catch (err) {
@@ -399,7 +442,9 @@ async function runSignalCheck(supabaseAdmin) {
                 } catch (err) {
                     console.error('[SignalMonitor] Close DB update error:', err.message);
                 }
-
+                await notifySubscribers(signal, supabaseAdmin);
+            } else if (signal.signalType === 'holding') {
+                // ── Holding Signal: Just notify (no DB update needed for transitory status) ──
                 await notifySubscribers(signal, supabaseAdmin);
             }
         }
