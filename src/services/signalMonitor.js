@@ -184,7 +184,8 @@ async function checkSignal(combo, strategiesMap) {
         }
 
         // ── 3. Check for HOLDING status (requested update) ──
-        // If the latest trade is NOT in latestClosed, it's currently open
+        // [SUPPRESSED] Users no longer want periodic holding notifications
+        /*
         const currentlyOpen = result.recentTrades.find(t => {
             if (!t.exitTime) return true; // Truly open
             return new Date(t.exitTime).getTime() >= lastCandleTime; // Forced close at last candle
@@ -212,6 +213,7 @@ async function checkSignal(combo, strategiesMap) {
                 });
             }
         }
+        */
 
         return signals.length > 0 ? signals : null;
     } catch (err) {
@@ -254,16 +256,13 @@ async function notifySubscribers(signal, supabaseAdmin) {
             let result;
             if (signal.signalType === 'close') {
                 result = await sendCloseSignalNotification(profile.telegram_chat_id, signal);
-            } else if (signal.signalType === 'holding') {
-                result = await sendHoldingSignalNotification(profile.telegram_chat_id, signal);
             } else {
                 result = await sendSignalNotification(profile.telegram_chat_id, signal);
             }
             if (result) sent++;
         }
 
-        const label = signal.signalType === 'close' ? '🔓 CLOSE' :
-            signal.signalType === 'holding' ? '⏳ HOLDING' : '🔔 ENTRY';
+        const label = signal.signalType === 'close' ? '🔓 CLOSE' : '🔔 ENTRY';
         console.log(`[SignalMonitor] ${label} Notified ${sent}/${profiles.length} users for ${signal.strategyId}/${signal.symbol}`);
         return sent;
     } catch (err) {
@@ -443,10 +442,8 @@ async function runSignalCheck(supabaseAdmin) {
                     console.error('[SignalMonitor] Close DB update error:', err.message);
                 }
                 await notifySubscribers(signal, supabaseAdmin);
-            } else if (signal.signalType === 'holding') {
-                // ── Holding Signal: Just notify (no DB update needed for transitory status) ──
-                await notifySubscribers(signal, supabaseAdmin);
             }
+            // 'holding' logic removed as per user request
         }
     }
 
