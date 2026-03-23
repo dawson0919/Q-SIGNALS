@@ -176,7 +176,8 @@
                     <span class="text-[9px] text-slate-500 font-bold uppercase mb-2">Premium Feature</span>
                     <p class="text-slate-400 text-xs text-center px-4 mb-3">升級進階會員以查看即時信號</p>
                     <a href="/profile.html"
-                        class="bg-primary text-black px-4 py-2 rounded-lg font-bold text-xs hover:opacity-90 transition-all">立即升級 <span class="text-[10px] block opacity-70">UPGRADE NOW</span></a>
+                        class="bg-primary text-black px-4 py-2 rounded-lg font-bold text-xs hover:opacity-90 transition-all">立即升級
+                        <span class="text-[10px] block opacity-70">UPGRADE NOW</span></a>
                 </div>
                 <!-- Signal Content -->
                 <div id="signalContent">
@@ -207,15 +208,20 @@
             <span class="text-[9px] text-slate-600 font-bold uppercase">Quant Metrics</span>
             <div class="bg-surface-dark border border-border-dark rounded-xl divide-y divide-border-dark mt-3"
                 id="quantMetrics">
-                <div class="flex justify-between items-center p-4"><span class="text-slate-400 text-sm">盈虧比 PF</span><span class="font-bold text-white" id="metricPF">--</span></div>
+                <div class="flex justify-between items-center p-4"><span class="text-slate-400 text-sm">盈虧比
+                        PF</span><span class="font-bold text-white" id="metricPF">--</span></div>
                 <div class="flex justify-between items-center p-4"><span class="text-slate-400 text-sm">盈虧比例</span><span
                         class="font-bold text-white" id="metricRF">--</span></div>
+                <div class="flex justify-between items-center p-4"><span class="text-slate-400 text-sm">期望值</span><span
+                        class="font-bold text-white" id="metricExp">--</span></div>
                 <div class="flex justify-between items-center p-4"><span
-                        class="text-slate-400 text-sm">期望值</span><span class="font-bold text-white"
-                        id="metricExp">--</span></div>
-                <div class="flex justify-between items-center p-4"><span class="text-slate-400 text-sm">平均持倉天數</span><span class="font-bold text-white" id="metricHold">--</span></div>
-                <div class="flex justify-between items-center p-4"><span class="text-slate-400 text-sm">總交易次數</span><span class="font-bold text-white" id="metricTotalTrades">--</span></div>
-                <div class="flex justify-between items-center p-4"><span class="text-slate-400 text-sm">獲利 / 虧損</span><span class="font-bold text-white" id="metricWL">--</span></div>
+                        class="text-slate-400 text-sm">平均持倉天數</span><span class="font-bold text-white"
+                        id="metricHold">--</span></div>
+                <div class="flex justify-between items-center p-4"><span
+                        class="text-slate-400 text-sm">總交易次數</span><span class="font-bold text-white"
+                        id="metricTotalTrades">--</span></div>
+                <div class="flex justify-between items-center p-4"><span class="text-slate-400 text-sm">獲利 /
+                        虧損</span><span class="font-bold text-white" id="metricWL">--</span></div>
             </div>
         </section>
 
@@ -339,6 +345,23 @@
                     document.getElementById('adminNotesContent').innerText = notes;
                 }
             } catch (e) { }
+
+            // Add custom description for Ichimoku if active
+            if (strategyId === 'ichimoku_cloud') {
+                const descBox = document.createElement('div');
+                descBox.className = 'mx-4 mt-2 p-4 bg-yellow-500/5 border border-yellow-500/20 rounded-xl';
+                descBox.innerHTML = `
+                    <h4 class="text-xs font-bold text-yellow-500 uppercase mb-2 flex items-center gap-1.5">
+                        <span class="material-symbols-outlined text-sm">info</span> 策略邏輯摘要
+                    </h4>
+                    <p class="text-[11px] text-slate-400 leading-relaxed italic">
+                        1. 價格突破雲層 (Cloud Breakout) 確認趨勢強度。<br>
+                        2. 轉換線 (Tenkan) 高於基準線 (Kijun) 確認動能確認。<br>
+                        3. 價格高於 EMA 200 確保方向一致，過濾震盪。
+                    </p>
+                `;
+                document.getElementById('strategyName').parentNode.parentNode.parentNode.appendChild(descBox);
+            }
 
             // Visibility Logic
             const isIndex = ['SPXUSDT', 'NQUSDT', 'ESUSDT'].includes(symbol);

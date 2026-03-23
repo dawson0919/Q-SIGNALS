@@ -95,6 +95,9 @@ strategies[dualStBreakout.id] = dualStBreakout;
 const donchianTrend = require('../engine/strategies/donchianTrend');
 strategies[donchianTrend.id] = donchianTrend;
 
+const ichimokuCloud = require('../engine/strategies/ichimoku_cloud');
+strategies[ichimokuCloud.id] = ichimokuCloud;
+
 // Health Check
 router.get('/health', (req, res) => {
     res.json({ status: 'ok', uptime: process.uptime() });

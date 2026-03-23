@@ -543,9 +543,14 @@
 
         for (const strat of data.strategies) {
           for (const symbol of symbols) {
-            // All index/futures symbols use donchian_trend
-            if (indexSymbols.includes(symbol) && strat.id !== 'donchian_trend') continue;
+            // Index/futures: each symbol uses its best-performing strategy
+            const indexStratMap = { SPXUSDT: 'turtle_breakout', NQUSDT: 'donchian_trend', ESUSDT: 'granville_eth_4h' };
+            if (indexSymbols.includes(symbol) && strat.id !== indexStratMap[symbol]) continue;
             if (strat.id === 'dual_st_breakout' && (symbol === 'XAUUSDT' || indexSymbols.includes(symbol))) continue;
+
+            // Skip known-negative crypto combos
+            const cryptoSkipList = { ETHUSDT: ['ma60'], SOLUSDT: ['macd_ma_optimized', 'dual_st_breakout', 'three_style'] };
+            if (cryptoSkipList[symbol] && cryptoSkipList[symbol].includes(strat.id)) continue;
 
             if (symbol === 'PAXGUSDT') {
               // Only show selected strategies for Gold (granville excluded — negative on PAXG)
@@ -718,11 +723,11 @@
           ? `<div class="absolute -right-12 top-6 bg-red-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">military_tech</span> 最佳績效</div>`
           : isTurtle && symbol === 'BTCUSDT'
             ? `<div class="absolute -right-12 top-6 bg-orange-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">local_fire_department</span> 趨勢之王</div>`
-            : strat.id === 'donchian_trend' && symbol === 'SPXUSDT' && timeframe === '4h'
+            : strat.id === 'turtle_breakout' && symbol === 'SPXUSDT' && timeframe === '4h'
               ? `<div class="absolute -right-12 top-6 bg-blue-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">show_chart</span> 標普優化</div>`
               : strat.id === 'donchian_trend' && symbol === 'NQUSDT' && timeframe === '4h'
                 ? `<div class="absolute -right-12 top-6 bg-indigo-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">trending_up</span> 那斯達克優化</div>`
-                : strat.id === 'donchian_trend' && symbol === 'ESUSDT' && timeframe === '4h'
+                : strat.id === 'granville_eth_4h' && symbol === 'ESUSDT' && timeframe === '4h'
                   ? `<div class="absolute -right-12 top-6 bg-violet-600 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">query_stats</span> 期貨優化</div>`
                   : isDualST
                   ? `<div class="absolute -right-12 top-6 bg-gradient-to-r from-cyan-600 to-teal-500 text-white text-[9px] font-black py-1 px-12 rotate-45 shadow-lg flex items-center justify-center gap-1 z-10"><span class="material-symbols-outlined text-[10px]">bolt</span> DUAL ST</div>`
@@ -751,13 +756,15 @@
             ${symbol === 'XAUUSDT' && timeframe === '1h' && strat.id === 'three_style' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：短線爆發型。專為黃金日內交易優化，具備極高的反應速度。</p>` : ''}
             ${symbol === 'XAUUSDT' && timeframe === '4h' && strat.id === 'three_style' ? `<p class="text-[11px] text-yellow-500/80 leading-tight mb-4 font-medium italic">特性：穩健波段型。專注於捕捉黃金長期趨勢，適合長線佈局。</p>` : ''}
             
-            ${symbol === 'SPXUSDT' && timeframe === '4h' && strat.id === 'donchian_trend' ? `<p class="text-[11px] text-blue-400/80 leading-tight mb-4 font-medium italic">特性：針對標普 500 期貨 (ES) 優化。唐奇安通道突破 + ADX 趨勢過濾，穩健波段策略。</p>` : ''}
+            ${symbol === 'SPXUSDT' && timeframe === '4h' && strat.id === 'turtle_breakout' ? `<p class="text-[11px] text-blue-400/80 leading-tight mb-4 font-medium italic">特性：針對標普 500 (SPX) 優化。海龜突破策略，精準捕捉標普波段行情。</p>` : ''}
             ${symbol === 'NQUSDT' && timeframe === '4h' && strat.id === 'donchian_trend' ? `<p class="text-[11px] text-indigo-400/80 leading-tight mb-4 font-medium italic">特性：針對那斯達克 100 期貨 (NQ) 優化。唐奇安突破 + ADX 趨勢過濾，專為美股期貨波段設計。</p>` : ''}
-            ${symbol === 'ESUSDT' && timeframe === '4h' && strat.id === 'donchian_trend' ? `<p class="text-[11px] text-violet-400/80 leading-tight mb-4 font-medium italic">特性：針對 E-mini S&P 500 期貨 (ES) 優化。高 ADX 門檻過濾震盪市，專注於強趨勢波段。</p>` : ''}
+            ${symbol === 'ESUSDT' && timeframe === '4h' && strat.id === 'granville_eth_4h' ? `<p class="text-[11px] text-violet-400/80 leading-tight mb-4 font-medium italic">特性：針對 E-mini S&P 500 期貨 (ES) 優化。葛蘭碧法則動態均線策略，專注強趨勢波段。</p>` : ''}
             
             ${symbol === 'BTCUSDT' && strat.id === 'dual_st_breakout' ? `<p class="text-[11px] text-cyan-400/90 leading-tight mb-4 font-medium border-l-2 border-cyan-400 pl-2">特性：雙重 SuperTrend 共振確認趨勢方向，唐奇安通道突破精準進場。針對 BTC 穩健波段優化。</p>` : ''}
             ${symbol === 'ETHUSDT' && strat.id === 'dual_st_breakout' ? `<p class="text-[11px] text-teal-400/90 leading-tight mb-4 font-medium border-l-2 border-teal-400 pl-2">特性：雙 SuperTrend 趨勢共振搭配唐奇安突破。針對 ETH 高 ROI 參數優化，盈虧比極佳。</p>` : ''}
             ${symbol === 'SOLUSDT' && strat.id === 'dual_st_breakout' ? `<p class="text-[11px] text-emerald-400/90 leading-tight mb-4 font-medium border-l-2 border-emerald-400 pl-2">特性：雙 SuperTrend 共振突破策略。針對 SOL 高波動特性優化，動態追蹤止損。</p>` : ''}
+            
+            ${strat.id === 'ichimoku_cloud' ? `<p class="text-[11px] text-yellow-500/90 leading-tight mb-4 font-medium border-l-2 border-yellow-500 pl-2">特性：一目均衡表雲圖突破系統。結合轉換線與基準線交叉，並以 EMA 200 作為長期趨勢濾網，專注於起漲點捕捉。</p>` : ''}
             
             <div class="grid grid-cols-2 gap-2 mb-4">
               <div class="bg-background-dark/50 p-2 rounded-lg border border-border-dark flex flex-col items-center justify-center text-center">
@@ -950,9 +957,9 @@
         { symbol: 'SOLUSDT', timeframe: '4h', id: 'granville_eth_4h', label: 'SOL' },
         { symbol: 'PAXGUSDT', timeframe: '4h', id: 'granville_eth_4h', label: 'GOLD' },
         { symbol: 'PAXGUSDT', timeframe: '1h', id: 'three_blade', label: 'GOLD' },
-        { symbol: 'SPXUSDT', timeframe: '4h', id: 'donchian_trend', label: 'SPX' },
+        { symbol: 'SPXUSDT', timeframe: '4h', id: 'turtle_breakout', label: 'SPX' },
         { symbol: 'NQUSDT', timeframe: '4h', id: 'donchian_trend', label: 'NQ' },
-        { symbol: 'ESUSDT', timeframe: '4h', id: 'donchian_trend', label: 'ES' },
+        { symbol: 'ESUSDT', timeframe: '4h', id: 'granville_eth_4h', label: 'ES' },
       ];
 
       let itemHtml = '';

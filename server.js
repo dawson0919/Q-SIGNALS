@@ -157,6 +157,7 @@ async function computeStrategyPerformanceCache() {
         require('./src/engine/strategies/granville_eth_4h'),
         require('./src/engine/strategies/dualSuperTrend'),
         require('./src/engine/strategies/donchianTrend'),
+        require('./src/engine/strategies/ichimoku_cloud'),
     ];
 
     // Same symbol × timeframe combinations shown on homepage
@@ -176,6 +177,11 @@ async function computeStrategyPerformanceCache() {
             } else {
                 jobs.push({ s, symbol, timeframe: '4h' });
             }
+
+            // Ichimoku Cloud extra timeframes
+            if (s.id === 'ichimoku_cloud' && symbol === 'BTCUSDT') {
+                jobs.push({ s, symbol, timeframe: '1h' });
+            }
         }
 
         // PAXGUSDT: only selected gold strategies
@@ -188,9 +194,10 @@ async function computeStrategyPerformanceCache() {
             }
         }
 
-        // All index/futures symbols use donchian_trend (optimized per-symbol)
-        if (s.id === 'donchian_trend') {
-            for (const symbol of indexSymbols) {
+        // Index/futures: each symbol uses its best-performing strategy
+        const indexStratMap = { SPXUSDT: 'turtle_breakout', NQUSDT: 'donchian_trend', ESUSDT: 'granville_eth_4h' };
+        for (const symbol of indexSymbols) {
+            if (s.id === indexStratMap[symbol]) {
                 jobs.push({ s, symbol, timeframe: '4h' });
             }
         }

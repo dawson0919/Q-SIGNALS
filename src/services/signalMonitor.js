@@ -66,9 +66,9 @@ const MONITOR_COMBOS = [
     { symbol: 'PAXGUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
     { symbol: 'PAXGUSDT', strategyId: 'ma60', timeframe: '4h' },
     // Indices & Futures (Yahoo Finance: NQ=F ~25000, ES=F ~5800)
-    { symbol: 'SPXUSDT', strategyId: 'donchian_trend', timeframe: '4h' },
+    { symbol: 'SPXUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
     { symbol: 'NQUSDT', strategyId: 'donchian_trend', timeframe: '4h' },
-    { symbol: 'ESUSDT', strategyId: 'donchian_trend', timeframe: '4h' },
+    { symbol: 'ESUSDT', strategyId: 'granville_eth_4h', timeframe: '4h' },
 ];
 
 /**

@@ -214,6 +214,74 @@ function adx(high, low, close, period = 14) {
     return adxResult;
 }
 
+/**
+ * Ichimoku Cloud Components
+ */
+function ichimoku(high, low, close, p1 = 9, p2 = 26, p3 = 52) {
+    const n = close.length;
+    const tenkan = new Array(n).fill(null);
+    const kijun = new Array(n).fill(null);
+    const spanA = new Array(n).fill(null);
+    const spanB = new Array(n).fill(null);
+    const chikou = new Array(n).fill(null);
+
+    for (let i = 0; i < n; i++) {
+        // Tenkan-Sen: (9-period high + 9-period low) / 2
+        if (i >= p1 - 1) {
+            let hh = -Infinity, ll = Infinity;
+            for (let j = 0; j < p1; j++) {
+                if (high[i - j] > hh) hh = high[i - j];
+                if (low[i - j] < ll) ll = low[i - j];
+            }
+            tenkan[i] = (hh + ll) / 2;
+        }
+
+        // Kijun-Sen: (26-period high + 26-period low) / 2
+        if (i >= p2 - 1) {
+            let hh = -Infinity, ll = Infinity;
+            for (let j = 0; j < p2; j++) {
+                if (high[i - j] > hh) hh = high[i - j];
+                if (low[i - j] < ll) ll = low[i - j];
+            }
+            kijun[i] = (hh + ll) / 2;
+        }
+
+        // Senkou Span A: (Tenkan + Kijun) / 2, shifted forward 26 periods
+        // We calculate 'now' and it will be used 'later'.
+        // To keep alignment with current bar, Span A at index i is the value calculated at i-26.
+        if (i >= p2) {
+            const prevTenkan = tenkan[i - p2];
+            const prevKijun = kijun[i - p2];
+            if (prevTenkan !== null && prevKijun !== null) {
+                spanA[i] = (prevTenkan + prevKijun) / 2;
+            }
+        }
+
+        // Senkou Span B: (52-period high + 52-period low) / 2, shifted forward 26 periods
+        if (i >= p3 + p2 - 1) {
+            let hh = -Infinity, ll = Infinity;
+            const startIdx = i - p2; // the calculation point
+            for (let j = 0; j < p3; j++) {
+                if (high[startIdx - j] > hh) hh = high[startIdx - j];
+                if (low[startIdx - j] < ll) ll = low[startIdx - j];
+            }
+            spanB[i] = (hh + ll) / 2;
+        }
+
+        // Chikou Span: Close shifted back 26 periods
+        // Chikou at index i is close at index i+26. 
+        // For backtesting, we usually check if close[i] > high[i-26] or similar.
+        // Actually, Chikou is just the close plotted 26 bars back.
+        // So chikou[i-26] = close[i].
+        // But for easier strategy logic: chikou[i] = close[i] vs price[i-26].
+        if (i >= p2) {
+            chikou[i] = close[i]; // The value is just close, but logically compared to candles[i-26]
+        }
+    }
+
+    return { tenkan, kijun, spanA, spanB, chikou };
+}
+
 module.exports = {
     sma,
     ema,
@@ -225,7 +293,8 @@ module.exports = {
     atr,
     donchian,
     superTrend,
-    adx
+    adx,
+    ichimoku
 };
 
 /**
