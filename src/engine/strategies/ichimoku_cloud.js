@@ -33,21 +33,27 @@ function createStrategy(params = {}) {
     const p3 = params.p3 || 52;
     const emaPeriod = params.ema_period || 200;
 
+    let cachedIchi = null;
+
     return function execute(candles, indicatorData, i, indicators) {
-        // Use the ichimoku indicator we added to indicators.js
-        const ichi = indicators.ichimoku(candles, p1, p2, p3);
-        const ema = indicators.ema(candles, emaPeriod);
+        // Use pre-computed EMA from indicatorData
+        const emaArr = indicatorData.ema[emaPeriod];
+        if (!emaArr) return null;
 
-        if (!ichi || !ema || i < Math.max(p3, emaPeriod)) return null;
+        // Compute ichimoku once and cache
+        if (!cachedIchi) {
+            cachedIchi = indicators.ichimoku(indicatorData.high, indicatorData.low, indicatorData.close, p1, p2, p3);
+        }
 
-        const curr = candles[i];
-        const close = curr.close;
+        if (!cachedIchi || i < Math.max(p3 + p2, emaPeriod)) return null;
 
-        const tenkan = ichi.tenkan[i];
-        const kijun = ichi.kijun[i];
-        const senkouA = ichi.senkouA[i];
-        const senkouB = ichi.senkouB[i];
-        const currEma = ema[i];
+        const close = candles[i].close;
+
+        const tenkan = cachedIchi.tenkan[i];
+        const kijun = cachedIchi.kijun[i];
+        const senkouA = cachedIchi.spanA[i];
+        const senkouB = cachedIchi.spanB[i];
+        const currEma = emaArr[i];
 
         if (tenkan === null || kijun === null || senkouA === null || senkouB === null || currEma === null) return null;
 
@@ -64,11 +70,17 @@ function createStrategy(params = {}) {
             return 'SELL';
         }
 
-        return 'EXIT'; // Simple exit logic: if conditions aren't met, exit (or we could wait for crossunder)
-        // For a more robust strategy, we typically want specific exit conditions. 
-        // But the user prompt says "Buy Logic" and "Sell Logic" specifically. 
-        // I'll stick to a slightly more "hold until reverse" or "exit if neutral" logic.
-        // Let's refine based on common Ichimoku: exit long if price < cloud or tenkan < kijun
+        // Exit long: price drops below cloud or tenkan crosses below kijun
+        // Exit short: price rises above cloud or tenkan crosses above kijun
+        // Only exit when clear reversal signal, otherwise hold
+        if (close < cloudBottom || tenkan < kijun) {
+            return 'CLOSE_LONG';
+        }
+        if (close > cloudTop || tenkan > kijun) {
+            return 'CLOSE_SHORT';
+        }
+
+        return null; // Hold position
     };
 }
 

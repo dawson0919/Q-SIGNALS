@@ -549,7 +549,7 @@
             if (strat.id === 'dual_st_breakout' && (symbol === 'XAUUSDT' || indexSymbols.includes(symbol))) continue;
 
             // Skip known-negative crypto combos
-            const cryptoSkipList = { ETHUSDT: ['ma60'], SOLUSDT: ['macd_ma_optimized', 'dual_st_breakout', 'three_style'] };
+            const cryptoSkipList = { BTCUSDT: ['ichimoku_cloud'], ETHUSDT: ['ma60', 'ichimoku_cloud'], SOLUSDT: ['macd_ma_optimized', 'dual_st_breakout', 'three_style', 'ichimoku_cloud'] };
             if (cryptoSkipList[symbol] && cryptoSkipList[symbol].includes(strat.id)) continue;
 
             if (symbol === 'PAXGUSDT') {
