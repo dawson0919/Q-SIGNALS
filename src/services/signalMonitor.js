@@ -96,20 +96,16 @@ async function checkSignal(combo, strategiesMap) {
         const oldSignal = lastSignals[signalKey];
         const oldClose = lastSignals[closeKey];
         const now = Date.now();
-        const MAX_AGE_MS = 4 * 60 * 60 * 1000; // 4 hours
+        const MAX_AGE_MS = 8 * 60 * 60 * 1000; // 8 hours (2x 4h candle)
         const signals = []; // Collect both entry and close signals
 
-        // ── 1. Check for NEW ENTRY signal ──
+        // ── 1. Check for NEW ENTRY signal (priority: notify on open) ──
         const isNew = !oldSignal ||
             new Date(oldSignal.entryTime).getTime() !== new Date(latest.entryTime).getTime() ||
             oldSignal.type !== latest.type;
 
         const signalTime = new Date(latest.entryTime).getTime();
         const isRecent = !isNaN(signalTime) && (now - signalTime) < MAX_AGE_MS;
-
-        // Skip entry if trade already closed on the same candle (open+close = noise)
-        const tradeAlreadyClosed = latest.exitTime &&
-            (now - new Date(latest.exitTime).getTime()) < MAX_AGE_MS;
 
         // Always update entry cache
         lastSignals[signalKey] = {
@@ -119,7 +115,8 @@ async function checkSignal(combo, strategiesMap) {
             rule: latest.rule
         };
 
-        if (isNew && isRecent && !tradeAlreadyClosed) {
+        // Always notify on new entry — even if trade already closed
+        if (isNew && isRecent) {
             signals.push({
                 signalType: 'entry',
                 strategyId,
