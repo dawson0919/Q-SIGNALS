@@ -59,6 +59,11 @@ function createStrategy(params = {}) {
         fast = 5; slow = 26; signal = 7; ma = 200;
     }
 
+    // Apply Optimized Parameters for SOL 4h
+    if (params.symbol === 'SOLUSDT' && params.timeframe === '4h') {
+        fast = 8; slow = 26; signal = 7; ma = 200;
+    }
+
     return function execute(candles, indicatorData, i, indicators) {
         let macdResult = indicatorData[`macd_${fast}_${slow}_${signal}`];
 

@@ -62,12 +62,10 @@ function createStrategy(params = {}) {
     // Apply Optimized Parameters for PAXG (Tokenized Gold)
     if (params.symbol === 'PAXGUSDT') {
         if (params.timeframe === '1h') {
-            fast = 8; mid = 15; slow = 30;
-            adxThreshold = 20;
+            fast = 10; mid = 50; slow = 200;
+            adxThreshold = 15;
             slMultiplier = 2.0;
-            tpMultiplier = 5.0;
-            rsiOverbought = 75;
-            rsiOversold = 25;
+            tpMultiplier = 8.0;
             console.log(`[ThreeStyle] Init PAXGUSDT 1H Optimized: ${fast}/${mid}/${slow} ADX>${adxThreshold} SL=${slMultiplier}x TP=${tpMultiplier}x`);
         } else if (params.timeframe === '4h') {
             fast = 10; mid = 35; slow = 90;
@@ -78,6 +76,46 @@ function createStrategy(params = {}) {
             rsiOversold = 25;
             console.log(`[ThreeStyle] Init PAXGUSDT 4H Optimized: ${fast}/${mid}/${slow} ADX>${adxThreshold} SL=${slMultiplier}x TP=${tpMultiplier}x`);
         }
+    }
+
+    // Apply Optimized Parameters for SOLUSDT
+    if (params.symbol === 'SOLUSDT') {
+        if (params.timeframe === '4h') {
+            fast = 5; mid = 50; slow = 120;
+            adxThreshold = 20;
+            slMultiplier = 2.5;
+            tpMultiplier = 8.0;
+            console.log(`[ThreeStyle] Init SOLUSDT 4H Optimized: ${fast}/${mid}/${slow} ADX>${adxThreshold} SL=${slMultiplier}x TP=${tpMultiplier}x`);
+        }
+    }
+
+    // Apply Optimized Parameters for ETHUSDT
+    if (params.symbol === 'ETHUSDT') {
+        if (params.timeframe === '4h') {
+            fast = 10; mid = 50; slow = 90;
+            adxThreshold = 20;
+            slMultiplier = 2.0;
+            tpMultiplier = 5.0;
+            console.log(`[ThreeStyle] Init ETHUSDT 4H Optimized: ${fast}/${mid}/${slow} ADX>${adxThreshold} SL=${slMultiplier}x TP=${tpMultiplier}x`);
+        }
+    }
+
+    // Apply Optimized Parameters for BTCUSDT
+    if (params.symbol === 'BTCUSDT') {
+        if (params.timeframe === '4h') {
+            fast = 5; mid = 35; slow = 50;
+            adxThreshold = 15;
+            slMultiplier = 2.5;
+            tpMultiplier = 5.0;
+            console.log(`[ThreeStyle] Init BTCUSDT 4H Optimized: ${fast}/${mid}/${slow} ADX>${adxThreshold} SL=${slMultiplier}x TP=${tpMultiplier}x`);
+        }
+    }
+
+    // Apply Optimized Parameters for CLUSDT (WTI Crude Oil) 1h — Pionex 21d/500bars
+    if (params.symbol === 'CLUSDT' && params.timeframe === '1h') {
+        fast = 5; mid = 20; slow = 200;
+        adxThreshold = 15;
+        console.log(`[ThreeStyle] Init CLUSDT 1H Optimized: ${fast}/${mid}/${slow} ADX>${adxThreshold}`);
     }
 
     return function execute(candles, indicatorData, i, indicators) {

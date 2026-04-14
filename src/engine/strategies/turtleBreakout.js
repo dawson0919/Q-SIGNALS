@@ -53,6 +53,17 @@ function createStrategy(params = {}) {
         }
     }
 
+    // Apply Optimized Parameters for SOL 4h
+    if (params.symbol === 'SOLUSDT' && params.timeframe === '4h') {
+        LEFT = 12; RIGHT = 5; MIN_HOLD_BARS = 15;
+    }
+
+    // Apply Optimized Parameters for CLUSDT (WTI Crude Oil) 1h — Pionex 21d/500bars
+    if (params.symbol === 'CLUSDT' && params.timeframe === '1h') {
+        LEFT = 4; RIGHT = 3; MIN_HOLD_BARS = 2;
+        console.log(`[TurtleBreakout] Init CLUSDT/1h Optimized: L=${LEFT} R=${RIGHT} Hold=${MIN_HOLD_BARS}`);
+    }
+
     // Persistent state inside closure
     let hprice = 0;
     let lprice = 0;

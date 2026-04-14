@@ -27,6 +27,10 @@ module.exports = {
             ma_p = 156; sl = 0.005;  // SOL: +95.12% ROI, WR 50.0%, PF 8.59
         } else if (symbol.includes('XAU') || symbol.includes('GOLD')) {
             ma_p = 16; sl = 0.005;  // XAU: +17.23% ROI, WR 22.7%, PF 1.69
+        } else if (symbol.includes('CL')) {
+            ma_p = 20; sl = 0.002;  // CLUSDT/1h: +10.89% ROI Pionex; 4h alt: ma_p=100 ROI +5.05%
+        } else if (symbol.includes('PAXG')) {
+            ma_p = 16; sl = 0.002;  // PAXG: +34.55% ROI (optimized, 124 trades)
         } else {
             ma_p = 203; sl = 0.005;  // ETH: +64.84% ROI, WR 38.5%, PF 7.58
         }

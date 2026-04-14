@@ -33,6 +33,7 @@ const OPTIMIZED_PARAMS = {
     'BTCUSDT_1h': { st1_period: 14, st1_mult: 3.0, st2_period: 30, st2_mult: 3.0, donchian_period: 15 },
     'BTCUSDT_4h': { st1_period: 14, st1_mult: 2.5, st2_period: 14, st2_mult: 5.0, donchian_period: 15 },
     'XAUUSDT_4h': { st1_period: 10, st1_mult: 3.0, st2_period: 20, st2_mult: 4.0, donchian_period: 20 },
+    'CLUSDT_1h': { st1_period: 7, st1_mult: 2.0, st2_period: 14, st2_mult: 3.0, donchian_period: 10 },
 };
 
 const DEFAULT_PARAMS = { st1_period: 10, st1_mult: 3.0, st2_period: 20, st2_mult: 4.0, donchian_period: 20 };

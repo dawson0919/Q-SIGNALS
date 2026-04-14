@@ -271,7 +271,7 @@
         const timeframe = params.get('timeframe') || '4h';
 
         // Update Title dynamically
-        const isIndexSymbol = ['SPXUSDT', 'SPYUSDT', 'NQUSDT', 'ESUSDT'].includes(symbol);
+        const isIndexSymbol = ['SPXUSDT', 'SPYUSDT', 'NQUSDT', 'ESUSDT', 'CLUSDT'].includes(symbol);
         const days = isIndexSymbol ? 90 : (timeframe === '1h' ? 45 : 180);
         const tfLabel = timeframe.toUpperCase();
         const titleEl = document.getElementById('equityTitle');
@@ -309,7 +309,7 @@
                 const sRes = await fetch(`/api/strategies/${strategyId}`, { headers: sHeaders });
                 const strat = await sRes.json();
 
-                const isIndexAsset = ['SPXUSDT', 'NQUSDT', 'ESUSDT'].includes(symbol);
+                const isIndexAsset = ['SPXUSDT', 'NQUSDT', 'ESUSDT', 'CLUSDT'].includes(symbol);
                 strategyCategory = isIndexAsset ? 'Platinum' : (strat.category || 'Basic');
                 const isPlatinumAsset = strategyCategory === 'Platinum';
 
@@ -332,7 +332,7 @@
                 // Show admin notes (Admin Only UI check + API check)
                 if (isAdmin && strat.adminNotes) {
                     let notes = strat.adminNotes;
-                    const mapping = { 'XAUUSDT': '[XAU / GOLD]', 'SPXUSDT': '[SPX / SPY]', 'SPYUSDT': '[SPX / SPY]', 'NQUSDT': '[NQ / Nasdaq Futures]', 'ESUSDT': '[ES / S&P Futures]' };
+                    const mapping = { 'XAUUSDT': '[XAU / GOLD]', 'SPXUSDT': '[SPX / SPY]', 'SPYUSDT': '[SPX / SPY]', 'NQUSDT': '[NQ / Nasdaq Futures]', 'ESUSDT': '[ES / S&P Futures]', 'CLUSDT': '[CL / WTI Crude Oil]' };
                     const header = mapping[symbol];
                     if (header && notes.includes(header)) {
                         const globalHeader = notes.split('[')[0];

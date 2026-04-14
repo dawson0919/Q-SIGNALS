@@ -28,10 +28,23 @@ if (shortCondition)
 `.trim();
 
 function createStrategy(params = {}) {
-    const p1 = params.p1 || 9;
-    const p2 = params.p2 || 26;
-    const p3 = params.p3 || 52;
-    const emaPeriod = params.ema_period || 200;
+    let p1 = params.p1 || 9;
+    let p2 = params.p2 || 26;
+    let p3 = params.p3 || 52;
+    let emaPeriod = params.ema_period || 200;
+
+    // Per-symbol/timeframe optimized parameter overrides
+    if (params.symbol === 'SOLUSDT' && params.timeframe === '4h') {
+        p1 = 24; p2 = 20; p3 = 44; emaPeriod = 200;
+    } else if (params.symbol === 'ETHUSDT' && params.timeframe === '4h') {
+        p1 = 24; p2 = 32; p3 = 80; emaPeriod = 100;
+    } else if (params.symbol === 'BTCUSDT' && params.timeframe === '4h') {
+        p1 = 24; p2 = 26; p3 = 80; emaPeriod = 100;
+    } else if (params.symbol === 'BTCUSDT' && params.timeframe === '1h') {
+        p1 = 12; p2 = 20; p3 = 80; emaPeriod = 100;
+    } else if (params.symbol === 'CLUSDT' && params.timeframe === '1h') {
+        p1 = 7; p2 = 20; p3 = 44; emaPeriod = 50;
+    }
 
     let cachedIchi = null;
 

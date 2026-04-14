@@ -163,7 +163,7 @@ async function computeStrategyPerformanceCache() {
     // Same symbol × timeframe combinations shown on homepage
     const jobs = [];
     const cryptoSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT'];
-    const indexSymbols = ['SPXUSDT', 'NQUSDT', 'ESUSDT'];
+    const indexSymbols = ['SPXUSDT', 'NQUSDT', 'ESUSDT', 'CLUSDT'];
     // Gold-specific strategies shown on homepage for PAXGUSDT
     const allowedGoldStrats = ['three_style', 'granville_eth_4h', 'turtle_breakout', 'dual_st_breakout', 'donchian_trend'];
 
@@ -195,10 +195,12 @@ async function computeStrategyPerformanceCache() {
         }
 
         // Index/futures: each symbol uses its best-performing strategy
-        const indexStratMap = { SPXUSDT: 'turtle_breakout', NQUSDT: 'donchian_trend', ESUSDT: 'granville_eth_4h' };
+        const indexStratMap = { SPXUSDT: 'turtle_breakout', NQUSDT: 'donchian_trend', ESUSDT: 'granville_eth_4h', CLUSDT: 'dual_ema' };
         for (const symbol of indexSymbols) {
             if (s.id === indexStratMap[symbol]) {
-                jobs.push({ s, symbol, timeframe: '4h' });
+                // CL uses 1h timeframe (best performing per optimization); others 4h
+                const tf = symbol === 'CLUSDT' ? '1h' : '4h';
+                jobs.push({ s, symbol, timeframe: tf });
             }
         }
     }
@@ -206,8 +208,8 @@ async function computeStrategyPerformanceCache() {
     let done = 0;
     for (const { s, symbol, timeframe } of jobs) {
         try {
-            const isIndex = ['SPXUSDT', 'NQUSDT', 'ESUSDT'].includes(symbol);
-            const daysBack = isIndex ? 90 : (timeframe === '1h' ? 45 : 180);
+            const isIndex = ['SPXUSDT', 'NQUSDT', 'ESUSDT', 'CLUSDT'].includes(symbol);
+            const daysBack = isIndex ? (symbol === 'CLUSDT' ? 30 : 90) : (timeframe === '1h' ? 45 : 180);
             const candles = await getCandleData(symbol, timeframe, { daysBack });
             if (candles.length < 50) continue;
 

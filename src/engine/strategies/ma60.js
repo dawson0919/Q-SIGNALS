@@ -31,6 +31,22 @@ function createStrategy(params = {}) {
         period = 20; filterPeriod = 100;
     }
 
+    // Apply Optimized Parameters for BTC 4h
+    if (params.symbol === 'BTCUSDT' && params.timeframe === '4h') {
+        period = 20; filterPeriod = 100;
+    }
+
+    // Apply Optimized Parameters for ETH 4h
+    if (params.symbol === 'ETHUSDT' && params.timeframe === '4h') {
+        period = 120; filterPeriod = 250;
+    }
+
+    // Apply Optimized Parameters for CLUSDT (WTI Crude Oil) 1h — Pionex 21d/500bars
+    if (params.symbol === 'CLUSDT' && params.timeframe === '1h') {
+        period = 30; filterPeriod = 100;
+        console.log(`[MA60] Init CLUSDT/1h Optimized: period=${period} filter=${filterPeriod}`);
+    }
+
     return function execute(candles, indicatorData, i, indicators) {
         const sma = indicatorData.sma[period];
         // Calculate filter MA on the fly if not pre-calculated, or ensure backtester calculates it

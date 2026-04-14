@@ -21,3 +21,5 @@ generate_og_image.js
 manifest_result.json
 create_test_data.js
 verify_signal.js
+check_members.js
+send_bulk_email.js

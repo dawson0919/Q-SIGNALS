@@ -3,7 +3,7 @@ const yahoo = new YahooFinance();
 const { insertCandles, getLatestCandleTime, getCandleCount } = require('./database');
 
 // Yahoo Finance Info: NQ=F (Nasdaq 100 Futures), ES=F (S&P 500 Futures) - 15m delay
-const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'PAXGUSDT', 'XAUUSDT', 'SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT'];
+const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'PAXGUSDT', 'XAUUSDT', 'SPXUSDT', 'NASUSDT', 'NQUSDT', 'ESUSDT', 'CLUSDT'];
 const CG_ID_MAP = {
     'SPXUSDT': 'spdr-s-p-500-etf-ondo-tokenized-etf',
     'NASUSDT': 'invesco-qqq-etf-ondo-tokenized-etf'
@@ -11,6 +11,10 @@ const CG_ID_MAP = {
 const YAHOO_SYMBOL_MAP = {
     'NQUSDT': 'NQ=F',
     'ESUSDT': 'ES=F'
+};
+// Pionex perpetual contracts (WTI crude oil)
+const PIONEX_SYMBOL_MAP = {
+    'CLUSDT': 'WTI_USDT_PERP'
 };
 const TIMEFRAMES = ['1h', '4h'];
 const BACKFILL_DAYS = parseInt(process.env.BACKFILL_DAYS || '365');
@@ -27,6 +31,11 @@ async function fetchKlines(symbol, interval, startTime, endTime, limit = 1000) {
     // Route to Yahoo Finance for NQ/ES (Delayed 15m)
     if (YAHOO_SYMBOL_MAP[symbol]) {
         return fetchKlinesFromYahoo(symbol, interval, startTime, endTime);
+    }
+
+    // Route to Pionex Perpetual for CL (WTI crude oil)
+    if (PIONEX_SYMBOL_MAP[symbol]) {
+        return fetchKlinesFromPionex(symbol, interval, limit);
     }
 
     const isFutures = symbol === 'XAUUSDT';
@@ -128,6 +137,43 @@ async function fetchKlinesFromYahoo(symbol, interval, startTime, endTime) {
         return [];
     }
 }
+async function fetchKlinesFromPionex(symbol, interval, limit = 500) {
+    const pionexSymbol = PIONEX_SYMBOL_MAP[symbol];
+    if (!pionexSymbol) return [];
+
+    // Pionex intervals (uppercase): 1M, 5M, 15M, 30M, 60M, 4H, 1D
+    const intervalMap = { '1h': '60M', '4h': '4H', '1d': '1D' };
+    const pionexInterval = intervalMap[interval] || '4H';
+    const pionexLimit = Math.min(limit, 500);
+
+    const url = `https://api.pionex.com/api/v1/market/klines?symbol=${pionexSymbol}&interval=${pionexInterval}&limit=${pionexLimit}`;
+
+    try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Pionex API ${res.status}`);
+        const json = await res.json();
+        if (!json.result || !json.data?.klines) {
+            console.error(`[Backfill] Pionex error for ${symbol}:`, json.message);
+            return [];
+        }
+        // Pionex returns newest first; reverse to oldest first
+        const list = [...json.data.klines].reverse();
+        const intervalMs = interval === '4h' ? 4 * 3600 * 1000 : 3600 * 1000;
+        return list.map(k => ({
+            openTime: parseInt(k.time),
+            open: parseFloat(k.open),
+            high: parseFloat(k.high),
+            low: parseFloat(k.low),
+            close: parseFloat(k.close),
+            volume: parseFloat(k.volume),
+            closeTime: parseInt(k.time) + intervalMs - 1
+        }));
+    } catch (err) {
+        console.error(`[Backfill] Pionex fetch failed for ${symbol}:`, err.message);
+        return [];
+    }
+}
+
 async function fetchKlinesFromCG(symbol, interval, days) {
     const cgId = CG_ID_MAP[symbol];
     if (!cgId) return [];
@@ -185,18 +231,19 @@ async function fetchKlinesFromCG(symbol, interval, days) {
 async function backfillSymbol(symbol, timeframe) {
     const isCG = !!CG_ID_MAP[symbol];
     const isYahoo = !!YAHOO_SYMBOL_MAP[symbol];
+    const isPionex = !!PIONEX_SYMBOL_MAP[symbol];
     const latestTime = await getLatestCandleTime(symbol, timeframe);
     const now = Date.now();
     let startTime;
 
-    if (isCG || (isYahoo && !latestTime)) {
+    if (isCG || (isYahoo && !latestTime) || isPionex) {
         // For CG or initial Yahoo, fetch a window
         const days = 90;
         startTime = now - (days * 24 * 60 * 60 * 1000);
         const candles = await fetchKlines(symbol, timeframe, startTime, now);
         if (candles.length > 0) {
             const count = await insertCandles(symbol, timeframe, candles);
-            console.log(`[Backfill] ${symbol} (${timeframe}): Inserted ${count} candles from ${isCG ? 'CoinGecko' : 'Yahoo'}`);
+            console.log(`[Backfill] ${symbol} (${timeframe}): Inserted ${count} candles from ${isCG ? 'CoinGecko' : isPionex ? 'Pionex' : 'Yahoo'}`);
         }
         return;
     }

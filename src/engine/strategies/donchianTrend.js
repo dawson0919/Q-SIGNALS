@@ -55,6 +55,14 @@ function createStrategy(params = {}) {
         DC_PERIOD = 15; ADX_THRESHOLD = 30; SL_MULT = 1.0; TP_MULT = 4.0;
         console.log(`[DonchianTrend] Init ESUSDT Optimized: P=${DC_PERIOD} ADX>${ADX_THRESHOLD} SL=${SL_MULT}x TP=${TP_MULT}x`);
     }
+    if (params.symbol === 'SOLUSDT' && params.timeframe === '4h') {
+        DC_PERIOD = 70; ADX_THRESHOLD = 20; SL_MULT = 2.0; TP_MULT = 6.0; VOL_FILTER = 1.0;
+        console.log(`[DonchianTrend] Init SOLUSDT/4h Optimized: P=${DC_PERIOD} ADX>${ADX_THRESHOLD} SL=${SL_MULT}x TP=${TP_MULT}x`);
+    }
+    if (params.symbol === 'CLUSDT' && params.timeframe === '1h') {
+        DC_PERIOD = 10; ADX_THRESHOLD = 20; SL_MULT = 1.0; TP_MULT = 6.0;
+        console.log(`[DonchianTrend] Init CLUSDT/1h Optimized: P=${DC_PERIOD} ADX>${ADX_THRESHOLD} SL=${SL_MULT}x TP=${TP_MULT}x`);
+    }
 
     return function execute(candles, indicatorData, i, indicators) {
         // Minimum bars for indicators

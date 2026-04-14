@@ -42,9 +42,12 @@ if (strategy.position_size < 0)
  */
 const OPTIMIZED_PARAMS = {
     'ETHUSDT': { fastLen: 5, slowLen: 50, slPct: 0.05, tpPct: 0.1, rsiThresh: 50, cooldown: 3, useRsi: false },
-    'SOLUSDT': { fastLen: 10, slowLen: 100, slPct: 0.04, tpPct: 0.2, rsiThresh: 50, cooldown: 3, useRsi: false },
+    'SOLUSDT': { fastLen: 30, slowLen: 100, slPct: 0.03, tpPct: 0.1, rsiThresh: 45, cooldown: 3, useRsi: true },
     'XAUUSDT': { fastLen: 30, slowLen: 50, slPct: 0.01, tpPct: 0.25, rsiThresh: 40, cooldown: 3, useRsi: true },
-    'BTCUSDT': { fastLen: 15, slowLen: 100, slPct: 0.05, tpPct: 0.25, rsiThresh: 50, cooldown: 3, useRsi: true }
+    'BTCUSDT': { fastLen: 15, slowLen: 100, slPct: 0.05, tpPct: 0.25, rsiThresh: 50, cooldown: 3, useRsi: true },
+    // CLUSDT (WTI Crude Oil) — Pionex data, re-optimized 2026-04
+    'CLUSDT': { fastLen: 10, slowLen: 30, slPct: 0.07, tpPct: 0.15, rsiThresh: 55, cooldown: 3, useRsi: true },      // 1h: ROI 39.75%
+    'CLUSDT_4h': { fastLen: 5, slowLen: 75, slPct: 0.07, tpPct: 0.2, rsiThresh: 40, cooldown: 3, useRsi: true }     // 4h: ROI 18.82%
 };
 
 function createStrategy(params = {}) {
@@ -129,7 +132,8 @@ module.exports = {
     pineScript,
     createStrategy: (params = {}) => {
         const symbol = (params.symbol || 'BTCUSDT').toUpperCase().replace(/[^A-Z0-9]/g, '');
-        const opt = OPTIMIZED_PARAMS[symbol] || OPTIMIZED_PARAMS['BTCUSDT'];
+        const timeframe = params.timeframe || '4h';
+        const opt = OPTIMIZED_PARAMS[`${symbol}_${timeframe}`] || OPTIMIZED_PARAMS[symbol] || OPTIMIZED_PARAMS['BTCUSDT'];
 
         const finalParams = { ...defaultParams, ...opt };
 

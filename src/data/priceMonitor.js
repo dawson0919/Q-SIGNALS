@@ -177,6 +177,42 @@ function startPriceMonitor() {
         });
     }
 
+    // Poll WTI Crude Oil (CLUSDT) from Pionex Perpetual
+    async function pollPionexFutures() {
+        const pionexMap = { 'CLUSDT': 'WTI_USDT_PERP' };
+        const https = require('https');
+        for (const [symbol, pionexSymbol] of Object.entries(pionexMap)) {
+            const url = `https://api.pionex.com/api/v1/market/tickers?symbol=${pionexSymbol}`;
+            https.get(url, res => {
+                let data = '';
+                res.on('data', d => data += d);
+                res.on('end', () => {
+                    try {
+                        const json = JSON.parse(data);
+                        const t = json.data?.tickers?.[0];
+                        if (t && parseFloat(t.close) > 5) {
+                            const open = parseFloat(t.open) || 0;
+                            const close = parseFloat(t.close);
+                            const changePct = open > 0 ? ((close - open) / open) * 100 : 0;
+                            currentPrices[symbol] = {
+                                price: close,
+                                change24h: changePct,
+                                high24h: parseFloat(t.high) || 0,
+                                low24h: parseFloat(t.low) || 0,
+                                volume24h: parseFloat(t.volume) || 0,
+                                timestamp: Date.now(),
+                                source: 'pionex'
+                            };
+                            if (global.broadcastPrices) global.broadcastPrices(currentPrices);
+                        }
+                    } catch (e) {
+                        console.error(`[PriceMonitor] Pionex parse error for ${symbol}:`, e.message);
+                    }
+                });
+            }).on('error', e => console.error(`[PriceMonitor] Pionex fetch error for ${symbol}:`, e.message));
+        }
+    }
+
     // Poll NQ/ES Futures Prices from Yahoo Finance (15min delay)
     async function pollYahooFutures() {
         const yahooMap = { 'NQUSDT': 'NQ=F', 'ESUSDT': 'ES=F' };
@@ -214,6 +250,8 @@ function startPriceMonitor() {
     setInterval(pollCoinGecko, 60000);
     pollYahooFutures();
     setInterval(pollYahooFutures, 60000);
+    pollPionexFutures();
+    setInterval(pollPionexFutures, 60000);
 }
 
 function stopPriceMonitor() {

@@ -374,7 +374,7 @@ router.post('/subscribe', requireAuth, async (req, res) => {
         console.log(`[Subscribe] User: ${req.user.email} (${req.user.id}), Role: ${role}, Strategy: ${s.name} (${s.category}), Symbol: ${symbol}`);
 
         // Index Restrictions (SPX/NAS)
-        const isIndex = ['SPXUSDT', 'NQUSDT', 'ESUSDT', 'SPX', 'NQ', 'ES'].includes(symbol);
+        const isIndex = ['SPXUSDT', 'NQUSDT', 'ESUSDT', 'CLUSDT', 'SPX', 'NQ', 'ES', 'CL'].includes(symbol);
         // RELAXED: Allow Advanced users to subscribe for now
         if (isIndex && !['admin', 'platinum', 'advanced'].includes(role)) {
             console.log(`[Subscribe] DENIED: ${symbol} requiring Advanced+.`);
@@ -532,6 +532,45 @@ router.get('/featured-signals/gold', async (req, res) => {
         res.json(featured);
     } catch (e) {
         console.error('[FeaturedGold] Error:', e.message);
+        res.json([]);
+    }
+});
+
+// CL WTI Crude Oil featured signals (primary featured asset)
+router.get('/featured-signals/oil', async (req, res) => {
+    try {
+        const { getAllStrategyPerformance } = require('../data/database');
+        const allPerf = await getAllStrategyPerformance();
+
+        const clPerf = allPerf
+            .filter(p => p.symbol === 'CLUSDT' && p.latest_signal && p.total_return != null)
+            .sort((a, b) => (parseFloat(b.total_return) || 0) - (parseFloat(a.total_return) || 0));
+
+        const best1h = clPerf.find(p => p.timeframe === '1h');
+        const best4h = clPerf.find(p => p.timeframe === '4h');
+
+        const featured = [best4h, best1h].filter(Boolean).map(p => {
+            const sig = p.latest_signal;
+            return {
+                id: `perf_${p.strategy_id}_${p.timeframe}`,
+                symbol: p.symbol,
+                strategy_id: p.strategy_id,
+                timeframe: p.timeframe,
+                type: sig.type === 'LONG' ? 'BUY' : (sig.type === 'SHORT' ? 'SELL' : sig.type),
+                entry_price: sig.entryPrice || sig.price || sig.entry_price,
+                roi: sig.pnlPercent || sig.roi || 0,
+                total_return: parseFloat(p.total_return) || 0,
+                win_rate: parseFloat(p.win_rate) || 0,
+                status: 'active',
+                entry_time: sig.entryTime || sig.entryDate || sig.time,
+                comment: `Strategy: ${p.strategy_id.replace(/_/g, ' ').toUpperCase()}`,
+                source: 'algo'
+            };
+        }).filter(s => s.entry_price && s.entry_time);
+
+        res.json(featured);
+    } catch (e) {
+        console.error('[FeaturedOil] Error:', e.message);
         res.json([]);
     }
 });
@@ -725,7 +764,7 @@ router.post('/backtest', backtestLimiter, async (req, res) => {
         let strategyFn;
         let strategyName;
 
-        const isIndex = ['SPXUSDT', 'NQUSDT', 'ESUSDT', 'SPX', 'NQ', 'ES'].includes(symbol);
+        const isIndex = ['SPXUSDT', 'NQUSDT', 'ESUSDT', 'CLUSDT', 'SPX', 'NQ', 'ES', 'CL'].includes(symbol);
 
         if (strategyId && strategies[strategyId]) {
             const s = strategies[strategyId];
@@ -850,7 +889,7 @@ router.get('/prices/history', async (req, res) => {
 
 // DB stats
 router.get('/stats', async (req, res) => {
-    const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'PAXGUSDT', 'SPXUSDT', 'NQUSDT', 'ESUSDT'];
+    const symbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT', 'PAXGUSDT', 'SPXUSDT', 'NQUSDT', 'ESUSDT', 'CLUSDT'];
     const stats = {};
     for (const s of symbols) {
         stats[s] = await getCandleCount(s, '4h');
