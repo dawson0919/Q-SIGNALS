@@ -20,5 +20,8 @@
     "pngjs": "^7.0.0",
     "ws": "^8.16.0",
     "yahoo-finance2": "^3.13.0"
+  },
+  "devDependencies": {
+    "sharp": "^0.34.5"
   }
 }
