@@ -6,33 +6,27 @@
     </filter>
     <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#1a0f05"/>
-      <stop offset="60%" stop-color="#0a0604"/>
+      <stop offset="55%" stop-color="#0a0604"/>
       <stop offset="100%" stop-color="#050302"/>
     </linearGradient>
-    <linearGradient id="oilChart" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#f97316" stop-opacity="0"/>
-      <stop offset="30%" stop-color="#f97316" stop-opacity="0.5"/>
-      <stop offset="100%" stop-color="#fb923c" stop-opacity="1"/>
-    </linearGradient>
-    <linearGradient id="chartFill" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#f97316" stop-opacity="0.35"/>
-      <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
-    </linearGradient>
     <radialGradient id="orbGlow" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0%" stop-color="#fb923c" stop-opacity="0.6"/>
-      <stop offset="60%" stop-color="#f97316" stop-opacity="0.15"/>
+      <stop offset="0%" stop-color="#fb923c" stop-opacity="0.55"/>
+      <stop offset="60%" stop-color="#f97316" stop-opacity="0.12"/>
       <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
     </radialGradient>
+    <linearGradient id="newTag" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#fb923c"/>
+      <stop offset="100%" stop-color="#f97316"/>
+    </linearGradient>
   </defs>
 
   <!-- Background -->
   <rect width="1200" height="630" fill="url(#bgGrad)"/>
-
-  <!-- Glow orb -->
-  <circle cx="950" cy="160" r="280" fill="url(#orbGlow)"/>
+  <circle cx="950" cy="120" r="260" fill="url(#orbGlow)"/>
+  <circle cx="180" cy="500" r="220" fill="url(#orbGlow)" opacity="0.5"/>
 
   <!-- Grid lines -->
-  <g stroke="#3a1d0a" stroke-width="0.5" opacity="0.5">
+  <g stroke="#3a1d0a" stroke-width="0.5" opacity="0.35">
     <line x1="0" y1="105" x2="1200" y2="105"/>
     <line x1="0" y1="210" x2="1200" y2="210"/>
     <line x1="0" y1="315" x2="1200" y2="315"/>
@@ -45,49 +39,89 @@
     <line x1="1000" y1="0" x2="1000" y2="630"/>
   </g>
 
-  <!-- Chart area fill (rising) -->
-  <polygon points="50,500 150,470 250,490 350,430 450,445 550,390 650,370 750,320 850,260 950,285 1050,220 1150,180 1150,630 50,630"
-    fill="url(#chartFill)"/>
+  <!-- Brand top-left -->
+  <text x="60" y="75" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="28" fill="#ffffff" letter-spacing="3">QUANTSIGNAL</text>
+  <text x="60" y="100" font-family="Arial, Helvetica, sans-serif" font-weight="500" font-size="14" fill="#fb923c" letter-spacing="4">AI 量化策略訊號平台</text>
 
-  <!-- Chart line -->
-  <polyline points="50,500 150,470 250,490 350,430 450,445 550,390 650,370 750,320 850,260 950,285 1050,220 1150,180"
-    fill="none" stroke="url(#oilChart)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+  <!-- NEW tag (top-right) -->
+  <rect x="970" y="50" width="170" height="50" rx="25" fill="url(#newTag)"/>
+  <text x="1055" y="83" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="22" fill="#1a0a00" letter-spacing="4">✨ NEW</text>
 
-  <!-- Top badge: 主推 -->
-  <rect x="460" y="50" width="280" height="40" rx="20" fill="#f97316" opacity="0.12" stroke="#f97316" stroke-width="1.5" stroke-opacity="0.5"/>
-  <text x="600" y="77" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="18" fill="#fb923c" letter-spacing="4">主推 TOP PICK · 限時上架</text>
+  <!-- Hero: CL WTI crude oil -->
+  <text x="600" y="200" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="68" fill="#ffffff" letter-spacing="-1">全新上線</text>
+  <text x="600" y="290" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="88" fill="#fb923c" filter="url(#glow)" letter-spacing="2">WTI 原油期貨 CL</text>
 
-  <!-- Main title: CL WTI 原油 -->
-  <text x="600" y="200" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="96" fill="#ffffff" letter-spacing="-2">WTI 原油期貨</text>
-  <text x="600" y="260" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="64" fill="#fb923c" filter="url(#glow)" letter-spacing="4">CL / USDT</text>
+  <!-- Tagline -->
+  <text x="600" y="340" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="600" font-size="22" fill="#e2e8f0" letter-spacing="3">即時 AI 策略訊號 · 一次覆蓋全品類資產</text>
 
-  <!-- Stats row -->
-  <g font-family="Arial, Helvetica, sans-serif">
-    <text x="300" y="360" text-anchor="middle" font-weight="900" font-size="44" fill="#fb923c">+39.75%</text>
-    <text x="300" y="390" text-anchor="middle" font-weight="600" font-size="16" fill="#94a3b8" letter-spacing="2">策略 ROI</text>
+  <!-- Asset chips row -->
+  <g font-family="Arial, Helvetica, sans-serif" font-weight="900">
+    <!-- CL highlighted -->
+    <g>
+      <rect x="100" y="400" width="130" height="80" rx="14" fill="#f97316" opacity="0.18" stroke="#fb923c" stroke-width="2"/>
+      <text x="165" y="438" text-anchor="middle" font-size="30" fill="#fb923c">CL</text>
+      <text x="165" y="462" text-anchor="middle" font-size="13" fill="#fde68a" letter-spacing="2" font-weight="600">原油</text>
+    </g>
 
-    <text x="600" y="360" text-anchor="middle" font-weight="900" font-size="44" fill="#fb923c">83%</text>
-    <text x="600" y="390" text-anchor="middle" font-weight="600" font-size="16" fill="#94a3b8" letter-spacing="2">勝率 WIN RATE</text>
+    <!-- BTC -->
+    <g>
+      <rect x="240" y="400" width="130" height="80" rx="14" fill="#f7931a" opacity="0.12" stroke="#f7931a" stroke-width="1.5" stroke-opacity="0.45"/>
+      <text x="305" y="438" text-anchor="middle" font-size="30" fill="#f7931a">BTC</text>
+      <text x="305" y="462" text-anchor="middle" font-size="13" fill="#fde68a" letter-spacing="2" font-weight="600">比特幣</text>
+    </g>
 
-    <text x="900" y="360" text-anchor="middle" font-weight="900" font-size="44" fill="#fb923c">23.2</text>
-    <text x="900" y="390" text-anchor="middle" font-weight="600" font-size="16" fill="#94a3b8" letter-spacing="2">盈虧比 PF</text>
+    <!-- ETH -->
+    <g>
+      <rect x="380" y="400" width="130" height="80" rx="14" fill="#627eea" opacity="0.12" stroke="#627eea" stroke-width="1.5" stroke-opacity="0.45"/>
+      <text x="445" y="438" text-anchor="middle" font-size="30" fill="#8da2f4">ETH</text>
+      <text x="445" y="462" text-anchor="middle" font-size="13" fill="#c7d2fe" letter-spacing="2" font-weight="600">以太坊</text>
+    </g>
+
+    <!-- SOL -->
+    <g>
+      <rect x="520" y="400" width="130" height="80" rx="14" fill="#14f195" opacity="0.10" stroke="#14f195" stroke-width="1.5" stroke-opacity="0.4"/>
+      <text x="585" y="438" text-anchor="middle" font-size="30" fill="#34f3a4">SOL</text>
+      <text x="585" y="462" text-anchor="middle" font-size="13" fill="#bbf7d0" letter-spacing="2" font-weight="600">Solana</text>
+    </g>
+
+    <!-- PAXG -->
+    <g>
+      <rect x="660" y="400" width="130" height="80" rx="14" fill="#eab308" opacity="0.12" stroke="#eab308" stroke-width="1.5" stroke-opacity="0.45"/>
+      <text x="725" y="438" text-anchor="middle" font-size="28" fill="#eab308">PAXG</text>
+      <text x="725" y="462" text-anchor="middle" font-size="13" fill="#fef3c7" letter-spacing="2" font-weight="600">黃金</text>
+    </g>
+
+    <!-- SPX -->
+    <g>
+      <rect x="800" y="400" width="130" height="80" rx="14" fill="#60a5fa" opacity="0.12" stroke="#60a5fa" stroke-width="1.5" stroke-opacity="0.45"/>
+      <text x="865" y="438" text-anchor="middle" font-size="30" fill="#60a5fa">SPX</text>
+      <text x="865" y="462" text-anchor="middle" font-size="13" fill="#dbeafe" letter-spacing="2" font-weight="600">標普 500</text>
+    </g>
+
+    <!-- NQ -->
+    <g>
+      <rect x="940" y="400" width="130" height="80" rx="14" fill="#a78bfa" opacity="0.12" stroke="#a78bfa" stroke-width="1.5" stroke-opacity="0.45"/>
+      <text x="1005" y="438" text-anchor="middle" font-size="30" fill="#a78bfa">NQ</text>
+      <text x="1005" y="462" text-anchor="middle" font-size="13" fill="#ede9fe" letter-spacing="2" font-weight="600">那斯達克</text>
+    </g>
+
+    <!-- ES (below row, centered under gap) -->
+    <g>
+      <rect x="1080" y="400" width="70" height="80" rx="14" fill="#c084fc" opacity="0.12" stroke="#c084fc" stroke-width="1.5" stroke-opacity="0.45"/>
+      <text x="1115" y="438" text-anchor="middle" font-size="26" fill="#c084fc">ES</text>
+      <text x="1115" y="462" text-anchor="middle" font-size="11" fill="#f3e8ff" letter-spacing="1" font-weight="600">S&amp;P 期</text>
+    </g>
   </g>
 
-  <!-- Divider -->
-  <line x1="200" y1="435" x2="1000" y2="435" stroke="#f97316" stroke-width="1" opacity="0.25"/>
-
-  <!-- Subtitle -->
-  <text x="600" y="485" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="28" fill="#e2e8f0">AI 量化策略 · 即時信號 · 進階會員專享</text>
-
-  <!-- Brand -->
-  <text x="600" y="540" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="42" fill="#ffffff" letter-spacing="2">QuantSignal</text>
+  <!-- Footer tagline -->
+  <text x="600" y="540" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="24" fill="#ffffff">9 大策略 · 8 類資產 · AI 訊號一站看個夠</text>
   <text x="600" y="575" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="400" font-size="16" fill="#64748b" letter-spacing="3">q-signals-production.up.railway.app</text>
 
   <!-- Border -->
-  <rect x="15" y="15" width="1170" height="600" rx="10" fill="none" stroke="#f97316" stroke-width="1.5" opacity="0.25"/>
+  <rect x="15" y="15" width="1170" height="600" rx="10" fill="none" stroke="#f97316" stroke-width="1.5" opacity="0.28"/>
 
   <!-- Corner accents -->
-  <g stroke="#f97316" stroke-width="3" opacity="0.7">
+  <g stroke="#fb923c" stroke-width="3" opacity="0.75">
     <line x1="15" y1="40" x2="15" y2="15"/>
     <line x1="15" y1="15" x2="40" y2="15"/>
     <line x1="1160" y1="15" x2="1185" y2="15"/>
