@@ -545,9 +545,14 @@
         for (const strat of data.strategies) {
           for (const symbol of symbols) {
             // Index/futures: each symbol uses its best-performing strategy
-            const indexStratMap = { SPXUSDT: 'turtle_breakout', NQUSDT: 'donchian_trend', ESUSDT: 'granville_eth_4h', CLUSDT: 'dual_ema' };
-            if (indexSymbols.includes(symbol) && strat.id !== indexStratMap[symbol]) continue;
-            if (strat.id === 'dual_st_breakout' && (symbol === 'XAUUSDT' || indexSymbols.includes(symbol))) continue;
+            // CLUSDT (WTI oil) shows all positive 1h strategies as cards
+            const indexStratMap = { SPXUSDT: 'turtle_breakout', NQUSDT: 'donchian_trend', ESUSDT: 'granville_eth_4h' };
+            const stockIndexSymbols = ['SPXUSDT', 'NQUSDT', 'ESUSDT'];
+            if (stockIndexSymbols.includes(symbol) && strat.id !== indexStratMap[symbol]) continue;
+            // CL: skip only the negative one (macd_ma)
+            const clSkipList = ['macd_ma_optimized'];
+            if (symbol === 'CLUSDT' && clSkipList.includes(strat.id)) continue;
+            if (strat.id === 'dual_st_breakout' && (symbol === 'XAUUSDT' || stockIndexSymbols.includes(symbol))) continue;
 
             // Skip known-negative crypto combos
             // After re-optimization (Pionex WTI + per-symbol overrides): only 3 combos remain negative

@@ -194,14 +194,17 @@ async function computeStrategyPerformanceCache() {
             }
         }
 
-        // Index/futures: each symbol uses its best-performing strategy
-        const indexStratMap = { SPXUSDT: 'turtle_breakout', NQUSDT: 'donchian_trend', ESUSDT: 'granville_eth_4h', CLUSDT: 'dual_ema' };
-        for (const symbol of indexSymbols) {
+        // Stock index/futures: each symbol uses its best-performing strategy
+        const indexStratMap = { SPXUSDT: 'turtle_breakout', NQUSDT: 'donchian_trend', ESUSDT: 'granville_eth_4h' };
+        for (const symbol of ['SPXUSDT', 'NQUSDT', 'ESUSDT']) {
             if (s.id === indexStratMap[symbol]) {
-                // CL uses 1h timeframe (best performing per optimization); others 4h
-                const tf = symbol === 'CLUSDT' ? '1h' : '4h';
-                jobs.push({ s, symbol, timeframe: tf });
+                jobs.push({ s, symbol, timeframe: '4h' });
             }
+        }
+
+        // CL WTI crude oil: compute all 1h strategies except known-negative (macd_ma)
+        if (s.id !== 'macd_ma_optimized') {
+            jobs.push({ s, symbol: 'CLUSDT', timeframe: '1h' });
         }
     }
 

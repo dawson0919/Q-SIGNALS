@@ -69,10 +69,15 @@ const MONITOR_COMBOS = [
     { symbol: 'SPXUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
     { symbol: 'NQUSDT', strategyId: 'donchian_trend', timeframe: '4h' },
     { symbol: 'ESUSDT', strategyId: 'granville_eth_4h', timeframe: '4h' },
-    // WTI Crude Oil (Pionex WTI_USDT_PERP ~$91) — top 3 strategies on 1h
+    // WTI Crude Oil (Pionex WTI_USDT_PERP ~$91) — all 8 positive 1h strategies
     { symbol: 'CLUSDT', strategyId: 'dual_ema', timeframe: '1h' },
     { symbol: 'CLUSDT', strategyId: 'donchian_trend', timeframe: '1h' },
     { symbol: 'CLUSDT', strategyId: 'turtle_breakout', timeframe: '1h' },
+    { symbol: 'CLUSDT', strategyId: 'ma60', timeframe: '1h' },
+    { symbol: 'CLUSDT', strategyId: 'dual_st_breakout', timeframe: '1h' },
+    { symbol: 'CLUSDT', strategyId: 'ichimoku_cloud', timeframe: '1h' },
+    { symbol: 'CLUSDT', strategyId: 'granville_eth_4h', timeframe: '1h' },
+    { symbol: 'CLUSDT', strategyId: 'three_style', timeframe: '1h' },
 ];
 
 /**
