@@ -23,3 +23,5 @@ create_test_data.js
 verify_signal.js
 check_members.js
 send_bulk_email.js
+retry_bulk_email.js
+bulk_email_retry_*.txt

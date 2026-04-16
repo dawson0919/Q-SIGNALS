@@ -166,14 +166,41 @@
                         </div>
                     </div>
 
-                    <!-- Step 2: KYC & Contact -->
-                    <div class="bg-surface-dark/50 border border-border-dark rounded-xl p-6 mb-2 max-w-sm mx-auto">
-                        <p class="text-primary font-extrabold text-lg mb-1 leading-tight">步驟二：完成 KYC 認證後聯繫小編解鎖</p>
-                        <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-6 leading-relaxed">
-                            Complete KYC & Contact Editor to Unlock</p>
+                    <!-- Step 2: Apply upgrade (new flow) -->
+                    <div class="bg-surface-dark/50 border border-primary/30 rounded-xl p-6 mb-3 max-w-sm mx-auto">
+                        <p class="text-primary font-extrabold text-lg mb-1 leading-tight">步驟二：填寫帳號並提出升等申請</p>
+                        <p class="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-5 leading-relaxed">
+                            Submit Mitrade + Pionex Account for Admin Review</p>
 
+                        <div id="upgradeStatusBanner" class="hidden mb-4 p-3 rounded-lg text-sm"></div>
+
+                        <div class="space-y-3 mb-4 text-left">
+                            <div>
+                                <label class="text-[11px] text-slate-400 font-bold uppercase block mb-1">Mitrade 帳號（7 碼數字）</label>
+                                <input id="mitradeInput" type="text" placeholder="e.g. 5132544"
+                                    class="w-full bg-black/30 border border-border-dark focus:border-primary rounded-lg px-3 py-2 text-white text-sm outline-none">
+                            </div>
+                            <div>
+                                <label class="text-[11px] text-slate-400 font-bold uppercase block mb-1">Pionex 帳號（8 碼數字）</label>
+                                <input id="pionexInput" type="text" placeholder="e.g. 12345678"
+                                    class="w-full bg-black/30 border border-border-dark focus:border-primary rounded-lg px-3 py-2 text-white text-sm outline-none">
+                            </div>
+                        </div>
+
+                        <button id="applyUpgradeBtn" onclick="submitUpgradeApplication()"
+                            class="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-black font-black rounded-xl hover:scale-[1.02] transition-all shadow-[0_0_20px_rgba(34,211,238,0.3)]">
+                            <span class="material-symbols-outlined text-xl">check_circle</span>
+                            我已註冊完成，提出升等申請
+                        </button>
+
+                        <p class="text-[10px] text-slate-500 mt-3">狀態待審期間，管理員將於 24 小時內處理並通知。</p>
+                    </div>
+
+                    <!-- Step 3: LINE fallback -->
+                    <div class="bg-surface-dark/50 border border-border-dark rounded-xl p-4 mb-2 max-w-sm mx-auto">
+                        <p class="text-slate-400 text-sm mb-3">或透過 LINE 聯繫小編</p>
                         <a href="https://lin.ee/WuRqowF" target="_blank"
-                            class="inline-flex items-center gap-2 px-8 py-4 bg-[#06C755] text-white font-black rounded-xl hover:scale-[1.05] transition-all shadow-[0_0_20px_rgba(6,199,85,0.3)] group">
+                            class="inline-flex items-center gap-2 px-6 py-3 bg-[#06C755] text-white font-black rounded-xl hover:scale-[1.05] transition-all shadow-[0_0_20px_rgba(6,199,85,0.3)] group">
                             <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path
                                     d="M24 10.304c0-5.232-5.383-9.489-12-9.489s-12 4.257-12 9.489c0 4.69 4.27 8.604 10.04 9.351.391.084.923.258 1.058.591.121.303.079.777.039 1.083l-.173 1.041c-.052.312-.252 1.221 1.083.666 1.334-.555 7.203-4.242 9.831-7.257 1.838-2.029 2.122-3.483 2.122-5.476zm-16.712 4.102h-1.442a.288.288 0 0 1-.288-.288V9.166a.288.288 0 0 1 .288-.288h1.442a.288.288 0 0 1 .288.288v4.95a.288.288 0 0 1-.288.288zm3.434 0h-1.44a.288.288 0 0 1-.288-.288V9.166a.288.288 0 0 1 .288-.288h.002a.288.288 0 0 1 .288.288l.002 2.768 2.053-2.71c.061-.081.161-.137.279-.146h.547a.288.288 0 0 1 .288.288v4.95a.288.288 0 0 1-.288.288h-1.442a.288.288 0 0 1-.288-.288v-2.766l-2.052 2.709a.301.301 0 0 1-.252.141zm5.344-1.63h-1.44a.288.288 0 0 1-.288-.288V9.166a.288.288 0 0 1 .288-.288h1.442a.288.288 0 0 1 .288.288v3.224h1.442a.288.288 0 0 1 .288.288v1.14c0 .159-.129.288-.288.288zm3.434-3.32h-1.44a.288.288 0 0 1-.288-.288v-.288h1.44c.159 0 .288-.129.288-.288v-1.14a.288.288 0 0 0-.288-.288h-3.17c-.159 0-.288.129-.288.288v4.95c0 .159.129.288.288.288h3.17c.159 0 .288-.129.288-.288v-1.14a.288.288 0 0 0-.288-.288h-1.44v-.288h1.44a.288.288 0 0 0 .288-.288V10.6a.288.288 0 0 0-.288-.288z" />
@@ -672,6 +699,53 @@
                     list.appendChild(errEl);
                 }
             }
+        }
+
+        async function submitUpgradeApplication() {
+            const btn = document.getElementById('applyUpgradeBtn');
+            const banner = document.getElementById('upgradeStatusBanner');
+            const mitrade = document.getElementById('mitradeInput').value.trim();
+            const pionex = document.getElementById('pionexInput').value.trim();
+            banner.classList.add('hidden');
+            if (!/^\d{6,9}$/.test(mitrade)) {
+                showBanner('error', 'Mitrade 帳號需為 6-9 碼純數字'); return;
+            }
+            if (!/^\d{6,10}$/.test(pionex)) {
+                showBanner('error', 'Pionex 帳號需為 6-10 碼純數字'); return;
+            }
+            const { data: { session } } = await window.supabase.auth.getSession();
+            if (!session) { showBanner('error', '請先登入'); return; }
+            btn.disabled = true;
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">progress_activity</span> 送出中...';
+            try {
+                const res = await fetch('/api/apply-upgrade', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+                    body: JSON.stringify({ mitrade_account: mitrade, pionex_account: pionex })
+                });
+                const d = await res.json();
+                if (res.ok) {
+                    showBanner('success', '✅ 升等申請已送出！管理員將於 24 小時內審核。狀態：pending');
+                    btn.innerHTML = '✅ 已提出申請（pending）';
+                    btn.disabled = true;
+                } else {
+                    showBanner('error', d.error || '送出失敗');
+                    btn.disabled = false; btn.innerHTML = orig;
+                }
+            } catch (e) {
+                showBanner('error', '網路錯誤：' + e.message);
+                btn.disabled = false; btn.innerHTML = orig;
+            }
+        }
+
+        function showBanner(type, msg) {
+            const banner = document.getElementById('upgradeStatusBanner');
+            banner.className = 'mb-4 p-3 rounded-lg text-sm ' +
+                (type === 'success' ? 'bg-green-500/10 border border-green-500/30 text-green-300'
+                                    : 'bg-red-500/10 border border-red-500/30 text-red-300');
+            banner.textContent = msg;
+            banner.classList.remove('hidden');
         }
 
         async function handleSignOut() {

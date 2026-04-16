@@ -286,6 +286,70 @@ router.get('/profile', requireAuth, async (req, res) => {
     }
 });
 
+// Apply for upgrade — user fills Mitrade + Pionex accounts, status → pending
+router.post('/apply-upgrade', requireAuth, async (req, res) => {
+    try {
+        const { mitrade_account, pionex_account } = req.body;
+        if (!mitrade_account || !pionex_account) {
+            return res.status(400).json({ error: '請填寫 Mitrade 與 Pionex 帳號' });
+        }
+        // 7-digit MITRADE, 8-digit Pionex (same rule as NBA Predictor)
+        if (!/^\d{6,9}$/.test(String(mitrade_account).trim())) {
+            return res.status(400).json({ error: 'Mitrade 帳號應為純數字 (6-9 碼)' });
+        }
+        if (!/^\d{6,10}$/.test(String(pionex_account).trim())) {
+            return res.status(400).json({ error: 'Pionex 帳號應為純數字 (6-10 碼)' });
+        }
+
+        const { data, error } = await getAdminClient()
+            .from('profiles')
+            .update({
+                trading_account: String(mitrade_account).trim(),
+                pionex_account: String(pionex_account).trim(),
+                upgrade_status: 'pending',
+                upgrade_requested_at: new Date().toISOString(),
+            })
+            .eq('id', req.user.id)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('[apply-upgrade] DB error:', error.message);
+            return res.status(500).json({ error: '儲存失敗: ' + error.message });
+        }
+
+        // Best-effort notify admin via Resend (non-blocking)
+        const resendKey = process.env.RESEND_API_KEY;
+        const adminEmail = (process.env.ADMIN_EMAILS || '').split(',')[0].trim();
+        if (resendKey && adminEmail) {
+            const body = JSON.stringify({
+                from: 'Q-SIGNALS <noreply@qsignals.net>',
+                to: [adminEmail],
+                subject: `【Q-SIGNALS】新升等申請待審 — ${req.user.email}`,
+                html: `<p>會員 <b>${req.user.email}</b> 已提交升等申請：</p>
+                       <ul><li>Mitrade: ${mitrade_account}</li><li>Pionex: ${pionex_account}</li></ul>
+                       <p>申請時間：${new Date().toLocaleString('zh-TW')}</p>
+                       <p>請至管理後台審核。</p>`,
+            });
+            try {
+                await fetch('https://api.resend.com/emails', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+                    body,
+                });
+            } catch (e) {
+                console.warn('[apply-upgrade] admin notify failed:', e.message);
+            }
+        }
+
+        return res.json({ success: true, status: 'pending', profile: data });
+    } catch (e) {
+        console.error('[apply-upgrade] error:', e);
+        res.status(500).json({ error: '系統錯誤' });
+    }
+});
+
+
 // Upload Proof Screenshot (Server-side to bypass RLS)
 router.post('/upload-proof', requireAuth, async (req, res) => {
     const { fileName, fileData } = req.body;
