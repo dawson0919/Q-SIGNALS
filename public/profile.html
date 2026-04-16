@@ -510,6 +510,28 @@
                     // Membership Visibility
                     if (role === 'standard') {
                         document.getElementById('applySection').classList.remove('hidden');
+                        // If user already submitted an upgrade application, lock the form
+                        if (profile.upgrade_status === 'pending') {
+                            const btn = document.getElementById('applyUpgradeBtn');
+                            const mi = document.getElementById('mitradeInput');
+                            const pi = document.getElementById('pionexInput');
+                            if (btn) { btn.innerHTML = '⏳ 審核中，請耐心等待'; btn.disabled = true; }
+                            if (mi && profile.trading_account) { mi.value = profile.trading_account; mi.disabled = true; }
+                            if (pi && profile.pionex_account) { pi.value = profile.pionex_account; pi.disabled = true; }
+                            const banner = document.getElementById('upgradeStatusBanner');
+                            if (banner) {
+                                banner.className = 'mb-4 p-3 rounded-lg text-sm bg-amber-500/10 border border-amber-500/30 text-amber-300';
+                                banner.textContent = '⏳ 您的升等申請審核中，管理員將於 24 小時內處理';
+                                banner.classList.remove('hidden');
+                            }
+                        } else if (profile.upgrade_status === 'rejected') {
+                            const banner = document.getElementById('upgradeStatusBanner');
+                            if (banner) {
+                                banner.className = 'mb-4 p-3 rounded-lg text-sm bg-red-500/10 border border-red-500/30 text-red-300';
+                                banner.textContent = '❌ 上次申請未通過：' + (profile.upgrade_reject_reason || '未說明。請修正後重新提交。');
+                                banner.classList.remove('hidden');
+                            }
+                        }
                     } else {
                         document.getElementById('applySection').classList.add('hidden');
                     }
@@ -719,9 +741,11 @@
                 });
                 const d = await res.json();
                 if (res.ok) {
-                    showBanner('success', '✅ 升等申請已送出！管理員將於 24 小時內審核。狀態：pending');
-                    btn.innerHTML = '✅ 已提出申請（pending）';
+                    showBanner('success', '✅ 升等申請已送出！管理員將於 24 小時內審核');
+                    btn.innerHTML = '⏳ 審核中，請耐心等待';
                     btn.disabled = true;
+                    document.getElementById('mitradeInput').disabled = true;
+                    document.getElementById('pionexInput').disabled = true;
                 } else {
                     showBanner('error', d.error || '送出失敗');
                     btn.disabled = false; btn.innerHTML = orig;
