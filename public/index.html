@@ -334,6 +334,18 @@
 
 
 
+        <!-- 90-Day Strategy Ranking -->
+        <div class="p-4 pb-0 space-y-2">
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex flex-col">
+              <h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 leading-none">近三個月策略績效排行</h2>
+              <span class="text-[9px] text-slate-600 font-bold uppercase mt-0.5">90-Day Performance Ranking</span>
+            </div>
+            <span id="ranking90-updated" class="text-[9px] text-slate-600"></span>
+          </div>
+          <div id="ranking90" class="hidden bg-card-dark rounded-xl border border-slate-800 overflow-hidden divide-y divide-slate-800/60"></div>
+        </div>
+
         <!-- Strategy List -->
         <div class="p-4 space-y-4">
           <div class="flex items-center justify-between mb-2">
@@ -517,6 +529,36 @@
     }
 
     // Load strategies — reads pre-computed performance from DB (no live backtest calls)
+    // 近三個月(90 天)統一窗口策略績效排行(前 10 名;冷啟動未算完前隱藏)
+    async function loadRanking90() {
+      try {
+        const res = await fetch('/api/strategies/ranking90');
+        const data = await res.json();
+        const rows = (data.rows || []).slice(0, 10);
+        if (!rows.length) return;
+        const names = { CLUSDT: 'CL 原油', BTCUSDT: 'BTC', ETHUSDT: 'ETH', SOLUSDT: 'SOL', PAXGUSDT: 'GOLD', XAUUSDT: 'XAU', SPXUSDT: 'SPX', NQUSDT: 'NQ', ESUSDT: 'ES' };
+        const el = document.getElementById('ranking90');
+        el.innerHTML = rows.map((r, i) => {
+          const pos = r.roi >= 0;
+          const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `<span class="text-slate-500 font-black text-xs">${i + 1}</span>`;
+          return `<div class="flex items-center gap-3 px-4 py-2.5">
+            <div class="w-6 text-center text-sm">${medal}</div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-bold text-white truncate">${r.strategyName || r.strategyId}</div>
+              <div class="text-[10px] text-slate-500">${names[r.symbol] || r.symbol} · ${(r.timeframe || '').toUpperCase()} · 勝率 ${Number(r.winRate).toFixed(1)}% · ${r.trades} 筆</div>
+            </div>
+            <div class="text-right">
+              <div class="text-base font-black ${pos ? 'text-primary' : 'text-red-500'}">${pos ? '+' : ''}${Number(r.roi).toFixed(1)}%</div>
+              <div class="text-[9px] text-slate-600">PF ${r.profitFactor == null ? '∞' : Number(r.profitFactor).toFixed(2)}</div>
+            </div>
+          </div>`;
+        }).join('');
+        el.classList.remove('hidden');
+        const up = document.getElementById('ranking90-updated');
+        if (up && data.computedAt) up.textContent = `更新 ${new Date(data.computedAt).toLocaleString('zh-TW', { hour12: false })}`;
+      } catch (e) { console.warn('ranking90 load failed', e); }
+    }
+
     async function loadStrategies() {
       try {
         const strategyList = document.getElementById('strategyList');
@@ -1041,6 +1083,7 @@
 
     // Init
     loadStrategies();
+    loadRanking90();
     loadFeaturedGoldSignals();
     checkDbStatus();
     setInterval(pollPrices, 10000);

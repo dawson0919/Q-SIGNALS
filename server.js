@@ -30,6 +30,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 // API Routes
 app.use('/api', apiRoutes);
 
+// 近三個月(90 天)策略績效排行:隨主快取每 4 小時重算,存記憶體(冷啟後數分鐘內填充)
+let ranking90 = { computedAt: null, rows: [] };
+app.get('/api/strategies/ranking90', (req, res) => res.json(ranking90));
+
 // WebSocket for live price streaming and online status
 const wss = new WebSocketServer({ server, path: '/ws/prices' });
 const onlineUsers = new Map(); // Store userId -> Set of sockets
@@ -209,6 +213,7 @@ async function computeStrategyPerformanceCache() {
     }
 
     let done = 0;
+    const rank90Rows = [];
     for (const { s, symbol, timeframe } of jobs) {
         try {
             const isIndex = ['SPXUSDT', 'NQUSDT', 'ESUSDT', 'CLUSDT'].includes(symbol);
@@ -230,11 +235,30 @@ async function computeStrategyPerformanceCache() {
 
             await upsertStrategyPerformance(s.id, symbol, timeframe, result.summary, latestSignal);
             done++;
+
+            // 90 天統一窗口(排行榜用;策略函式帶閉包狀態,必須重建)
+            try {
+                const c90 = await getCandleData(symbol, timeframe, { daysBack: 90 });
+                if (c90.length >= 50) {
+                    const fn90 = s.createStrategy ? s.createStrategy(params) : s.execute;
+                    const r90 = backtester.run(fn90, c90);
+                    if (r90?.summary) {
+                        rank90Rows.push({
+                            strategyId: s.id, strategyName: s.name, symbol, timeframe,
+                            roi: r90.summary.totalReturn, winRate: r90.summary.winRate,
+                            profitFactor: r90.summary.profitFactor, trades: r90.summary.totalTrades,
+                        });
+                    }
+                }
+            } catch (_e) { /* 排行缺一筆無妨 */ }
         } catch (e) {
             console.warn(`[StrategyCache] Skipped ${s.id}/${symbol}/${timeframe}: ${e.message}`);
         }
     }
     console.log(`✅ Strategy performance cache: ${done}/${jobs.length} entries saved to DB`);
+    rank90Rows.sort((a, b) => b.roi - a.roi);
+    ranking90 = { computedAt: new Date().toISOString(), windowDays: 90, rows: rank90Rows };
+    console.log(`✅ 90d ranking: ${rank90Rows.length} rows`);
 
     // Re-run every 4 hours to keep data fresh
     setTimeout(() => computeStrategyPerformanceCache().catch(e => console.error('[StrategyCache] Refresh error:', e.message)), 4 * 60 * 60 * 1000);
