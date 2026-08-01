@@ -67,8 +67,8 @@ const MONITOR_COMBOS = [
     { symbol: 'PAXGUSDT', strategyId: 'ma60', timeframe: '4h' },
     // Indices & Futures (Yahoo Finance: NQ=F ~25000, ES=F ~5800)
     { symbol: 'SPXUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },
-    { symbol: 'NQUSDT', strategyId: 'donchian_trend', timeframe: '4h' },
-    { symbol: 'ESUSDT', strategyId: 'granville_eth_4h', timeframe: '4h' },
+    { symbol: 'NQUSDT', strategyId: 'macd_ma_optimized', timeframe: '4h' },   // 2026-08-01 對決最佳 +3.0%
+    { symbol: 'ESUSDT', strategyId: 'turtle_breakout', timeframe: '4h' },     // 2026-08-01 對決最佳 +2.2%
     // WTI Crude Oil (Pionex WTI_USDT_PERP ~$91) — all 8 positive 1h strategies
     { symbol: 'CLUSDT', strategyId: 'dual_ema', timeframe: '1h' },
     { symbol: 'CLUSDT', strategyId: 'donchian_trend', timeframe: '1h' },

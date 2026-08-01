@@ -41,9 +41,11 @@ if (strategy.position_size < 0)
  * GOLD: ~30% ROI
  */
 const OPTIMIZED_PARAMS = {
-    'ETHUSDT': { fastLen: 5, slowLen: 50, slPct: 0.05, tpPct: 0.1, rsiThresh: 50, cooldown: 3, useRsi: false },
-    'SOLUSDT': { fastLen: 30, slowLen: 100, slPct: 0.03, tpPct: 0.1, rsiThresh: 45, cooldown: 3, useRsi: true },
-    'XAUUSDT': { fastLen: 30, slowLen: 50, slPct: 0.01, tpPct: 0.25, rsiThresh: 40, cooldown: 3, useRsi: true },
+    // 2026-08-01 重新掃參(180d,70/30 訓練/驗證):ETH -25.5%→+22.4%、SOL→+8.3%、XAU→+14.0%
+    'ETHUSDT': { fastLen: 60, slowLen: 150, slPct: 0.03, tpPct: 0.1, rsiThresh: 50, cooldown: 3, useRsi: false },
+    'SOLUSDT': { fastLen: 30, slowLen: 150, slPct: 0.08, tpPct: 0.1, rsiThresh: 45, cooldown: 3, useRsi: false },
+    'XAUUSDT': { fastLen: 60, slowLen: 100, slPct: 0.01, tpPct: 0.25, rsiThresh: 40, cooldown: 3, useRsi: true },
+    'PAXGUSDT': { fastLen: 20, slowLen: 150, slPct: 0.03, tpPct: 0.25, rsiThresh: 50, cooldown: 3, useRsi: true },
     'BTCUSDT': { fastLen: 15, slowLen: 100, slPct: 0.05, tpPct: 0.25, rsiThresh: 50, cooldown: 3, useRsi: true },
     // CLUSDT (WTI Crude Oil) — Pionex data, re-optimized 2026-04
     'CLUSDT': { fastLen: 10, slowLen: 30, slPct: 0.07, tpPct: 0.15, rsiThresh: 55, cooldown: 3, useRsi: true },      // 1h: ROI 39.75%

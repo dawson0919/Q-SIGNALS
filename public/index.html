@@ -546,7 +546,8 @@
           for (const symbol of symbols) {
             // Index/futures: each symbol uses its best-performing strategy
             // CLUSDT (WTI oil) shows all positive 1h strategies as cards
-            const indexStratMap = { SPXUSDT: 'turtle_breakout', NQUSDT: 'donchian_trend', ESUSDT: 'granville_eth_4h' };
+            // 2026-08-01 九策略對決結果:NQ 最佳 macd_ma(+3.0%)、ES 最佳 turtle(+2.2%);SPX 全負由負卡自動隱藏
+            const indexStratMap = { SPXUSDT: 'turtle_breakout', NQUSDT: 'macd_ma_optimized', ESUSDT: 'turtle_breakout' };
             const stockIndexSymbols = ['SPXUSDT', 'NQUSDT', 'ESUSDT'];
             if (stockIndexSymbols.includes(symbol) && strat.id !== indexStratMap[symbol]) continue;
             // CL: skip only the negative one (macd_ma)
@@ -561,7 +562,7 @@
 
             if (symbol === 'PAXGUSDT') {
               // Only show selected strategies for Gold (granville excluded — negative on PAXG)
-              const allowedGoldStrats = ['three_style', 'turtle_breakout', 'dual_st_breakout', 'donchian_trend'];
+              const allowedGoldStrats = ['three_style', 'turtle_breakout', 'dual_st_breakout', 'donchian_trend', 'dual_ema', 'ma60'];
               if (!allowedGoldStrats.includes(strat.id)) continue;
 
               const tf = (strat.id === 'three_style') ? '1h' : '4h';
@@ -604,6 +605,8 @@
     function fillCardStats(strategyId, symbol, timeframe, card, perf) {
       const roi = parseFloat(perf.totalReturn);
       card.dataset.roiPositive = roi >= 0 ? 'true' : 'false';
+      // 資料驅動:負報酬圖卡直接移除,首頁只展示正報酬策略(2026-08-01)
+      if (roi < 0) { card.remove(); updateTabCounts(); return; }
 
       const roiEl = document.getElementById(`roi-${strategyId}-${symbol}-${timeframe}`);
       if (roiEl) {
@@ -825,6 +828,8 @@
         if (data.summary) {
           const roi = data.summary.totalReturn;
           card.dataset.roiPositive = roi >= 0 ? 'true' : 'false';
+          // 資料驅動:負報酬圖卡直接移除(與 fillCardStats 一致)
+          if (roi < 0) { card.remove(); updateTabCounts(); return; }
 
           const roiEl = document.getElementById(`roi-${strategyId}-${symbol}-${timeframe}`);
           if (roiEl) {

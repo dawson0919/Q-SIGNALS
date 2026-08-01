@@ -58,6 +58,14 @@ function createStrategy(params = {}) {
         LEFT = 12; RIGHT = 5; MIN_HOLD_BARS = 15;
     }
 
+    // 2026-08-01 重新掃參(180d,70/30 訓練/驗證):BTC -13%→+12.9%(驗證 +20.6%)、PAXG +3.8%→+17.9%
+    if (params.symbol === 'BTCUSDT' && params.timeframe === '4h') {
+        LEFT = 10; RIGHT = 5; MIN_HOLD_BARS = 5;
+    }
+    if (params.symbol === 'PAXGUSDT' && params.timeframe === '4h') {
+        LEFT = 2; RIGHT = 5; MIN_HOLD_BARS = 10;
+    }
+
     // Apply Optimized Parameters for CLUSDT (WTI Crude Oil) 1h — Pionex 21d/500bars
     if (params.symbol === 'CLUSDT' && params.timeframe === '1h') {
         LEFT = 4; RIGHT = 3; MIN_HOLD_BARS = 2;

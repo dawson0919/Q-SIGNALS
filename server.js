@@ -165,7 +165,7 @@ async function computeStrategyPerformanceCache() {
     const cryptoSymbols = ['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'XAUUSDT'];
     const indexSymbols = ['SPXUSDT', 'NQUSDT', 'ESUSDT', 'CLUSDT'];
     // Gold-specific strategies shown on homepage for PAXGUSDT
-    const allowedGoldStrats = ['three_style', 'granville_eth_4h', 'turtle_breakout', 'dual_st_breakout', 'donchian_trend'];
+    const allowedGoldStrats = ['three_style', 'granville_eth_4h', 'turtle_breakout', 'dual_st_breakout', 'donchian_trend', 'dual_ema', 'ma60'];
 
     for (const s of strategyModules) {
         for (const symbol of cryptoSymbols) {
@@ -195,7 +195,7 @@ async function computeStrategyPerformanceCache() {
         }
 
         // Stock index/futures: each symbol uses its best-performing strategy
-        const indexStratMap = { SPXUSDT: 'turtle_breakout', NQUSDT: 'donchian_trend', ESUSDT: 'granville_eth_4h' };
+        const indexStratMap = { SPXUSDT: 'turtle_breakout', NQUSDT: 'macd_ma_optimized', ESUSDT: 'turtle_breakout' };
         for (const symbol of ['SPXUSDT', 'NQUSDT', 'ESUSDT']) {
             if (s.id === indexStratMap[symbol]) {
                 jobs.push({ s, symbol, timeframe: '4h' });
@@ -219,7 +219,8 @@ async function computeStrategyPerformanceCache() {
             let params = { ...s.defaultParams, symbol, timeframe };
             if (isIndex && s.id === 'turtle_breakout') {
                 if (['NQUSDT', 'NQ'].includes(symbol)) params = { leftBars: 12, rightBars: 4, minHoldBars: 2 };
-                else params = { leftBars: 6, rightBars: 5, minHoldBars: 15 };
+                else if (symbol === 'SPXUSDT') params = { leftBars: 6, rightBars: 5, minHoldBars: 15 };
+                // ESUSDT 用預設參數(2/5/2):2026-08-01 對決 +2.2%,套 SPX 參數反而失真
             }
             const stratFn = s.createStrategy ? s.createStrategy(params) : s.execute;
 
